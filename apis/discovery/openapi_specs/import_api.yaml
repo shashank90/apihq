@@ -1,0 +1,163 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: API Discovery
+servers:
+  - url: http://localhost:5000
+paths:
+  /apis/v1/specs:
+    post:
+      summary: Upload openapi spec
+      operationId: uploadSpec
+      tags:
+        - discovery
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                collection_name:
+                  description: Unique API collection name for logically grouping APIs
+                  type: string
+                  pattern: ^\w+$
+                  maxLength: 30
+                file:
+                  description: OpenAPI spec
+                  type: string
+                  format: binary
+              required:
+                - collection_name
+                - file
+      responses:
+        "201":
+          description: OpenAPI Spec uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactionId:
+                    type: string
+                    pattern: ^\w+$
+                    maxLength: 30
+                  message:
+                    type: string
+                    pattern: ^\w+$
+                    maxLength: 30
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        pattern: ^\w+$
+                        maxLength: 10
+                      message:
+                        type: string
+                        pattern: ^\w+$
+                        maxLength: 20
+        "401":
+          description: Unauthorized response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+        "403":
+          description: Forbidden response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+
+  /apis/v1/specs/{spec_id}:
+    get:
+      summary: Get spec from db
+      operationId: getSpec
+      tags:
+        - discovery
+      parameters:
+        - name: spec_id
+          in: path
+          required: true
+          description: Unique spec_id
+          schema:
+            type: string
+            pattern: ^\w+$
+            maxLength: 40
+      responses:
+        "200":
+          description: OpenAPI spec retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  # Return yaml or json openapi spec as json. Let client convert to appropriate presentation format
+                  spec:
+                    type: string
+                    pattern: ^\w+$
+                    maxLength: 20
+        "401":
+          description: Unauthorized response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        pattern: ^\w+$
+                        maxLength: 20
+                      message:
+                        type: string
+                        pattern: ^\w+$
+                        maxLength: 20
+        "403":
+          description: Forbidden response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        pattern: ^\w+$
+                        maxLength: 20
+                      message:
+                        type: string
+                        pattern: ^\w+$
+                        maxLength: 20

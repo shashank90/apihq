@@ -1,0 +1,29 @@
+.vulnDetailsWrapper {
+  flex: 4;
+  display: flex;
+  flex-direction: column;
+}
+.vulnDetailItem {
+  width: 400px;
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.vulnDetailItemHeader,
+.vulnDetailLargeItemHeader {
+  color: gray;
+  font-weight: 600;
+}
+.vulnDetailItemValue {
+  margin-left: 20px;
+}
+.vulnDetailLargeItem {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.textAreaStyle {
+  width: 500px;
+  height: 150px;
+}

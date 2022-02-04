@@ -1,0 +1,13 @@
+.file_details {
+  display: flex;
+  flex-direction: column;
+}
+.file_upload_container {
+  margin-top: 10px;
+  text-align: center;
+  margin-left: 80px;
+}
+.error_text {
+  color: red;
+  font-size: 14px;
+}

@@ -1,0 +1,7 @@
+rules:
+  - id: find-api-signatures
+    languages:
+      - python
+    pattern: $ROUTE.route("$API_PATH", methods=["$HTTP_METHOD"])
+    message: Found API using Flask routes
+    severity: INFO

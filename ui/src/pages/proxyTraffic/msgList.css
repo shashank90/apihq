@@ -1,0 +1,18 @@
+.msgList {
+  flex: 4;
+}
+
+.msgListItem {
+  display: flex;
+  align-items: center;
+}
+
+.msgListView {
+  border: none;
+  border-radius: 10px;
+  padding: 5px 10px;
+  background-color: #3bb077;
+  color: white;
+  cursor: pointer;
+  margin-right: 20px;
+}

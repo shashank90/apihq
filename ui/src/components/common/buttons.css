@@ -1,0 +1,42 @@
+.tbottombarWrapper {
+  padding: 0px 20px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1px;
+}
+
+.tsave-next-wrapper {
+  display: flex;
+  justify-content: space-around;
+}
+
+.tsave-btn {
+  border: none;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: darkblue;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tnext-btn {
+  border: none;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: darkblue;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 35px;
+}
+.tback-btn {
+  margin-right: auto;
+  border: none;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: darkblue;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}

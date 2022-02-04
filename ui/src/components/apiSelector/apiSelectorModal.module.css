@@ -1,0 +1,75 @@
+.dropdown {
+  display: flex;
+}
+.modal {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  background-color: white;
+  padding: 1rem;
+  text-align: center;
+  width: 60rem;
+  z-index: 10;
+  position: fixed;
+  top: 20vh;
+  left: calc(50% - 25rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.url_label {
+  font-size: 16px;
+  align-items: center;
+  vertical-align: middle;
+}
+.url_value {
+  margin-left: 10px;
+  width: 40rem;
+}
+hr {
+  border: 1px solid black;
+}
+.header {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.header_btn {
+  flex: 1;
+  margin-top: 10px;
+}
+.header_pair {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-top: 5px;
+  align-items: center;
+}
+.header_name_label {
+  margin-left: 38px;
+}
+.header_name_label::after {
+  content: "*";
+  color: red;
+}
+.header_label {
+  margin-left: 15px;
+}
+.header_label::after {
+  content: "*";
+  color: red;
+}
+.header_value {
+  font-size: 16px;
+  margin-top: 5px;
+  margin-left: 10px;
+  margin-right: 5px;
+}
+#select {
+  border: 1px solid black;
+  width: 100px;
+  font-size: 16px;
+}
+
+.error_text {
+  color: #b40e0e;
+}
