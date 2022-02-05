@@ -25,3 +25,5 @@ psycopg2
 openapi-spec-validator
 black
 semgrep
+prance
+openapi-core

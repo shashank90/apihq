@@ -59,9 +59,41 @@ def remove_files(folder: str):
             logger.exception(f"Failed to delete {file_path}")
 
 
-def write_json(file_name: str, dicT: Dict):
-    with open(file_name, "w") as fp:
+def write_json(file_path: str, dicT: Dict):
+    """
+    Dump dict to json file
+    """
+    with open(file_path, "w") as fp:
         json.dump(dicT, fp)
+
+
+def read_content(file_path: str) -> str:
+    """
+    Read all contents of a file into a string
+    """
+    content = None
+    if os.path.exists(file_path):
+        with open(file_path) as f:
+            content = f.read()
+    return content
+
+
+def read_json(file_path: str) -> Dict:
+    """
+    Read json file contents into dict
+    """
+    result = None
+    with open(file_path, "r") as fh:
+        result = json.load(fh)
+    return result
+
+
+def write_content(file_name: str, content: str):
+    """
+    Dump string content to file
+    """
+    with open(file_name, "w+", encoding="utf-8") as f:
+        f.write(content)
 
 
 def is_file_exists(path):

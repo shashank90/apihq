@@ -1,25 +1,27 @@
 import "./issueDetails.css";
 import Buttons from "../../components/common/Buttons";
 export default function IssueDetails(props) {
-  console.log("Inside Vuln Details");
-  const vulnObj = props.vulnObject;
-  console.log(vulnObj);
+  const detail = props.detail;
+  console.log(detail);
 
   const isBackBtnVisible = true;
   const isActionBtnVisible = true;
   const isNextBtnVisible = false;
   const actionButtonLabel = "Show Request";
 
-  const alert = vulnObj.alert;
-  const wascId = vulnObj.wascid;
-  const cweId = vulnObj.cweid;
-  const desc = vulnObj.desc;
-  const confidence = vulnObj.confidence;
-  const riskDesc = vulnObj.riskdesc;
-  const instanceCount = vulnObj.count;
-  const instances = JSON.stringify(vulnObj.instances);
-  const solution = vulnObj.solution;
-  const reference = vulnObj.reference;
+  const description = detail.description;
+  // const wascId = detail.wascid;
+  // const cweId = detail.cweid;
+  const message = detail.message;
+  console.log(message);
+  // const confidence = detail.confidence;
+  // const riskDesc = detail.riskdesc;
+  // const instanceCount = detail.count;
+  // const instances = JSON.stringify(detail.instances);
+  // const solution = detail.solution;
+  // const reference = detail.reference;
+
+  const msgItems = message.map((d, index) => <li key={index}>{d}</li>);
 
   function handleOnAction() {}
 
@@ -42,14 +44,16 @@ export default function IssueDetails(props) {
       </div>
       <h2>Issue Details</h2>
       <div className="vulnDetailItem">
-        <label className="vulnDetailItemHeader">Alert:</label>
-        <span className="vulnDetailItemValue">{alert}</span>
+        <label className="vulnDetailItemHeader">Description:</label>
+        <span className="vulnDetailItemValue">{description}</span>
       </div>
       <div className="vulnDetailLargeItem">
-        <label className="vulnDetailItemHeader">Description</label>
-        <textarea value={desc} className="textAreaStyle" />
+        <label className="vulnDetailItemHeader">Message:</label>
+        <div className="box">{msgItems}</div>
       </div>
-      <div className="vulnDetailItem">
+      // TODO: When uncommenting below block, use div(with box class) instead of
+      //textarea
+      {/* <div className="vulnDetailItem">
         <label className="vulnDetailItemHeader">WASCID:</label>
         <span className="vulnDetailItemValue">{wascId}</span>
       </div>
@@ -80,7 +84,7 @@ export default function IssueDetails(props) {
       <div className="vulnDetailLargeItem">
         <label className="vulnDetailItemHeader">Reference</label>
         <textarea value={reference} className="textAreaStyle" />
-      </div>
+      </div> */}
     </div>
   );
 }

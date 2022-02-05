@@ -22,7 +22,12 @@
   flex-direction: column;
   margin-bottom: 20px;
 }
-
+.box {
+  width: 500px;
+  height: 150px;
+  border: 1px solid black;
+  border-radius: 5px;
+}
 .textAreaStyle {
   width: 500px;
   height: 150px;

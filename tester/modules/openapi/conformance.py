@@ -1,12 +1,21 @@
-from errno import EROFS
 from http.client import BAD_REQUEST
-from importlib.machinery import PathFinder
 from pathlib import Path
 from typing import List, Dict
-from urllib import response
-from urllib.parse import parse_qs, urlparse, urlsplit
-from body_parser import encode_multipart_formdata
-from utils.constants import ERROR_MESSAGES, REQUEST_ID, HAR_FOLDER
+import uuid
+from urllib import request, response
+from urllib.parse import parse_qs, urlsplit
+from db.helper import update_run_details
+from db.model.api_run import RunStatusEnum
+
+# from body_parser import encode_multipart_formdata
+from utils.constants import (
+    DESCRIPTION,
+    MESSAGE,
+    REQUEST_ID,
+    HAR_FOLDER,
+    RESPONSE_VALIDATION,
+    ISSUE_ID,
+)
 from tester.connectors.zap.factory import get_zap
 from tester.connectors.zap.util import (
     get_http_archive,
@@ -36,6 +45,7 @@ logger = Logger(__name__)
 
 ERROR_RESPONSE_VALIDATION_FILE = "errors_response_validation.json"
 ERROR_REQUEST_VALIDATION_FILE = "errors_request_validation.json"
+ISSUES_FILE = "issues.json"
 REQUEST_METADATA_FILE = "request_metadata.json"
 REQUEST_INTENT = "request_intent"
 BAD_REQUEST = "BAD_REQUEST"
@@ -74,12 +84,17 @@ def save_har(data_dir: str, request_id: str, zap: ZAPv2, zap_msg_id: str) -> Dic
     return har_data
 
 
-def scan(api_path: str, spec_path: str, data_dir: str, auth_headers: List[Dict]):
+def run(
+    run_id: str, api_path: str, spec_path: str, data_dir: str, auth_headers: List[Dict]
+):
     """
     Test API contract conformance by initiating requests that fall outside contract constraints
     """
     # Create and send payloads for each api
-    logger.info(f"Performing conformance test for api path: {api_path}")
+    logger.info(f"Running API Tests for api path: {api_path}")
+
+    update_run_details(run_id, RunStatusEnum.IN_PROGRESS)
+
     (request_metadata_list, response_list) = invoke_apis(
         data_dir, api_path, spec_path, auth_headers
     )
@@ -89,10 +104,12 @@ def scan(api_path: str, spec_path: str, data_dir: str, auth_headers: List[Dict])
     openapi_core_spec = get_openapi_spec(spec_path)
 
     zap: ZAPv2 = get_zap()
+    zap_messages = get_zap_messages(zap)
 
     # Validate each response against OpenAPI spec for each api
     response_validation_errors: List[str] = []
     request_validation_errors: List[str] = []
+    issues: List[Dict] = []
     for response_object in response_list:
 
         # TODO: Construct these values from har data itself instead of getting from invoker
@@ -102,12 +119,12 @@ def scan(api_path: str, spec_path: str, data_dir: str, auth_headers: List[Dict])
 
         # Get URL by matching request_id across messages captured via ZAP
         request_id = response_object.get(REQUEST_ID)
-        url_detail = get_url_detl(request_id, zap)
+        url_detail = get_url_detl(request_id, zap_messages)
         zap_msg_id = url_detail.get("zap_message_id")
         har_data = save_har(data_dir, request_id, zap, zap_msg_id)
 
-        req_details: Dict = get_request_details(har_data)
-        req_details["path_params"] = path_params
+        # req_details: Dict = get_request_details(har_data)
+        # req_details["path_params"] = path_params
 
         # Request validation errors. Record invalid requests that went through
         if response_status == OK:
@@ -126,13 +143,16 @@ def scan(api_path: str, spec_path: str, data_dir: str, auth_headers: List[Dict])
         res_error_messages = get_response_validation_errors(
             full_api_path, openapi_core_spec, response_object
         )
-        response_validation_errors.append(
-            {
-                REQUEST_ID: request_id,
-                ERROR_MESSAGES: res_error_messages,
-                REQUEST_INTENT: BAD_REQUEST,
-            }
+
+        error: Dict = add_response_error(
+            request_id, response_validation_errors, res_error_messages
         )
+
+        # Add unique error to cumulative list of issues
+        if error:
+            issue_id = uuid.uuid4().hex
+            error[ISSUE_ID] = issue_id
+            issues.append(error)
 
     error_response_validation_file = os.path.join(
         data_dir, ERROR_RESPONSE_VALIDATION_FILE
@@ -142,11 +162,64 @@ def scan(api_path: str, spec_path: str, data_dir: str, auth_headers: List[Dict])
         data_dir, ERROR_REQUEST_VALIDATION_FILE
     )
 
-    # Write validation error responses(schema errors) for all negative requests
+    issues_file = os.path.join(data_dir, ISSUES_FILE)
+
     # TODO: Save this to db (Add a request_id and connect table to requests table) so it can be joined with requests table
     write_json(error_response_validation_file, response_validation_errors)
 
     write_json(error_request_validation_file, request_validation_errors)
+
+    write_json(issues_file, issues)
+
+    # Update final db status
+    update_run_details(run_id, RunStatusEnum.COMPLETED)
+
+
+def add_response_error(
+    request_id: str, response_validation_errors: List, res_error_messages: List
+):
+    """
+    Add unique response errors
+    """
+    error: Dict = None
+    if len(response_validation_errors) == 0:
+        error: Dict = get_error(request_id, res_error_messages)
+        response_validation_errors.append(error)
+
+    elif is_error_new(response_validation_errors, res_error_messages):
+        error: Dict = get_error(request_id, res_error_messages)
+        response_validation_errors.append(error)
+
+    return error
+
+
+def get_error(request_id: str, error_messages: List[str]) -> Dict:
+    """
+    Return error object
+    """
+    return {
+        REQUEST_ID: request_id,
+        MESSAGE: error_messages,
+        REQUEST_INTENT: BAD_REQUEST,
+        DESCRIPTION: RESPONSE_VALIDATION,
+    }
+
+
+def is_error_new(response_validation_errors: List, res_error_messages: List):
+    """
+    Add only unique errors to final validation error list
+    """
+    total = len(res_error_messages)
+    count = 0
+    for m1 in res_error_messages:
+        for m2 in response_validation_errors:
+            for m3 in m2[MESSAGE]:
+                if m1 == m3:
+                    count = count + 1
+
+    if count == total:
+        return False
+    return True
 
 
 def write_request_metadata(data_dir: str, req_metadata: List[Dict]):
@@ -162,11 +235,19 @@ def write_request_metadata(data_dir: str, req_metadata: List[Dict]):
         )
 
 
-def get_url_detl(request_id: str, zap: ZAPv2):
+def get_zap_messages(zap: ZAPv2):
+    """
+    Get all messages proxied through ZAP
+    """
+    messages = get_messages(zap)
+    return messages
+
+
+def get_url_detl(request_id: str, messages: List):
     """
     Get url details including zap_message_id given request_id (which binds request and response)
     """
-    messages = get_messages(zap)
+    # messages = get_messages(zap)
     url_details = get_urls(messages)
     return get_url_detail(request_id, url_details)
 
@@ -221,21 +302,21 @@ def get_email_mime_multipart_form_data():
     """
     openapi_core expects multipart/form-data to be encoded using email multipart/form-data for further processing.
     Hence adding translation layer to convert http multipart/form-data to email multipart/form-data
-    TODO: Remove hard-coding
     """
-    return encode_multipart_formdata(
-        [
-            {
-                "collectionName": "valid",
-                "contentType": "text/plain",
-            },
-            {
-                "file": "",
-                "contentType": "text/plain",
-                "filename": "eff00875-7828-11ec-a821-1181c30f7749.txt",
-            },
-        ]
-    )
+    pass
+    # return encode_multipart_formdata(
+    #     [
+    #         {
+    #             "collectionName": "valid",
+    #             "contentType": "text/plain",
+    #         },
+    #         {
+    #             "file": "",
+    #             "contentType": "text/plain",
+    #             "filename": "eff00875-7828-11ec-a821-1181c30f7749.txt",
+    #         },
+    #     ]
+    # )
 
 
 def get_request_validation_errors(full_api_path: str, spec: Dict, req_details: Dict):

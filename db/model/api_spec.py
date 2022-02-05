@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from db.database import Base
 
 
-class APISpec(Base):
+class ApiSpec(Base):
     __tablename__ = "api_spec"
 
     id = Column(Integer, primary_key=True)
@@ -18,9 +18,8 @@ class APISpec(Base):
     time_updated = Column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False
     )
-    # Strict one to one relationship from spec to audit and scan objects respectively
-    audit_result = relationship("APIAudit", backref="spec", uselist=False)
-    scan_result = relationship("APIScan", backref="spec", uselist=False)
+    # Strict one to one relationship from spec to validate
+    validate_result = relationship("ApiValidate", backref="spec", uselist=False)
     user = relationship("User", backref="specs")
 
     def __init__(self, spec_id, user_id, collection_name, file_name, data_dir):

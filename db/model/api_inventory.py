@@ -19,10 +19,11 @@ class AddedByEnum(enum.Enum):
     USER = "user"
 
 
-class APIInventory(Base):
+class ApiInventory(Base):
     __tablename__ = "api_inventory"
 
     id = Column(Integer, primary_key=True)
+    api_id = Column(String(40), nullable=False, unique=True)
     # In case of crawled APIs, spec may not be present
     spec_id = Column(String(40), ForeignKey("api_spec.spec_id"), nullable=True)
     # TODO: Is the user the owner ? Need this notion when deleting API. Think RBAC
@@ -31,6 +32,7 @@ class APIInventory(Base):
     )  # User who discovered the api(crawler or actual user)
     added_by = Column(Enum(AddedByEnum), nullable=False)
     api_path = Column(String(120), nullable=False)
+    api_endpoint_url = Column(String(120), nullable=True)
     http_method = Column(String(20), nullable=False)
     found_in_file = Column(String(40), nullable=True)
     # Add additional remarks to be displayed
@@ -45,6 +47,7 @@ class APIInventory(Base):
     def __init__(
         self,
         spec_id,
+        api_id,
         user_id,
         added_by,
         api_path,
@@ -53,6 +56,7 @@ class APIInventory(Base):
         message=None,
     ):
         self.spec_id = spec_id
+        self.api_id = api_id
         self.user_id = user_id
         self.added_by = added_by
         self.api_path = api_path

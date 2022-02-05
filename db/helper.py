@@ -4,9 +4,11 @@ from typing import Dict, List
 from sqlalchemy.orm import Session
 from db.database import get_session
 import uuid
-from db.model.api_inventory import APIInventory
-from db.model.api_spec import APISpec
+from db.model.api_inventory import ApiInventory
+from db.model.api_spec import ApiSpec
+from db.model.api_run import ApiRun, RunStatusEnum
 from db.model.user import User
+from db.model.api_validate import ApiValidate, ValidateStatusEnum
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -42,23 +44,58 @@ def get_user(email: str = None, user_id: str = None):
     return user
 
 
+def update_validation_status(spec_id: str, user_id: str, status: ValidateStatusEnum):
+    """
+    Update spec validation status
+    """
+    session: Session = get_session()
+    api_validate = session.query(ApiValidate).filter_by(spec_id=spec_id).first()
+    # Update status
+    if api_validate:
+        api_validate.status = status
+    # Or insert fresh record
+    else:
+        api_validate = ApiValidate(spec_id, user_id, status)
+        session.add(api_validate)
+    session.commit()
+
+
+def add_run_details(run_id: str, api_id: str, user_id: str, run_status: RunStatusEnum):
+    """
+    Add run record
+    """
+    session: Session = get_session()
+    api_run = ApiRun(run_id, api_id, user_id, run_status)
+    session.add(api_run)
+    session.commit()
+
+
+def update_run_details(run_id: str, run_status: RunStatusEnum):
+    session: Session = get_session()
+    api_run = session.query(ApiValidate).filter_by(run_id=run_id).first()
+    api_run.status = run_status
+    session.commit()
+
+
 def add_api_to_inventory(api_path: str, api_details: Dict):
     """
     Insert or Update api path in inventory table based on whether it exists
     """
     session: Session = get_session()
-    api_path_obj = session.query(APIInventory).filter_by(api_path=api_path).first()
+    api_path_obj = session.query(ApiInventory).filter_by(api_path=api_path).first()
     # http_method
     http_method = api_details.get("http_method")
     session: Session = get_session()
     if not api_path_obj:
+        api_id = api_details.get("api_id")
         spec_id = api_details.get("spec_id")
         user_id = api_details.get("user_id")
         added_by = api_details.get("added_by")
         found_in_file = api_details.get("found_in_file")
         # Store additional info if any
         message = api_details.get("message")
-        api_inventory_object = APIInventory(
+        api_inventory_object = ApiInventory(
+            api_id=api_id,
             spec_id=spec_id,
             user_id=user_id,
             added_by=added_by,
@@ -83,13 +120,20 @@ def add_api_to_inventory(api_path: str, api_details: Dict):
             session.commit()
 
 
-def get_discovered_apis(user_id):
+def get_api_inventory(user_id):
     """
     Get discovered APIs given user id
     """
     session: Session = get_session()
-    inventory = session.query(APIInventory).filter_by(user_id=user_id).first()
+    inventory = session.query(ApiInventory).filter_by(user_id=user_id)
     return inventory
+
+
+def update_spec(spec_id, collection_name=None):
+    session: Session = get_session()
+    spec: ApiSpec = get_spec(spec_id)
+    spec.collection_name = collection_name
+    session.commit()
 
 
 def get_spec(spec_id, api_path=None):
@@ -97,15 +141,7 @@ def get_spec(spec_id, api_path=None):
     Retrieve spec object given spec_id & api path
     """
     session: Session = get_session()
-    # spec = None
-    # if api_path:
-    # spec = (
-    # session.query(APISpec)
-    # .filter(and_(spec_id == spec_id, api_path == api_path))
-    # .first()
-    # )
-    # else:
-    spec = session.query(APISpec).filter_by(spec_id=spec_id).first()
+    spec = session.query(ApiSpec).filter_by(spec_id=spec_id).first()
     return spec
 
 
@@ -118,6 +154,6 @@ def add_spec(
     2. api to inventory table
     """
     session: Session = get_session()
-    spec = APISpec(spec_id, user_id, collection_name, file_name, data_dir)
+    spec = ApiSpec(spec_id, user_id, collection_name, file_name, data_dir)
     session.add(spec)
     session.commit()

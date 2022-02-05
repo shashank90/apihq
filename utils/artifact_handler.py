@@ -5,13 +5,7 @@ import zapv2
 from in_memory.model.discovery_params import DiscoveryParams
 
 from in_memory.model.spec_params import SpecParams
-from misc.zap.zap_data import ZAPData
 from log.factory import Logger
-from misc.zap.setter import (
-    remove_context,
-    remove_site_nodes,
-    export_context,
-)
 from utils.file_handler import create_spec_folder
 
 logger = Logger(__name__)
@@ -30,22 +24,6 @@ def clear_txn_data(zap: zapv2.ZAPv2, txn_id):
     # Remove from cache
     # clear_txn_params(txn_id)
     pass
-
-
-def clear_zap_data(zap: zapv2.ZAPv2, zap_data: ZAPData):
-    """
-    Save and clear ZAP data
-    :param zap:
-    :param zap_data:
-    """
-    context_name = zap_data.get_context_name()
-    sites = zap_data.get_sites()
-    # Save ZAP context
-    export_context(zap, context_name)
-    # Remove ZAP context
-    remove_context(zap, context_name)
-    # Remove site nodes
-    remove_site_nodes(zap, sites)
 
 
 def create_spec_artifacts() -> SpecParams:

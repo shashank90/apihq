@@ -1,2 +1,0 @@
-# appsechq-ui
-AppSecHQ UI

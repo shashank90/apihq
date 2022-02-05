@@ -26,7 +26,7 @@ def generate_sdk(sdk_dir: str, spec_path: str, openapi_config_file_path: str):
     logger.info("openapi sdk generation begins...")
     output = run_cmd(
         [
-            "openapi-generator-cli",
+            "/home/shashank/bin/openapitools/openapi-generator-cli",
             "generate",
             "-i",
             spec_path,

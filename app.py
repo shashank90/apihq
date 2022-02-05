@@ -2,14 +2,13 @@ import threading
 import time
 
 from flask import Flask
-from db import tester
 
 from db.database import init_db
 from log.factory import Logger, init_logger
 from apis.auth.routes import auth_bp
 from apis.discovery.routes import discovery_bp
-from apis.audit.routes import audit_bp
-from apis.scan.routes import scan_bp
+from apis.validate.routes import validate_bp
+from apis.run.routes import run_bp
 from utils.constants import WORK_DIR
 from utils.file_handler import remove_files
 
@@ -32,8 +31,8 @@ def create_app():
         # Register Blueprints
         app.register_blueprint(auth_bp)
         app.register_blueprint(discovery_bp)
-        app.register_blueprint(audit_bp)
-        app.register_blueprint(scan_bp)
+        app.register_blueprint(validate_bp)
+        app.register_blueprint(run_bp)
 
     try:
         while True:

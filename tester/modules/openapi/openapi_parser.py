@@ -52,7 +52,7 @@ def get_paths(spec_path) -> Tuple[str, str]:
     """
     Retrieve API path and http method
     """
-    parser = ResolvingParser("./apis/discovery/openapi_specs/import_api.yaml")
+    parser = ResolvingParser(spec_path)
     spec = parser.specification
     paths = spec["paths"]
     path_list = []

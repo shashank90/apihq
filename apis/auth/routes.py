@@ -43,11 +43,11 @@ def login():
         token = jwt.encode(
             {
                 "user_id": user.user_id,
-                "exp": datetime.utcnow() + timedelta(minutes=30),
+                "exp": datetime.utcnow() + timedelta(minutes=90),
             },
             current_app.config["SECRET_KEY"],
             algorithm="HS256",
-        )
+        ).decode("utf-8")
 
         return make_response(jsonify({"token": token}), 201)
     # returns 403 if password is wrong

@@ -9,7 +9,13 @@ from sqlalchemy_utils import database_exists, create_database
 # Connect and create an SQLAlchemy session
 DATABASE_NAME = "cymitra"
 SCHEMA_NAME = "apihq"
-engine = create_engine(f"postgres://p075am:p075am@localhost/{DATABASE_NAME}")
+
+# TODO: Move this to .env
+USER_P075am_PASSWORD = "Wyr73x@BgQQ;4"
+
+engine = create_engine(
+    f"postgres://p075am:{USER_P075am_PASSWORD}@localhost/{DATABASE_NAME}"
+)
 # Create db if not exists
 if not database_exists(engine.url):
     create_database(engine.url)
@@ -28,8 +34,8 @@ Base.metadata.schema = SCHEMA_NAME
 from db.model import user
 from db.model import api_spec
 from db.model import api_inventory
-from db.model import api_audit
-from db.model import api_scan
+from db.model import api_validate
+from db.model import api_run
 
 
 def init_db():

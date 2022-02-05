@@ -1,8 +1,4 @@
 Install the following on docker image
-# newman json summary reporter
-npm i newman-reporter-json-summary
-# Postman Collection sdk
-npm install postman-collection --save
 # Install postgres
 https://www.digitalocean.com/community/tutorials/how-to-install-postgresql-on-ubuntu-20-04-quickstart
 Pre-requisite for installing psycopg2
@@ -17,3 +13,22 @@ python3 -m venv venv
 sudo apt-get install python3-pip
 sudo apt-get install libpq-dev python-dev
 pip install -r requirements.txt
+
+
+# Install IBM OpenAPI validator
+sudo npm install ibm-openapi-validator
+sudo npm install @ibm-cloud/openapi-ruleset
+
+# Install openapi-code generator
+
+sudo apt install default-jdk
+sudo apt install default-jre
+sudo apt install maven
+sudo apt install jq
+
+# Copy paste following instructions into terminal
+
+mkdir -p ~/bin/openapitools
+curl https://raw.githubusercontent.com/OpenAPITools/openapi-generator/master/bin/utils/openapi-generator-cli.sh > ~/bin/openapitools/openapi-generator-cli
+chmod u+x ~/bin/openapitools/openapi-generator-cli
+export PATH=$PATH:~/bin/openapitools/

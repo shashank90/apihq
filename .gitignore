@@ -137,4 +137,4 @@ cython_debug/
 
 # VScode style settings
 .vscode/
-work/
+logs/

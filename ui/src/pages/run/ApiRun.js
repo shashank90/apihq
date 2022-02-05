@@ -1,4 +1,4 @@
-import styles from "./apiScan.module.css";
+import styles from "./apiRun.module.css";
 import topbarStyles from "../../components/common/topbarstyles.module.css";
 import buttons from "../../components/common/buttons.module.css";
 import { DataGrid } from "@material-ui/data-grid";
@@ -15,8 +15,6 @@ export default function APIScan() {
   const [apiPath, setApiPath] = useState();
   const [authHeaders, setAuthHeaders] = useState();
 
-  const validate = "/apis/scan/issues";
-
   function showDropdownHandler() {
     setDropdownModalIsOpen(true);
   }
@@ -27,25 +25,6 @@ export default function APIScan() {
 
   const columns = [
     { field: "id", headerName: "ID", width: 100 },
-    {
-      field: "Scan Result",
-      headerName: "Scan Result",
-      width: 200,
-      renderCell: (params) => {
-        return (
-          <>
-            <Link
-              to={{
-                pathname: `/apis/scan/issues/${params.row.id}`,
-                query: { validate },
-              }}
-            >
-              <button className="msgListView">View</button>
-            </Link>
-          </>
-        );
-      },
-    },
     {
       field: "Endpoint URL",
       headerName: "Endpoint URL",
@@ -60,6 +39,24 @@ export default function APIScan() {
       width: 200,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.site}</div>;
+      },
+    },
+    {
+      field: "Result",
+      headerName: "Result",
+      width: 200,
+      renderCell: (params) => {
+        return (
+          <>
+            <Link
+              to={{
+                pathname: `/apis/run/issues/${params.row.id}`,
+              }}
+            >
+              <button className="msgListView">View</button>
+            </Link>
+          </>
+        );
       },
     },
   ];
@@ -87,12 +84,12 @@ export default function APIScan() {
     return (
       <div className={styles.TargetList}>
         <div className={topbarStyles.new_action_container}>
-          <h1 className={styles.TargetTitle}>Scan</h1>
+          <h1 className={styles.TargetTitle}>Run</h1>
           <button
             className={buttons.new_action_btn}
             onClick={() => showDropdownHandler()}
           >
-            Scan API
+            Run API
           </button>
         </div>
         <DataGrid

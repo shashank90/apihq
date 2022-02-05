@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
 from db.database import get_session
-from db.model.api_audit import APIAudit, AuditStatusEnum
-from db.model.api_scan import APIScan, ScanStatusEnum
-from db.model.api_spec import APISpec
+from db.model.api_validate import ApiValidate, ValidateStatusEnum
+from db.model.api_run import ApiRun, RunStatusEnum
+from db.model.api_spec import ApiSpec
 from db.model.company import Company
 from db.model.user import User
 from log.factory import Logger
@@ -35,7 +35,7 @@ def insert_spec():
     spec_id = "spec1234566777"
     collection_name = "import_api"
     data_dir = "/abc/dir"
-    spec = APISpec(spec_id, user_id, collection_name, data_dir)
+    spec = ApiSpec(spec_id, user_id, collection_name, data_dir)
     # session.add(spec)
     # session.commit()
 
@@ -47,8 +47,8 @@ def insert_audit():
     spec_id = "spec1234566777"
     user_id = 2
     score = 25
-    status = AuditStatusEnum.INITIATIED
-    audit = APIAudit(spec_id, user_id, score, status)
+    status = ValidateStatusEnum.INITIATIED
+    audit = ApiValidate(spec_id, user_id, score, status)
     session.add(audit)
     session.commit()
 
@@ -58,8 +58,8 @@ def insert_scan():
     spec_id = "spec1234566777"
     user_id = 2
     score = 25
-    status = ScanStatusEnum.INITIATIED
-    audit = APIScan(spec_id, user_id, score, status)
+    status = RunStatusEnum.INITIATIED
+    audit = ApiRun(spec_id, user_id, score, status)
     session.add(audit)
     session.commit()
 
@@ -72,9 +72,9 @@ def get_user_customer(username):
 
 def get_api_spec(collection_name):
     session: Session = get_session()
-    spec: APISpec = (
-        session.query(APISpec)
-        .filter(APISpec.collection_name == collection_name)
+    spec: ApiSpec = (
+        session.query(ApiSpec)
+        .filter(ApiSpec.collection_name == collection_name)
         .first()
     )
     print(f"FOUND MY FIRST API Spec {spec.scan_result.status} ")

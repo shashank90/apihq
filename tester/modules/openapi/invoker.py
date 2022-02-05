@@ -2,7 +2,7 @@ import re
 from typing import Dict, List, Tuple, Type
 from urllib.parse import urljoin
 from utils.constants import (
-    ERROR_MESSAGES,
+    MESSAGE,
     FILE_ATTRIBUTE_TYPE,
     REQUEST_ID,
     UPLOAD_JSON_FILE,

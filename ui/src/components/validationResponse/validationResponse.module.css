@@ -1,0 +1,37 @@
+.box {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid gray;
+  border-radius: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-left: 5px;
+  cursor: pointer;
+  overflow: auto;
+}
+
+.example_container {
+  display: flex;
+  flex-direction: column;
+}
+.example_head {
+  display: flex;
+  justify-content: space-between;
+}
+.example_heading {
+  font-size: 12pt;
+  font-weight: bold;
+  margin-left: 10px;
+  margin-top: 10px;
+}
+.example_back_btn {
+  margin-top: 10px;
+  margin-right: 10px;
+}
+
+.example_body {
+  border: 1px solid gray;
+  border-radius: 5px;
+  margin-left: 10px;
+  margin-right: 50px;
+  margin-top: 10px;
+}
