@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import apiStyles from "./apiSelectorModal.module.css";
 import buttons from "../common/buttons.module.css";
 import Buttons from "../common/Buttons";
 import { useHistory } from "react-router";
 import { DeleteOutline } from "@material-ui/icons";
+import AuthContext from "../../store/auth-context";
 
 const getApisURL = "http://localhost:3000/apis/v1/discovered";
 const runAPIBaseURL = "http://localhost:3000/apis/v1/run";
@@ -20,6 +21,7 @@ export default function APIDropdownModal(props) {
   const [headerName, setHeaderName] = useState("");
   const [headerValue, setHeaderValue] = useState("");
   const [headerPairs, setHeaderPairs] = useState([]);
+  const authCtx = useContext(AuthContext);
 
   const isBackBtnVisible = true;
   const isActionBtnVisible = true;
@@ -28,8 +30,10 @@ export default function APIDropdownModal(props) {
 
   const history = useHistory();
 
-  const handleOnBack = () => {
-    history.push("/apis/run");
+  const handleOnBack = (e) => {
+    e.preventDefault();
+    props.onCancel();
+    // history.push("/apis/run");
   };
 
   function getApiId(apiPath) {
@@ -75,8 +79,7 @@ export default function APIDropdownModal(props) {
         body: JSON.stringify(body),
         headers: {
           "Content-Type": "application/json",
-          "x-access-token":
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZjdhZDIyMTMtMTZiOS00MDE2LThhZGUtYjA3MjNmNDdlOWFkIiwiZXhwIjoxNjQ0MzQzNzI4fQ.NhX65wQfzo0Mk4gwXBi-2l6SrpCH0CP35I9Uy_pp3uY",
+          "x-access-token": authCtx.token,
         },
       });
 
@@ -116,8 +119,7 @@ export default function APIDropdownModal(props) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-access-token":
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZjdhZDIyMTMtMTZiOS00MDE2LThhZGUtYjA3MjNmNDdlOWFkIiwiZXhwIjoxNjQ0MzQzNzI4fQ.NhX65wQfzo0Mk4gwXBi-2l6SrpCH0CP35I9Uy_pp3uY",
+          "x-access-token": authCtx.token,
         },
       });
       const data = await response.json();

@@ -1,19 +1,22 @@
 import styles from "./apiRun.module.css";
+import React, { useState, useCallback, useEffect, useContext } from "react";
 import topbarStyles from "../../components/common/topbarstyles.module.css";
 import buttons from "../../components/common/buttons.module.css";
 import { DataGrid } from "@material-ui/data-grid";
 import { Link } from "react-router-dom";
-import { useState } from "react";
 import ReactDOM from "react-dom";
-import { targetList } from "../../store/dummyData";
 import APIDropdownModal from "../../components/apiSelector/ApiSelectorModal";
 import Backdrop from "../../components/common/Backdrop";
+import AuthContext from "../../store/auth-context";
+
+const getRunsURL = "http://localhost:3000/apis/v1/runs";
 
 export default function APIScan() {
-  const [data, setData] = useState(targetList);
+  const [runs, setRuns] = useState([]);
   const [dropdownModalIsOpen, setDropdownModalIsOpen] = useState(false);
-  const [apiPath, setApiPath] = useState();
-  const [authHeaders, setAuthHeaders] = useState();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const authCtx = useContext(AuthContext);
 
   function showDropdownHandler() {
     setDropdownModalIsOpen(true);
@@ -23,8 +26,58 @@ export default function APIScan() {
     setDropdownModalIsOpen(false);
   }
 
+  const fetchRunHandler = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(getRunsURL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": authCtx.token,
+        },
+      });
+
+      const data = await response.json();
+      console.log(data);
+      if (!response.ok) {
+        console.log("Response status: " + response.status);
+        if ("error" in data) {
+          throw new Error(data.error.message);
+        }
+        throw new Error(data.message);
+      } else {
+        const runs = data.runs.map((api, index) => {
+          return {
+            id: index + 1,
+            runId: api.run_id,
+            httpMethod: api.http_method,
+            endpointURL: api.endpoint_url,
+            status: api.status,
+          };
+        });
+        setRuns(runs);
+      }
+    } catch (error) {
+      setError(error.message);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchRunHandler();
+  }, [fetchRunHandler]);
+
   const columns = [
     { field: "id", headerName: "ID", width: 100 },
+    {
+      field: "HTTP Method",
+      headerName: "HTTP Method",
+      width: 200,
+      renderCell: (params) => {
+        return <div className="TargetListItem">{params.row.site}</div>;
+      },
+    },
     {
       field: "Endpoint URL",
       headerName: "Endpoint URL",
@@ -33,9 +86,17 @@ export default function APIScan() {
         return <div className="TargetListItem">{params.row.site}</div>;
       },
     },
+    // {
+    //   field: "Last Run",
+    //   headerName: "Last Run",
+    //   width: 200,
+    //   renderCell: (params) => {
+    //     return <div className="TargetListItem">{params.row.site}</div>;
+    //   },
+    // },
     {
-      field: "Last Run",
-      headerName: "Last Run",
+      field: "Status",
+      headerName: "Status",
       width: 200,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.site}</div>;
@@ -50,7 +111,7 @@ export default function APIScan() {
           <>
             <Link
               to={{
-                pathname: `/apis/run/issues/${params.row.id}`,
+                pathname: `/apis/run/issues/${params.row.runId}`,
               }}
             >
               <button className="msgListView">View</button>
@@ -63,6 +124,24 @@ export default function APIScan() {
 
   console.log(dropdownModalIsOpen);
 
+  let content = (
+    <DataGrid
+      rows={runs}
+      disableSelectionOnClick
+      columns={columns}
+      pageSize={8}
+      checkboxSelection
+    />
+  );
+
+  if (error) {
+    content = <p>{error}</p>;
+  }
+
+  if (loading) {
+    content = <p>Loading...</p>;
+  }
+
   if (dropdownModalIsOpen) {
     return (
       <div className="card">
@@ -72,7 +151,6 @@ export default function APIScan() {
         )}
         {ReactDOM.createPortal(
           <APIDropdownModal
-            setApiPath={setApiPath}
             onCancel={closeDropdownHandler}
             onConfirm={closeDropdownHandler}
           />,
@@ -92,13 +170,7 @@ export default function APIScan() {
             Run API
           </button>
         </div>
-        <DataGrid
-          rows={data}
-          disableSelectionOnClick
-          columns={columns}
-          pageSize={8}
-          checkboxSelection
-        />
+        {content}
       </div>
     );
   }

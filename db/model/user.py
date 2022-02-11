@@ -18,11 +18,12 @@ class User(Base):
         DateTime, default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    def __init__(self, user_id, name, email, password):
+    def __init__(self, user_id, name, email, password, company_name=None):
         self.user_id = user_id
         self.name = name
         self.email = email
         self.password = password
+        self.company_name = company_name
 
     def __repr__(self):
         return f"{self.email}"

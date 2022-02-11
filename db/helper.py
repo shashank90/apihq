@@ -12,7 +12,7 @@ from db.model.api_validate import ApiValidate, ValidateStatusEnum
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
-def add_user(name: str, email: str, password: str):
+def add_user(name: str, email: str, password: str, company_name: str):
     """
     Create and insert user object given input params
     """
@@ -21,6 +21,7 @@ def add_user(name: str, email: str, password: str):
         name=name,
         email=email,
         password=generate_password_hash(password),
+        company_name=company_name,
     )
     # insert user
     session: Session = get_session()
@@ -60,6 +61,12 @@ def update_validation_status(spec_id: str, user_id: str, status: ValidateStatusE
     session.commit()
 
 
+def get_run_details(user_id: str) -> List[ApiRun]:
+    session: Session = get_session()
+    api_runs = session.query(ApiRun).filter_by(user_id=user_id)
+    return api_runs
+
+
 def add_run_details(run_id: str, api_id: str, user_id: str, run_status: RunStatusEnum):
     """
     Add run record
@@ -77,7 +84,7 @@ def update_run_details(run_id: str, run_status: RunStatusEnum):
     session.commit()
 
 
-def add_api_to_inventory(api_path: str, api_details: Dict):
+def add_api_to_inventory(user_id: str, api_path: str, api_details: Dict):
     """
     Insert or Update api path in inventory table based on whether it exists
     """
@@ -88,6 +95,7 @@ def add_api_to_inventory(api_path: str, api_details: Dict):
     session: Session = get_session()
     if not api_path_obj:
         api_id = api_details.get("api_id")
+        api_endpoint_url = api_details.get("api_endpoint_url")
         spec_id = api_details.get("spec_id")
         user_id = api_details.get("user_id")
         added_by = api_details.get("added_by")
@@ -100,6 +108,7 @@ def add_api_to_inventory(api_path: str, api_details: Dict):
             user_id=user_id,
             added_by=added_by,
             api_path=api_path,
+            api_endpoint_url=api_endpoint_url,
             http_method=http_method,
             found_in_file=found_in_file,
             message=message,

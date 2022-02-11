@@ -44,7 +44,6 @@ discovery_bp = Blueprint("discovery_bp", __name__)
 # Accept: multipart/form-data
 def import_api(current_user):
     user_id = current_user.user_id
-    api_id = uuid_handler.get_uuid()
     logger.info(f"Uploading OpenAPI spec for user {user_id}")
 
     # Identify openapi source(user or crawler)
@@ -83,7 +82,7 @@ def import_api(current_user):
 
         # Lint and check if valid YAML
         response = {}
-        lint_output = validate(data_dir, spec_path, lint_only=True)
+        lint_output = validate(data_dir, spec_id, spec_path, lint_only=True)
         if lint_output:
             error_msg = YAML_LINT_ERROR_PREFIX + lint_output
             response = jsonify({"error": {"message": error_msg}})
@@ -99,15 +98,17 @@ def import_api(current_user):
         # Extract API paths and store in inventory table.
         # API inventory table has an FK dependency to API spec table
         path_list = get_paths(spec_path)
-        for api_path, method in path_list:
+        for api_path, method, api_endpoint_url in path_list:
+            api_id = uuid_handler.get_uuid()
             api_insert_record = {
                 "user_id": user_id,
                 "api_id": api_id,
+                "api_endpoint_url": api_endpoint_url,
                 "spec_id": spec_id,
                 "http_method": method,
                 "added_by": added_by,
             }
-            add_api_to_inventory(api_path, api_insert_record)
+            add_api_to_inventory(user_id, api_path, api_insert_record)
 
         response = jsonify(
             {"spec_id": spec_id, "message": "File uploaded successfully"}
@@ -134,10 +135,10 @@ def discover_api(current_user):
     Receive apis from code repository crawler
     """
     user_id = current_user.user_id
-    api_id = uuid_handler.get_uuid()
     api_records = request.get_json()
     # Insert APIs discovered from code repository into inventory
     for api_record in api_records:
+        api_id = uuid_handler.get_uuid()
         api_path = api_record.get("api_path")
         http_method = api_record.get("http_method")
         found_in_file = api_record.get("found_in_file")
@@ -150,7 +151,7 @@ def discover_api(current_user):
             "found_in_file": found_in_file,
         }
 
-        add_api_to_inventory(api_path, api_insert_record)
+        add_api_to_inventory(user_id, api_path, api_insert_record)
     # Respond
     resp = jsonify(
         {
@@ -176,6 +177,7 @@ def get_discovered_apis(current_user):
         {
             "spec_id": api.spec_id,
             "api_path": api.api_path,
+            "api_endpoint_url": api.api_endpoint_url,
             "http_method": api.http_method,
             "added_by": api.added_by.name,
             "message": api.message,

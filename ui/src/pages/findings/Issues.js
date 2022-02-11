@@ -1,9 +1,10 @@
 import "./issues.css";
 import styles from "../../components/common/errors.css";
+import { useState, useCallback, useEffect, useContext } from "react";
 import { DataGrid } from "@material-ui/data-grid";
-import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import IssueDetails from "./IssueDetails.js";
+import AuthContext from "../../store/auth-context";
 
 const getIssuesBaseURL = "http://localhost:3000/apis/v1/issues";
 
@@ -13,6 +14,7 @@ export default function Issues(props) {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const authCtx = useContext(AuthContext);
 
   const params = useParams();
   let specId = params.specId;
@@ -43,8 +45,7 @@ export default function Issues(props) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-access-token":
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZjdhZDIyMTMtMTZiOS00MDE2LThhZGUtYjA3MjNmNDdlOWFkIiwiZXhwIjoxNjQ0NDI0OTU1fQ.YlWL5pP4ZNqMJpDFG9El0m63Drp0jQk1RIcsd39ETDc",
+          "x-access-token": authCtx.token,
         },
       });
       const data = await response.json();

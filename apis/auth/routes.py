@@ -13,6 +13,9 @@ auth_bp = Blueprint("auth_bp", __name__)
 
 logger = Logger(__name__)
 
+MISSING_EMAIL_PASSWORD = "MISSING_EMAIL_PASSWORD"
+INVALID_USER = "INVALID_USER"
+INCORRECT_PASSWORD = "INCORRECT_PASSWORD"
 
 # route for logging user in
 @auth_bp.route("/login", methods=["POST"])
@@ -25,7 +28,12 @@ def login():
         return make_response(
             "Could not verify",
             401,
-            {"WWW-Authenticate": 'Basic realm ="Login required !!"'},
+            {
+                "error": {
+                    "code": MISSING_EMAIL_PASSWORD,
+                    "message": "Either email or password is missing",
+                }
+            },
         )
 
     user: User = get_user(email=auth.get("email"))
@@ -35,7 +43,7 @@ def login():
         return make_response(
             "Could not verify",
             401,
-            {"WWW-Authenticate": 'Basic realm ="User does not exist !!"'},
+            {"error": {"code": INVALID_USER, "message": "User does not exist"}},
         )
 
     if check_password_hash(user.password, auth.get("password")):
@@ -49,12 +57,12 @@ def login():
             algorithm="HS256",
         ).decode("utf-8")
 
-        return make_response(jsonify({"token": token}), 201)
+        return make_response(jsonify({"message": "success", "token": token}), 201)
     # returns 403 if password is wrong
     return make_response(
         "Could not verify",
         403,
-        {"WWW-Authenticate": 'Basic realm ="Wrong Password !!"'},
+        {"error": {"code": INCORRECT_PASSWORD, "message": "Incorrect password"}},
     )
 
 
@@ -66,13 +74,24 @@ def signup():
     # gets name, email and password
     name, email = data.get("name"), data.get("email")
     password = data.get("password")
+    company_name = data.get("companyName")
 
     # checking for existing user
     user: User = get_user(email=email)
     if not user:
         # database ORM object
-        add_user(name, email, password)
-        return make_response("Successfully registered.", 201)
+        add_user(name, email, password, company_name)
+        response = make_response(
+            jsonify({"message": "Successfully registered"}),
+            201,
+        )
+        # response.headers["Content-Type"] = "application/json"
+        return response
     else:
         # returns 202 if user already exists
-        return make_response("User already exists. Please Log in.", 202)
+        response = make_response(
+            jsonify({"message": "User already exists. Please log in"}),
+            202,
+        )
+        # response.headers["Content-Type"] = "application/json"
+        return response

@@ -54,6 +54,12 @@ def get_paths(spec_path) -> Tuple[str, str]:
     """
     parser = ResolvingParser(spec_path)
     spec = parser.specification
+    host = None
+    api_endpoint_url = None
+    # Logic to get hostname
+    if "servers" in spec:
+        # Picking the first server url. Warning: This may not be proper
+        host = spec["servers"][0]["url"]
     paths = spec["paths"]
     path_list = []
 
@@ -62,7 +68,9 @@ def get_paths(spec_path) -> Tuple[str, str]:
             for k2, _ in v.items():
                 method = k2
         api_path = k1
-        path_list.append((api_path, method))
+        if host:
+            api_endpoint_url = os.path.join(host, api_path)
+        path_list.append((api_path, method, api_endpoint_url))
     return path_list
 
 

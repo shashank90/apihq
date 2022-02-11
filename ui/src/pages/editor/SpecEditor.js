@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useContext } from "react";
 import styles from "./specEditor.module.css";
 import AceEditor from "react-ace";
 import { defaultValue } from "./defaultTemplate.js";
@@ -10,6 +10,7 @@ import Buttons from "../../components/common/Buttons";
 import buttons from "../../components/common/buttons.module.css";
 import ValidationResponse from "../../components/validationResponse/ValidationResponse";
 import { useParams } from "react-router-dom";
+import AuthContext from "../../store/auth-context";
 
 const fileSaveBaseURL = "http://localhost:3000/apis/v1/spec_strings";
 const getSpecBaseURL = "http://localhost:3000/apis/v1/specs";
@@ -27,6 +28,7 @@ export default function SpecEditor(props) {
   const [validationError, setValidationError] = useState(null);
   const [specLoading, setSpecLoading] = useState(false);
   const [specError, setSpecError] = useState(null);
+  const authCtx = useContext(AuthContext);
 
   // Use this to go back to appropriate previous page
   // const location = useLocation();
@@ -63,8 +65,7 @@ export default function SpecEditor(props) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-access-token":
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZjdhZDIyMTMtMTZiOS00MDE2LThhZGUtYjA3MjNmNDdlOWFkIiwiZXhwIjoxNjQ0NDk3NDA4fQ.pdHYNUYa9jHzYzcgNyK45VN0iYRCcx60kvNsp-PMy20",
+          "x-access-token": authCtx.token,
         },
       });
       const data = await response.json();
@@ -151,8 +152,7 @@ export default function SpecEditor(props) {
         body: JSON.stringify(spec_object),
         headers: {
           "Content-Type": "application/json",
-          "x-access-token":
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZjdhZDIyMTMtMTZiOS00MDE2LThhZGUtYjA3MjNmNDdlOWFkIiwiZXhwIjoxNjQ0NDk3NDA4fQ.pdHYNUYa9jHzYzcgNyK45VN0iYRCcx60kvNsp-PMy20",
+          "x-access-token": authCtx.token,
         },
       });
 

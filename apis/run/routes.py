@@ -3,8 +3,8 @@ from typing import Dict, List
 import threading
 from flask import Blueprint, jsonify, request
 from apis.auth.decorators.decorator import token_required
-from db.helper import add_run_details, get_spec
-from db.model.api_run import RunStatusEnum
+from db.helper import add_run_details, get_spec, get_run_details
+from db.model.api_run import ApiRun, RunStatusEnum
 from db.model.api_spec import ApiSpec
 from log.factory import Logger
 from tester.modules.openapi.conformance import ISSUES_FILE, run
@@ -46,6 +46,32 @@ def run_api(current_user, api_id):
     t.start()
 
     response = jsonify({"message": "API triggered successfully"})
+    response.status_code = 200
+
+    return response
+
+
+@run_bp.route("/apis/v1/runs", methods=["GET"])
+@token_required
+def get_runs(current_user):
+    """
+    Run a tests to detect if defined spec and implementation are aligned
+    """
+    user_id = current_user.user_id
+    logger.info(f"Fetching API runs for user {user_id}")
+
+    api_runs: List[ApiRun] = get_run_details(user_id)
+    runs = []
+    for api_run in api_runs:
+        runs.append(
+            {
+                "api_endpoint_url": api_run.api.api_endpoint_url,
+                "http_method": "",
+                "status": api_run.status,
+            }
+        )
+
+    response = jsonify({"message": "success", "runs": runs})
     response.status_code = 200
 
     return response

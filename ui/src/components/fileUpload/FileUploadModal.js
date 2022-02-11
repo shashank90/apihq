@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import styles from "./fileUploadModal.module.css";
 import modalStyle from "../common/modals.module.css";
 import Buttons from "../common/Buttons";
-import { useHistory } from "react-router";
-import { DeleteOutline } from "@material-ui/icons";
+import AuthContext from "../../store/auth-context";
 
+const fileUploadURL = "http://localhost:3000/apis/v1/specs";
 export default function FileUploadModal(props) {
   const [collectionName, setCollectionName] = useState("");
   const [file, setFile] = useState();
-  const fileUploadURL = "http://localhost:3000/apis/v1/specs";
+  const authCtx = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -55,8 +55,7 @@ export default function FileUploadModal(props) {
         method: "POST",
         body: formData,
         headers: {
-          "x-access-token":
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZjdhZDIyMTMtMTZiOS00MDE2LThhZGUtYjA3MjNmNDdlOWFkIiwiZXhwIjoxNjQ0MzE5NTczfQ.hgmY5tICsK8lSRL3FItm5-hbIe2lqQdmEOVs2RI2N5g",
+          "x-access-token": authCtx.token,
         },
       });
 

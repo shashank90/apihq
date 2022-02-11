@@ -3,12 +3,12 @@ import topbarStyles from "../../components/common/topbarstyles.module.css";
 import buttons from "../../components/common/buttons.module.css";
 import { DataGrid } from "@material-ui/data-grid";
 import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import ReactDOM from "react-dom";
 import Backdrop from "../../components/common/Backdrop";
 import FileUploadModal from "../../components/fileUpload/FileUploadModal";
 import { DeleteOutline } from "@material-ui/icons";
-import { targetList } from "../../store/dummyData";
+import AuthContext from "../../store/auth-context";
 
 const getApisURL = "http://localhost:3000/apis/v1/discovered";
 
@@ -18,6 +18,7 @@ export default function APIInventory() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const location = useLocation();
+  const authCtx = useContext(AuthContext);
 
   function showModalHandler() {
     setUploadModalIsOpen(true);
@@ -37,8 +38,7 @@ export default function APIInventory() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "x-access-token":
-            "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZjdhZDIyMTMtMTZiOS00MDE2LThhZGUtYjA3MjNmNDdlOWFkIiwiZXhwIjoxNjQ0NDk3NDA4fQ.pdHYNUYa9jHzYzcgNyK45VN0iYRCcx60kvNsp-PMy20",
+          "x-access-token": authCtx.token,
         },
       });
       const data = await response.json();

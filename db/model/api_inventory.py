@@ -42,7 +42,7 @@ class ApiInventory(Base):
         DateTime, default=func.now(), onupdate=func.now(), nullable=False
     )
     user = relationship("User", backref="apis")
-    spec = relationship("APISpec", backref="apis")
+    spec = relationship("ApiSpec", backref="apis")
 
     def __init__(
         self,
@@ -51,6 +51,7 @@ class ApiInventory(Base):
         user_id,
         added_by,
         api_path,
+        api_endpoint_url,
         http_method,
         found_in_file,
         message=None,
@@ -60,6 +61,7 @@ class ApiInventory(Base):
         self.user_id = user_id
         self.added_by = added_by
         self.api_path = api_path
+        self.api_endpoint_url = api_endpoint_url
         self.http_method = http_method
         self.found_in_file = found_in_file
         if message:

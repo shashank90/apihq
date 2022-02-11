@@ -19,7 +19,7 @@ YAML_EXCEPTION = "YAMLException:"
 
 def validate(data_dir: str, spec_id: str, spec_path: str, lint_only=False) -> None:
     """
-    Perform OpenAPI spec audit using ibm openapi validator npm package
+    Perform OpenAPI spec validation using ibm openapi validator npm package
     """
     logger.info(f"Validating openapi spec at {spec_path}...")
 
@@ -32,11 +32,8 @@ def validate(data_dir: str, spec_id: str, spec_path: str, lint_only=False) -> No
         return validate_out
 
     validate_out: str = preprocess_validate(validate_output)
-    # logger.info(validate_out)
-    # logger.info("Type: " + str(type(validate_out)))
 
     validate_result: Dict = json.loads(validate_out)
-    # logger.info(validate_result)
 
     final_messages = process_validate(validate_result)
 

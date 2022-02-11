@@ -41,7 +41,6 @@ logger = Logger(__name__)
 # Accept: application/json
 def create_openapi_str(current_user):
     user_id = current_user.user_id
-    api_id = uuid_handler.get_uuid()
     logger.info(f"Creating OpenAPI spec string for user {user_id}")
 
     data = request.get_json()
@@ -75,15 +74,17 @@ def create_openapi_str(current_user):
     # Extract API paths and store in inventory table.
     # API inventory table has an FK dependency to API spec table
     path_list = get_paths(spec_path)
-    for api_path, method in path_list:
+    for api_path, method, api_endpoint_url in path_list:
+        api_id = uuid_handler.get_uuid()
         api_insert_record = {
             "user_id": user_id,
             "api_id": api_id,
+            "api_endpoint_url": api_endpoint_url,
             "spec_id": spec_id,
             "http_method": method,
             "added_by": added_by,
         }
-        add_api_to_inventory(api_path, api_insert_record)
+        add_api_to_inventory(user_id, api_path, api_insert_record)
 
     # Run audit on newly created spec
     validate_output = validate(data_dir, spec_path)
@@ -104,7 +105,6 @@ def create_openapi_str(current_user):
 # Accept: application/json
 def update_openapi_str(current_user, spec_id):
     user_id = current_user.user_id
-    api_id = uuid_handler.get_uuid()
     logger.info(f"Updating OpenAPI spec string {spec_id} for user {user_id}")
 
     data = request.get_json()
@@ -131,17 +131,19 @@ def update_openapi_str(current_user, spec_id):
 
     # Update API paths in inventory table
     path_list = get_paths(spec_path)
-    for api_path, method in path_list:
+    for api_path, method, api_endpoint_url in path_list:
+        api_id = uuid_handler.get_uuid()
         api_insert_record = {
             "user_id": user_id,
             "spec_id": spec_id,
             "api_id": api_id,
+            "api_endpoint_url": api_endpoint_url,
             "http_method": method,
         }
-        add_api_to_inventory(api_path, api_insert_record)
+        add_api_to_inventory(user_id, api_path, api_insert_record)
 
     # Run audit on newly created spec
-    validate_output = validate(data_dir, spec_path)
+    validate_output = validate(data_dir, spec_id, spec_path)
 
     # TODO: Write audit output to file system
 
