@@ -6,7 +6,7 @@ from db.model.api_spec import ApiSpec
 import os
 from flask import Blueprint, jsonify, request
 from apis.auth.decorators.decorator import token_required
-from db.helper import get_spec
+from db.helper import get_spec, get_validation_status
 from db.model.api_spec import ApiSpec
 from log.factory import Logger
 from tester.validator import validate
@@ -86,14 +86,15 @@ def create_openapi_str(current_user):
         }
         add_api_to_inventory(user_id, api_path, api_insert_record)
 
-    # Run audit on newly created spec
-    validate_output = validate(data_dir, spec_path)
+    # Run validate on newly created spec
+    status, validate_output = validate(data_dir, user_id, spec_id, spec_path)
 
     resp = jsonify(
         {
             "spec_id": spec_id,
             "message": "File created successfully",
             "validate_output": validate_output,
+            "status": status,
         }
     )
     resp.status_code = 201
@@ -143,7 +144,7 @@ def update_openapi_str(current_user, spec_id):
         add_api_to_inventory(user_id, api_path, api_insert_record)
 
     # Run audit on newly created spec
-    validate_output = validate(data_dir, spec_id, spec_path)
+    status, validate_output = validate(data_dir, user_id, spec_id, spec_path)
 
     # TODO: Write audit output to file system
 
@@ -183,7 +184,9 @@ def retrieve_spec(current_user, spec_id):
         response.status_code = 404
         return response
 
-    # response = make_response()
+    # Get validation status
+    status = get_validation_status(spec_id)
+
     # Read YAML file
     with open(spec_path, "r") as stream:
         data = yaml.safe_load(stream)
@@ -193,6 +196,7 @@ def retrieve_spec(current_user, spec_id):
                 "collection_name": collection_name,
                 "spec_string": data,
                 "validate_output": validate_output,
+                "status": status,
             }
         )
         response.status_code = 200
@@ -213,11 +217,11 @@ def audit_api(current_user, spec_id):
     # Run OpenAPI spec audit asynchronously
     # t = threading.Thread(target=audit, args=[data_dir, spec_path])
     # t.start()
-    audit_output = validate(data_dir, spec_path)
+    status, validate_output = validate(data_dir, spec_path)
 
     # TODO: Need to come up with an audit score
 
-    response = jsonify({"message": "success", "validate_output": audit_output})
+    response = jsonify({"message": "success", "validate_output": validate_output})
     response.status_code = 200
 
     return response

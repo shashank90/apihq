@@ -3,9 +3,16 @@ from typing import Dict, List
 import threading
 from flask import Blueprint, jsonify, request
 from apis.auth.decorators.decorator import token_required
-from db.helper import add_run_details, get_spec, get_run_details
+from db.helper import (
+    add_run_details,
+    get_spec,
+    get_run_details,
+    get_api_details,
+    get_run_records,
+)
 from db.model.api_run import ApiRun, RunStatusEnum
 from db.model.api_spec import ApiSpec
+from db.model.api_inventory import ApiInventory
 from log.factory import Logger
 from tester.modules.openapi.conformance import ISSUES_FILE, run
 from utils import uuid_handler
@@ -35,7 +42,10 @@ def run_api(current_user, api_id):
     run_id = uuid_handler.get_uuid()
     add_run_details(run_id, api_id, user_id, RunStatusEnum.INITIATED)
 
-    spec: ApiSpec = get_spec(api_id, api_path)
+    api: ApiInventory = get_api_details(api_id)
+    spec_id = api.spec_id
+    api_path = api.api_path
+    spec: ApiSpec = get_spec(spec_id, api_path)
     data_dir = spec.data_dir
     file_name = spec.file_name
 
@@ -60,16 +70,18 @@ def get_runs(current_user):
     user_id = current_user.user_id
     logger.info(f"Fetching API runs for user {user_id}")
 
-    api_runs: List[ApiRun] = get_run_details(user_id)
+    api_runs: List[ApiRun] = get_run_records(user_id)
     runs = []
-    for api_run in api_runs:
-        runs.append(
-            {
-                "api_endpoint_url": api_run.api.api_endpoint_url,
-                "http_method": "",
-                "status": api_run.status,
-            }
-        )
+    if api_runs:
+        for api_run in api_runs:
+            runs.append(
+                {
+                    "run_id": api_run.run_id,
+                    "api_endpoint_url": api_run.api.api_endpoint_url,
+                    "http_method": "",
+                    "status": api_run.status.name,
+                }
+            )
 
     response = jsonify({"message": "success", "runs": runs})
     response.status_code = 200
@@ -93,7 +105,11 @@ def get_issues(current_user, run_id):
     user_id = current_user.user_id
     logger.info(f"Fetching issues for run {run_id} for user {user_id}")
 
-    spec: ApiSpec = get_spec(run_id)
+    api_run: ApiRun = get_run_details(run_id)
+    api_id = api_run.api_id
+    api: ApiInventory = get_api_details(api_id)
+    spec_id = api.spec_id
+    spec: ApiSpec = get_spec(spec_id)
     data_dir: str = spec.data_dir
 
     issues_file = os.path.join(data_dir, ISSUES_FILE)

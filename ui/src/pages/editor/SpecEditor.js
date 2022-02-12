@@ -83,6 +83,9 @@ export default function SpecEditor(props) {
       if ("validate_output" in data) {
         setValidationResponse(JSON.parse(data.validate_output));
       }
+      if ("status" in data) {
+        setValidationStatus(data.status);
+      }
     } catch (error) {
       setSpecError(error.message);
     }

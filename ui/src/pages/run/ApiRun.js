@@ -52,7 +52,7 @@ export default function APIScan() {
             id: index + 1,
             runId: api.run_id,
             httpMethod: api.http_method,
-            endpointURL: api.endpoint_url,
+            endpointURL: api.api_endpoint_url,
             status: api.status,
           };
         });
@@ -75,7 +75,7 @@ export default function APIScan() {
       headerName: "HTTP Method",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.site}</div>;
+        return <div className="TargetListItem">{params.row.httpMethod}</div>;
       },
     },
     {
@@ -83,7 +83,7 @@ export default function APIScan() {
       headerName: "Endpoint URL",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.site}</div>;
+        return <div className="TargetListItem">{params.row.endpointURL}</div>;
       },
     },
     // {
@@ -99,7 +99,7 @@ export default function APIScan() {
       headerName: "Status",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.site}</div>;
+        return <div className="TargetListItem">{params.row.status}</div>;
       },
     },
     {
@@ -122,7 +122,7 @@ export default function APIScan() {
     },
   ];
 
-  console.log(dropdownModalIsOpen);
+  // console.log(dropdownModalIsOpen);
 
   let content = (
     <DataGrid

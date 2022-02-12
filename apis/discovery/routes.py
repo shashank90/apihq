@@ -82,7 +82,7 @@ def import_api(current_user):
 
         # Lint and check if valid YAML
         response = {}
-        lint_output = validate(data_dir, spec_id, spec_path, lint_only=True)
+        lint_output = validate(data_dir, user_id, spec_id, spec_path, lint_only=True)
         if lint_output:
             error_msg = YAML_LINT_ERROR_PREFIX + lint_output
             response = jsonify({"error": {"message": error_msg}})
@@ -176,6 +176,7 @@ def get_discovered_apis(current_user):
     apis = [
         {
             "spec_id": api.spec_id,
+            "api_id": api.api_id,
             "api_path": api.api_path,
             "api_endpoint_url": api.api_endpoint_url,
             "http_method": api.http_method,

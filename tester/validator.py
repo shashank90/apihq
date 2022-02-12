@@ -17,7 +17,9 @@ LINT_CMD = "lint-openapi"
 YAML_EXCEPTION = "YAMLException:"
 
 
-def validate(data_dir: str, spec_id: str, spec_path: str, lint_only=False) -> None:
+def validate(
+    data_dir: str, user_id: str, spec_id: str, spec_path: str, lint_only=False
+) -> None:
     """
     Perform OpenAPI spec validation using ibm openapi validator npm package
     """
@@ -38,24 +40,30 @@ def validate(data_dir: str, spec_id: str, spec_path: str, lint_only=False) -> No
     final_messages = process_validate(validate_result)
 
     # Update db status
-    update_validate_status(spec_id, final_messages)
+    status = update_validate_status(spec_id, user_id, final_messages)
 
     # Write validate output to data dir
     validate_report_path = os.path.join(data_dir, VALIDATE_REPORT)
     write_json(validate_report_path, final_messages)
 
-    return final_messages
+    return (status, final_messages)
 
 
-def update_validate_status(spec_id: str, messages: List[Dict]):
+def update_validate_status(spec_id: str, user_id, messages: List[Dict]):
     """
     Logic that makes an api ready for scan
     """
+    status: ValidateStatusEnum = None
     # Update validation status. Right now logic may be restrict. TODO: Come up with a score instead ?
     if len(messages) > 0:
-        update_validation_status(spec_id, ValidateStatusEnum.FIX_VALIDATION_ERROR)
+        status = ValidateStatusEnum.FIX_VALIDATION_ERROR.name
+        update_validation_status(
+            spec_id, user_id, ValidateStatusEnum.FIX_VALIDATION_ERROR
+        )
     else:
-        update_validation_status(spec_id, ValidateStatusEnum.READY_FOR_SCAN)
+        status = ValidateStatusEnum.READY_FOR_SCAN.name
+        update_validation_status(spec_id, user_id, ValidateStatusEnum.READY_FOR_SCAN)
+    return status
 
 
 def process_validate(validate_out: Dict) -> Dict:

@@ -44,15 +44,21 @@ export default function IssueDetails(props) {
       </div>
       <h2>Issue Details</h2>
       <div className="vulnDetailItem">
-        <label className="vulnDetailItemHeader">Description:</label>
-        <span className="vulnDetailItemValue">{description}</span>
+        <label className="vulnDetailItemHeader" htmlFor="description">
+          Description:
+        </label>
+        <span className="vulnDetailItemValue" id="description">
+          {description}
+        </span>
       </div>
       <div className="vulnDetailLargeItem">
-        <label className="vulnDetailItemHeader">Message:</label>
-        <div className="box">{msgItems}</div>
+        <label className="vulnDetailItemHeader" htmlFor="msg">
+          Message:
+        </label>
+        <div className="box" id="msg">
+          {msgItems}
+        </div>
       </div>
-      // TODO: When uncommenting below block, use div(with box class) instead of
-      //textarea
       {/* <div className="vulnDetailItem">
         <label className="vulnDetailItemHeader">WASCID:</label>
         <span className="vulnDetailItemValue">{wascId}</span>

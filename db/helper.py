@@ -61,10 +61,34 @@ def update_validation_status(spec_id: str, user_id: str, status: ValidateStatusE
     session.commit()
 
 
-def get_run_details(user_id: str) -> List[ApiRun]:
+def get_validation_status(spec_id: str) -> str:
+    """
+    Get validation status given spec_id
+    """
+    session: Session = get_session()
+    api_validate = session.query(ApiValidate).filter_by(spec_id=spec_id).first()
+    return api_validate.status.name
+
+
+def get_run_records(user_id: str) -> List[ApiRun]:
+    """
+    Get API Run records for a given user
+    """
     session: Session = get_session()
     api_runs = session.query(ApiRun).filter_by(user_id=user_id)
     return api_runs
+
+
+def get_api_details(api_id: str) -> ApiInventory:
+    session: Session = get_session()
+    api_run = session.query(ApiInventory).filter_by(api_id=api_id).first()
+    return api_run
+
+
+def get_run_details(run_id: str) -> ApiRun:
+    session: Session = get_session()
+    api = session.query(ApiRun).filter_by(run_id=run_id).first()
+    return api
 
 
 def add_run_details(run_id: str, api_id: str, user_id: str, run_status: RunStatusEnum):
@@ -79,7 +103,7 @@ def add_run_details(run_id: str, api_id: str, user_id: str, run_status: RunStatu
 
 def update_run_details(run_id: str, run_status: RunStatusEnum):
     session: Session = get_session()
-    api_run = session.query(ApiValidate).filter_by(run_id=run_id).first()
+    api_run = session.query(ApiRun).filter_by(run_id=run_id).first()
     api_run.status = run_status
     session.commit()
 
@@ -145,7 +169,7 @@ def update_spec(spec_id, collection_name=None):
     session.commit()
 
 
-def get_spec(spec_id, api_path=None):
+def get_spec(spec_id):
     """
     Retrieve spec object given spec_id & api path
     """

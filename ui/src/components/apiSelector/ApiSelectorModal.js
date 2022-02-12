@@ -17,9 +17,7 @@ export default function APIDropdownModal(props) {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
-  const [apiPath, setApiPath] = useState("");
-  const [headerName, setHeaderName] = useState("");
-  const [headerValue, setHeaderValue] = useState("");
+  const [apiEndpointURL, setApiPath] = useState("");
   const [headerPairs, setHeaderPairs] = useState([]);
   const authCtx = useContext(AuthContext);
 
@@ -36,19 +34,19 @@ export default function APIDropdownModal(props) {
     // history.push("/apis/run");
   };
 
-  function getApiId(apiPath) {
-    if (apiPath == defaultSelectMessage) {
+  function getApiId(apiEndpointURL) {
+    if (apiEndpointURL == defaultSelectMessage) {
       return null;
     }
-    console.log("api path: " + apiPath);
+    console.log("api path: " + apiEndpointURL);
     for (let x in apis) {
       let api = apis[x];
-      console.log(api.apiPath);
-      if (api.apiPath == apiPath) {
+      // console.log(api.apiPath);
+      if (api.apiEndpointURL == apiEndpointURL) {
         return api.apiId;
       }
     }
-    console.log("Could not find apiId for path: " + apiPath);
+    console.log("Could not find apiId for path: " + apiEndpointURL);
   }
 
   const handleOnAction = async (e) => {
@@ -56,7 +54,7 @@ export default function APIDropdownModal(props) {
 
     setActionLoading();
 
-    const apiId = getApiId(apiPath);
+    const apiId = getApiId(apiEndpointURL);
     if (apiId == null) {
       setActionError("Select API Endpoint URL");
       return;
@@ -70,7 +68,10 @@ export default function APIDropdownModal(props) {
 
     console.log(transformedHeaderPairs);
 
-    const body = { api_path: apiPath, auth_headers: transformedHeaderPairs };
+    const body = {
+      api_path: apiEndpointURL,
+      auth_headers: transformedHeaderPairs,
+    };
     const runAPIURL = runAPIBaseURL + "/" + apiId;
 
     try {
@@ -133,11 +134,14 @@ export default function APIDropdownModal(props) {
 
       // Set Api paths
       const transformedApis = data.apis.map((api, index) => {
-        return { apiPath: api.api_path, apiId: api.spec_id };
+        return { apiEndpointURL: api.api_endpoint_url, apiId: api.api_id };
         // endpointURL: api.endpoint_url,
       });
       // Add default entry
-      transformedApis.unshift({ apiPath: defaultSelectMessage, apiId: "" });
+      transformedApis.unshift({
+        apiEndpointURL: defaultSelectMessage,
+        apiId: "",
+      });
       setApis(transformedApis);
     } catch (error) {
       setDataLoadingError(error.message);
@@ -156,8 +160,6 @@ export default function APIDropdownModal(props) {
 
   const addHeaderPair = (e) => {
     e.preventDefault();
-    setHeaderName("");
-    setHeaderValue("");
     setHeaderPairs((s) => {
       return [
         ...s,
@@ -246,13 +248,13 @@ export default function APIDropdownModal(props) {
           <select
             className={apiStyles.url_value}
             id="url_selector"
-            value={apiPath}
+            value={apiEndpointURL}
             onChange={handleApiPathChange}
           >
             {apis.map((api, index) => {
               return (
-                <option key={index} value={api.apiPath}>
-                  {api.apiPath}
+                <option key={index} value={api.apiEndpointURL}>
+                  {api.apiEndpointURL}
                 </option>
               );
             })}

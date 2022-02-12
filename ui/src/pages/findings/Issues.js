@@ -17,10 +17,8 @@ export default function Issues(props) {
   const authCtx = useContext(AuthContext);
 
   const params = useParams();
-  let specId = params.specId;
-  // TODO: Remove hard-coding
-  specId = "S0844c74de3ed4768a1c3c833f98daa74";
-  console.log(specId);
+  let runId = params.runId;
+  console.log(runId);
 
   function showIssueDetails(id) {
     console.log("Row with id clicked: " + id);
@@ -39,7 +37,7 @@ export default function Issues(props) {
   const fetchIssuesHandler = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const getIssuesURL = getIssuesBaseURL + "/" + specId;
+    const getIssuesURL = getIssuesBaseURL + "/" + runId;
     try {
       const response = await fetch(getIssuesURL, {
         method: "GET",
