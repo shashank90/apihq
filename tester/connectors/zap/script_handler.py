@@ -1,14 +1,20 @@
-import zapv2
+from zapv2 import ZAPv2
 
-from log.factory import Logger
+# from tester.connectors.zap.factory import get_zap
+# from log.factory import Logger
 
-logger = Logger(__name__)
+# logger = Logger(__name__)
 
 
 def load(zap, script_name=None):
     script_name = "Test Insecure HTTP Verbs"
     print("Loading {} script...".format(script_name))
-    zap.script.load(script_name, "active", "jython", "/home/kali/.ZAP/scripts/scripts/active/TestInsecureHTTPVerbs.py")
+    zap.script.load(
+        script_name,
+        "active",
+        "jython",
+        "/home/kali/.ZAP/scripts/scripts/active/TestInsecureHTTPVerbs.py",
+    )
 
 
 def enable(zap, script_name=None):
@@ -24,15 +30,52 @@ def list_scripts(zap, script_name=None):
 
 
 def remove_script(zap, script_name=None):
-    script_name = 'Test Insecure HTTP Verbs'
+    script_name = "Test Insecure HTTP Verbs"
     print("Removing script {}", script_name)
     zap.script.remove(script_name)
 
 
-def add_script(zap: zapv2.ZAPv2):
-    script_name = 'simple_auth.js'
-    logger.info(f"Loading and enabling auth script {script_name}")
-    script_type = 'authentication'
-    script_engine = 'Oracle Nashorn'
-    file_name = '/home/kali/Desktop/appsechq-custom-scripts/zap/authentication/simple_auth.js'
-    zap.script.load(script_name, script_type, script_engine, file_name)
+def add_script(zap: ZAPv2, script_name, script_type, script_engine, file_path):
+    zap.script.load(script_name, script_type, script_engine, file_path)
+
+
+HOST = "http://localhost:8080"
+ZAP_KEY = "tspnihgu0jdnm4ml7irhvsun5b"
+
+
+class ZAP:
+    def __init__(self, host, apikey=None):
+        self.host = host
+        print("Initializing ZAP...")
+        self.zap = ZAPv2(proxies={"http": host}, apikey=apikey)
+
+    def get_zap(self):
+        return self.zap
+
+
+# Global var (Keeping a single instance)
+zap_instance = ZAP(host=HOST, apikey=ZAP_KEY)
+
+
+def get_zap():
+    return zap_instance.get_zap()
+
+
+def get_zap():
+    return zap_instance.get_zap()
+
+
+def init():
+    script_name = "dump_request.py"
+    script_type = "httpsender"
+    script_engine = "jython"
+    file_path = (
+        "/home/shashank/Desktop/apihq/tester/connectors/zap/scripts/dump_request.py"
+    )
+
+    zap: ZAPv2 = get_zap()
+    add_script(zap, script_name, script_type, script_engine, file_path)
+
+
+if __name__ == "__main__":
+    init()

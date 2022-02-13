@@ -94,9 +94,32 @@ def get_url_detail(request_id: str, url_details: List[Dict]):
     filtered: List = filter(lambda x: x["request_id"] == request_id, url_details)
     if filtered:
         filter_list = list(filtered)
-        if len(filter_list) == 1:
+        if len(filter_list) > 1:
+            return get_proper_url(filter_list)
+        elif len(filter_list) == 1:
             return filter_list[0]
     return None
+
+
+def get_proper_url(list: List[str]):
+    """
+    First api request to host will be broken into multiple requests (by paths). All having sharing request id
+    For ex: http://localhost:8080/apis/v1/specs/specId will become:
+    1. http://localhost:8080/
+    2. http://localhost:8080/apis/
+    3. http://localhost:8080/apis/v1
+    4. http://localhost:8080/apis/v1/specs
+    They key is to capture appropriate url. And we will choose the longest one
+    """
+    count_max = -1
+    proper_url = None
+    for url in list:
+        url_char_count = url.count()
+        if url_char_count > count_max:
+            count_max = url_char_count
+            proper_url = url
+
+    return proper_url
 
 
 def get_http_archive(zap: ZAPv2, zap_message_id: str) -> str:

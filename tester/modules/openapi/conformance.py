@@ -252,6 +252,14 @@ def get_url_detl(request_id: str, messages: List):
     return get_url_detail(request_id, url_details)
 
 
+def get_zap_message_ids(data_dir: str):
+    """
+    Get zap message ids by reading file names
+    """
+    har_dir = os.path.join(data_dir, "har")
+    return os.listdir(har_dir)
+
+
 def get_openapi_spec(spec_path: str):
     """
     Get openapi in dict form

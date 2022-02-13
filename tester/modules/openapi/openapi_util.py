@@ -108,7 +108,6 @@ def init_configuration(pkg_name: str) -> str:
     config_class = getattr(config_module, "Configuration")
     configuration = config_class(
         host="http://localhost:5000",
-        access_token="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NDA1OTc4MzQsImlhdCI6MTY0MDU5Nzc3NCwic3ViIjoibmFtZTEifQ.KwYudK6g7CVKHE9BgVJwR7A-e1oS--EQ3HyWdiTc02k",
         disabled_client_side_validations="multipleOf,maximum,exclusiveMaximum,minimum,exclusiveMinimum,maxLength,minLength,pattern,maxItems,minItems",
     )
     # Enable Debug logging

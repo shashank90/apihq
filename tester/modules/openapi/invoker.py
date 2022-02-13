@@ -1008,7 +1008,7 @@ def extract_path_params(api_path):
 def _invoke_apis(
     api_path: str,
     spec_path: str,
-    txn_dir: str,
+    data_dir: str,
     gen_package_name: str,
     auth_headers: List[Dict],
 ) -> List[Dict]:
@@ -1028,7 +1028,7 @@ def _invoke_apis(
         path_param_keys = extract_path_params(api_path)
 
         # Create an instances of the API class
-        api_instances = get_api_instances(api_client, txn_dir, gen_package_name)
+        api_instances = get_api_instances(api_client, data_dir, gen_package_name)
 
         # Testing operationId to api function mapping
         api_instance, endpoint_obj = get_endpoint_obj(api_path, api_instances)
@@ -1047,7 +1047,7 @@ def _invoke_apis(
             spec=spec,
             path=api_path,
             configuration=configuration,
-            txn_dir=txn_dir,
+            txn_dir=data_dir,
             pkg_name=gen_package_name,
         )
 
@@ -1071,16 +1071,16 @@ def _invoke_apis(
         ):
             # Generate and  attach unique request id for each request
             # Use it for matching actual request (captured via zap) and response
-            request_id = uuid.uuid4().hex
+            # request_id = uuid.uuid4().hex
             # TODO remove header from har(http archive file) after saving
-            api_client.set_default_header(REQUEST_ID, request_id)
+            api_client.set_default_header(REQUEST_ID, data_dir)
 
             # Set auth headers
             for auth_header in auth_headers:
                 for header_name, header_value in auth_header.items():
                     api_client.set_default_header(header_name, header_value)
 
-            req_metadata[REQUEST_ID] = request_id
+            req_metadata[REQUEST_ID] = data_dir
 
             try:
                 logger.info(f"Sending request: {attribute_payload}")
@@ -1101,7 +1101,7 @@ def _invoke_apis(
             # Now that we are storing the har(http archive) file.
             # These details can be picked up from har data itself in conformance.py file
             response_obj = {
-                REQUEST_ID: request_id,
+                REQUEST_ID: data_dir,
                 "full_api_path": full_api_path,
                 # "path_params": path_params,
                 "mimetype": mimetype,

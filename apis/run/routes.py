@@ -45,7 +45,7 @@ def run_api(current_user, api_id):
     api: ApiInventory = get_api_details(api_id)
     spec_id = api.spec_id
     api_path = api.api_path
-    spec: ApiSpec = get_spec(spec_id, api_path)
+    spec: ApiSpec = get_spec(spec_id)
     data_dir = spec.data_dir
     file_name = spec.file_name
 
