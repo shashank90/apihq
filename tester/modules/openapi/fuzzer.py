@@ -128,10 +128,10 @@ def get_min_array(min_items: int, attribute: str, value) -> List:
         for i in range(0, min_items - 1):
             min_payloads.append(value)
 
-    remarks = "Array min items violation"
+    message = "Array min items violation"
     constraint = "Array minItems"
     payload_metadata = wrap_attribute_payload_metadata(
-        value=min_payloads, attribute=attribute, remarks=remarks, constraint=constraint
+        value=min_payloads, attribute=attribute, message=message, constraint=constraint
     )
     return payload_metadata
 
@@ -144,9 +144,9 @@ def get_max_array(max_items: int, attribute: str, value) -> List:
     for i in range(0, max_items + 1):
         max_payloads.append(value)
 
-    remarks = "Array max items violation"
+    message = "Array max items violation"
     constraint = "Array maxItems"
     payload_metadata = wrap_attribute_payload_metadata(
-        value=max_payloads, attribute=attribute, remarks=remarks, constraint=constraint
+        value=max_payloads, attribute=attribute, message=message, constraint=constraint
     )
     return payload_metadata

@@ -166,7 +166,18 @@ def retrieve_spec(current_user, spec_id):
 
     logger.info(f"Retrieving spec {spec_id} for user {user_id}")
 
+    # Invalid spec id
     spec: ApiSpec = get_spec(spec_id)
+    if not spec:
+        response = jsonify(
+            {
+                "spec_id": spec_id,
+                "message": "Spec not found",
+            }
+        )
+        response.status_code = 404
+        return response
+
     collection_name = spec.collection_name
     data_dir = spec.data_dir
     file_name = spec.file_name
@@ -174,6 +185,7 @@ def retrieve_spec(current_user, spec_id):
     validate_report_path = os.path.join(data_dir, VALIDATE_REPORT)
     validate_output = read_content(validate_report_path)
 
+    # Spec file not found for some reason(May be inadvertently deleted?)
     if not os.path.exists(spec_path):
         response = jsonify(
             {

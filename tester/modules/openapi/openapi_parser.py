@@ -1,23 +1,57 @@
 import copy
 import os
+from tarfile import SUPPORTED_TYPES
 from typing import Tuple
 from prance import ResolvingParser
 
+SUPPORTED_TYPES = ["txt", "pdf", "yaml", "json"]
 
-def get_array_validation(path, key, spec):
+
+def get_from_spec(path, spec, key=None, type=None):
     """
-    Get array validation info from a (application/json) request body given a key/property
+    Get validation info from a (application/json) request body given a key/property
     """
     path_items = spec["paths"]
-    key_validations = []
+    output = []
     endpoint_objects = path_items[path]
     for _, endpoint_object in endpoint_objects.items():
-        schema = endpoint_object["requestBody"]["content"]["application/json"]["schema"]
-        if "properties" in schema:
-            properties = schema["properties"]
-            get_arr_validation(key, properties, key_validations)
+        content = endpoint_object["requestBody"]["content"]
+        for _, v1 in content.items():
+            schema = v1["schema"]
+            if "properties" in schema:
+                properties = schema["properties"]
+                if type == "array":
+                    get_arr_validation(key, properties, output)
+                if type == "file":
+                    get_file_type(properties, output)
+    return output
 
-    return key_validations
+
+def get_file_type(spec, types):
+    """
+    Given a spec, extract file type/extension from description.
+    Search for `format: binary` and extract that field's description
+    """
+    for _, v in spec.items():
+        if "type" in v:
+            if "description" in v:
+                types.extend(_get_file_type(v["description"]))
+        if "type" in v and v["type"] == "object" and "properties" in v:
+            types.extend(get_file_type(v["properties"]))
+        if "type" in v and v["type"] == "array" and "items" in v:
+            if "type" in v["items"] and "description" in v["items"]:
+                types.extend(_get_file_type(v["items"]["description"]))
+
+
+def _get_file_type(description):
+    """
+    Get file type from description
+    """
+    types = []
+    for type in SUPPORTED_TYPES:
+        if type in description:
+            types.append(type)
+    return types
 
 
 def get_arr_validation(key, spec, key_validations):
@@ -25,7 +59,6 @@ def get_arr_validation(key, spec, key_validations):
     Given a key, find array validations recursively
     """
     # Array of type object(s) is untested!!
-
     for k, v in spec.items():
         if key == k:
             prop_details = spec[key]
@@ -79,8 +112,8 @@ def main():
     parser = ResolvingParser("./apis/discovery/openapi_specs/import_api.yaml")
     # key = "num"
     spec = parser.specification
-    get_paths(spec)
-    # print(get_array_validation("/users/v1/{username}/email", key, spec))
+    # get_paths(spec)
+    print(get_from_spec("/apis/v1/specs", spec, type="file"))
 
 
 if __name__ == "__main__":

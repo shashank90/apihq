@@ -8,6 +8,8 @@ WORK_DIR = os.path.join(TEMP_DIR, "logs")
 DISCOVERED_DIR = "api_discovered"
 data_dir = "api_spec"
 DATA_DIR_PREFIX = "data_dir_"
+DATA_DIR = "data_dir"
+ZAP_MESSAGE_DIR = "har/zap_message_ids"
 UPLOAD_FOLDER = "~/apihq/logs"
 JSON_REPORT = "zap_report.json"
 NEWMAN_OUTFILE = "newman_output.json"
@@ -43,7 +45,7 @@ UNNAMED = "unnamed"
 
 # TODO: ZAP KEY. Need to move this to config file
 ZAP_KEY = "tspnihgu0jdnm4ml7irhvsun5b"
-HAR_FOLDER = "har"
+HAR_DIR = "har"
 MESSAGE = "message"
 DESCRIPTION = "description"
 RESPONSE_VALIDATION = "Response Validation"

@@ -23,7 +23,7 @@ paths:
                   pattern: ^\w+$
                   maxLength: 30
                 file:
-                  description: OpenAPI spec
+                  description: OpenAPI spec in yaml
                   type: string
                   format: binary
               required:

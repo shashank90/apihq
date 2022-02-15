@@ -1,5 +1,6 @@
 from http.client import BAD_REQUEST
 from pathlib import Path
+import base64
 from typing import List, Dict
 import uuid
 from urllib import request, response
@@ -10,18 +11,20 @@ from db.model.api_run import RunStatusEnum
 # from body_parser import encode_multipart_formdata
 from utils.constants import (
     DESCRIPTION,
+    ERROR_TYPE_REQUEST,
+    ERROR_TYPE_RESPONSE,
     MESSAGE,
     REQUEST_ID,
-    HAR_FOLDER,
+    HAR_DIR,
     RESPONSE_VALIDATION,
     ISSUE_ID,
+    ZAP_MESSAGE_DIR,
 )
 from tester.connectors.zap.factory import get_zap
 from tester.connectors.zap.util import (
     get_http_archive,
     get_messages,
-    get_url_detail,
-    get_urls,
+    get_zap_message_detail,
 )
 from werkzeug.datastructures import ImmutableMultiDict
 from utils.file_handler import write_json
@@ -32,6 +35,7 @@ from tester.modules.openapi.init_invoker import invoke_apis
 from tester.modules.openapi.validator import request_validation, response_validation
 from openapi_core.templating.paths.exceptions import PathError
 from openapi_core.templating.responses.exceptions import ResponseFinderError
+from openapi_core.templating.responses.exceptions import ResponseNotFound
 from openapi_core.validation.response.datatypes import ResponseValidationResult
 from openapi_core.validation.request.datatypes import RequestValidationResult
 from openapi_core.validation.exceptions import InvalidSecurity
@@ -40,17 +44,21 @@ from openapi_core import create_spec
 from prance import ResolvingParser
 from jsonschema import ValidationError
 import json
+from haralyzer import HarParser
+from utils.uuid_handler import get_uuid
 
 logger = Logger(__name__)
 
 ERROR_RESPONSE_VALIDATION_FILE = "errors_response_validation.json"
 ERROR_REQUEST_VALIDATION_FILE = "errors_request_validation.json"
 ISSUES_FILE = "issues.json"
+REQUESTS_FILE = "requests.json"
 REQUEST_METADATA_FILE = "request_metadata.json"
 REQUEST_INTENT = "request_intent"
 BAD_REQUEST = "BAD_REQUEST"
 URL = "url"
-OK = "200"
+OK = 200
+CREATED = 201
 
 
 def get_har(zap: ZAPv2, zap_msg_id: str):
@@ -67,7 +75,7 @@ def _save_har(data_dir: str, request_id: str, har: Dict):
     Save har(http archive) to file
     """
     har_file = request_id + ".json"
-    har_dir = os.path.join(data_dir, HAR_FOLDER)
+    har_dir = os.path.join(data_dir, HAR_DIR)
     # Create har file path along with dirs(if they don't exist)
     Path(har_dir).mkdir(parents=True, exist_ok=True)
     har_file_path = os.path.join(har_dir, har_file)
@@ -95,64 +103,52 @@ def run(
 
     update_run_details(run_id, RunStatusEnum.IN_PROGRESS)
 
-    (request_metadata_list, response_list) = invoke_apis(
+    (request_metadata, response_list) = invoke_apis(
         data_dir, api_path, spec_path, auth_headers
     )
 
-    write_request_metadata(data_dir, request_metadata_list)
+    write_request_metadata(data_dir, request_metadata)
 
     openapi_core_spec = get_openapi_spec(spec_path)
 
     zap: ZAPv2 = get_zap()
-    zap_messages = get_zap_messages(zap)
+    zap_messages = get_zap_message_ids(data_dir)
 
     # Validate each response against OpenAPI spec for each api
     response_validation_errors: List[str] = []
     request_validation_errors: List[str] = []
+    requests = []
     issues: List[Dict] = []
     for response_object in response_list:
 
-        # TODO: Construct these values from har data itself instead of getting from invoker
         full_api_path = response_object.get("full_api_path")
-        path_params = response_object.get("path_params")
+        # path_params = response_object.get("path_params")
         response_status = response_object.get("response_status")
 
-        # Get URL by matching request_id across messages captured via ZAP
         request_id = response_object.get(REQUEST_ID)
-        url_detail = get_url_detl(request_id, zap_messages)
-        zap_msg_id = url_detail.get("zap_message_id")
+        request_detail = get_zap_message_details(request_id, zap_messages)
+        zap_msg_id = request_detail.get("zap_message_id")
         har_data = save_har(data_dir, request_id, zap, zap_msg_id)
+
+        add_requests(request_id, har_data, requests)
 
         # req_details: Dict = get_request_details(har_data)
         # req_details["path_params"] = path_params
 
         # Request validation errors. Record invalid requests that went through
-        if response_status == OK:
-            request_validation_errors.append({REQUEST_ID: request_id})
-
-        # TODO: Investigate why openapi_core request validation is failing. See if master branch can be forked and changes made to convert bytes to string
-        # req_error_messages = get_request_validation_errors(
-        # full_api_path, openapi_core_spec, req_details
-        # )
-
-        # request_validations.append(
-        # {REQUEST_ID: request_id, ERROR_MESSAGES: req_error_messages}
-        # )
+        if response_status == OK or response_status == CREATED:
+            add_request_error(
+                request_id, request_validation_errors, request_metadata, issues
+            )
 
         # Response validation errors
         res_error_messages = get_response_validation_errors(
             full_api_path, openapi_core_spec, response_object
         )
 
-        error: Dict = add_response_error(
-            request_id, response_validation_errors, res_error_messages
+        add_response_error(
+            request_id, response_validation_errors, res_error_messages, issues
         )
-
-        # Add unique error to cumulative list of issues
-        if error:
-            issue_id = uuid.uuid4().hex
-            error[ISSUE_ID] = issue_id
-            issues.append(error)
 
     error_response_validation_file = os.path.join(
         data_dir, ERROR_RESPONSE_VALIDATION_FILE
@@ -162,38 +158,131 @@ def run(
         data_dir, ERROR_REQUEST_VALIDATION_FILE
     )
 
-    issues_file = os.path.join(data_dir, ISSUES_FILE)
-
     # TODO: Save this to db (Add a request_id and connect table to requests table) so it can be joined with requests table
     write_json(error_response_validation_file, response_validation_errors)
 
     write_json(error_request_validation_file, request_validation_errors)
 
+    requests_file = os.path.join(data_dir, REQUESTS_FILE)
+    write_json(requests_file, requests)
+
+    issues_file = os.path.join(data_dir, ISSUES_FILE)
     write_json(issues_file, issues)
 
     # Update final db status
     update_run_details(run_id, RunStatusEnum.COMPLETED)
 
 
+def add_requests(request_id: str, har_data: Dict, requests: List):
+    """
+    Parse zap har data and create request_response object
+    """
+    request_response = {}
+    request_object = {}
+    response_object = {}
+    if "log" in har_data:
+        log = har_data["log"]
+        if "entries" in log and len(log["entries"]) > 0:
+            entry = log["entries"][0]
+            if "request" in entry:
+                request = entry["request"]
+                url = request["url"]
+                request_object["url"] = url
+
+                if "headers" in request:
+                    headers = request["headers"]
+                    request_object["header"] = form_headers(headers)
+                if "postData" in request:
+                    body = request["postData"]
+                    if "text" in body:
+                        request_object["body"] = body["text"]
+            if "response" in entry:
+                response = entry["response"]
+                response_object["status"] = response["status"]
+                if "headers" in response:
+                    headers = response["headers"]
+                    response_object["header"] = form_headers(headers)
+                if "content" in response:
+                    content = response["content"]
+                    if "text" in content:
+                        b64decoded = base64.b64decode(content["text"])
+                        response_object["body"] = extract_str(b64decoded)
+
+    request_response["request_id"] = request_id
+    request_response["request"] = request_object
+    request_response["response"] = response_object
+
+    requests.append(request_response)
+
+
+def extract_str(content):
+    """
+    Extract text from bytes-like object, if it is one or just return the str
+    """
+    string: str = ""
+    try:
+        string = content.decode("utf-8")
+    except UnicodeDecodeError:
+        logger.debug("Given content isn't a bytes-like object")
+        string = content
+
+    return string
+
+
+def form_headers(headers: List[Dict]):
+    """
+    Create header string from list of header name/value pair
+    """
+    header_str = ""
+    for header in headers:
+        header_str = header_str + header["name"] + ":" + header["value"] + "\n"
+
+    return header_str
+
+
 def add_response_error(
-    request_id: str, response_validation_errors: List, res_error_messages: List
+    request_id: str,
+    response_validation_errors: List,
+    res_error_messages: List,
+    issues: List[Dict],
 ):
     """
-    Add unique response errors
+    Add response errors
     """
     error: Dict = None
-    if len(response_validation_errors) == 0:
-        error: Dict = get_error(request_id, res_error_messages)
-        response_validation_errors.append(error)
 
-    elif is_error_new(response_validation_errors, res_error_messages):
-        error: Dict = get_error(request_id, res_error_messages)
-        response_validation_errors.append(error)
+    # Uncomment below Logic to add unique response error
 
-    return error
+    # if len(response_validation_errors) == 0:
+    # error: Dict = get_error(request_id, res_error_messages)
+    # response_validation_errors.append(error)
+    #
+    # elif is_error_new(response_validation_errors, res_error_messages):
+    # error: Dict = get_error(request_id, res_error_messages)
+    # response_validation_errors.append(error)
+
+    error: Dict = get_error(request_id, res_error_messages, ERROR_TYPE_RESPONSE)
+    response_validation_errors.append(error)
+
+    add_final_issues(error, issues)
 
 
-def get_error(request_id: str, error_messages: List[str]) -> Dict:
+def add_request_error(
+    request_id: str,
+    request_validation_errors: List,
+    request_metadata: List[Dict],
+    issues: List[Dict],
+):
+    req_details = get_request_metadata(request_id, request_metadata)
+    messages = [req_details.get("message")]
+    error: Dict = get_error(request_id, messages, ERROR_TYPE_REQUEST)
+    request_validation_errors.append(error)
+
+    # Add to list of final issues
+    add_final_issues(error, issues)
+
+
+def get_error(request_id: str, error_messages: List[str], error_type: str) -> Dict:
     """
     Return error object
     """
@@ -201,8 +290,28 @@ def get_error(request_id: str, error_messages: List[str]) -> Dict:
         REQUEST_ID: request_id,
         MESSAGE: error_messages,
         REQUEST_INTENT: BAD_REQUEST,
-        DESCRIPTION: RESPONSE_VALIDATION,
+        DESCRIPTION: error_type,
     }
+
+
+def add_final_issues(error: Dict, final_issues: List[Dict]):
+    """
+    Add error to cumulative list of issues
+    """
+    # Add unique error to cumulative list of issues
+    if error:
+        issue_id = get_uuid()
+        error[ISSUE_ID] = issue_id
+        final_issues.append(error)
+
+
+def get_request_metadata(request_id: str, request_metadata: List[Dict]):
+    """
+    Get request metadata for given request_id
+    """
+    for item in request_metadata:
+        if request_id == item["request_id"]:
+            return item
 
 
 def is_error_new(response_validation_errors: List, res_error_messages: List):
@@ -243,21 +352,27 @@ def get_zap_messages(zap: ZAPv2):
     return messages
 
 
-def get_url_detl(request_id: str, messages: List):
+def get_zap_message_details(request_id: str, zap_messages: List[Dict]):
     """
     Get url details including zap_message_id given request_id (which binds request and response)
     """
-    # messages = get_messages(zap)
-    url_details = get_urls(messages)
-    return get_url_detail(request_id, url_details)
+    return get_zap_message_detail(request_id, zap_messages)
 
 
 def get_zap_message_ids(data_dir: str):
     """
     Get zap message ids by reading file names
     """
-    har_dir = os.path.join(data_dir, "har")
-    return os.listdir(har_dir)
+    zap_msg_dir = os.path.join(data_dir, ZAP_MESSAGE_DIR)
+
+    # Form list of request_id and zap_message_id
+    items = []
+    for item in os.listdir(zap_msg_dir):
+        temp = item.split("_")
+        request_id = temp[0]
+        zap_message_id = temp[1]
+        items.append({"request_id": request_id, "zap_message_id": zap_message_id})
+    return items
 
 
 def get_openapi_spec(spec_path: str):
@@ -370,6 +485,9 @@ def get_response_validation_errors(
         response_validation_results.raise_for_errors()
     except PathError as pe:
         error_messages = get_error_messages(pe)
+    except ResponseNotFound as rn:
+        logger.info(str(rn))
+        error_messages.append(str(rn))
     except ResponseFinderError as re:
         error_messages = get_error_messages(re)
     except Exception as e:
@@ -382,6 +500,7 @@ def get_response_validation_errors(
     return error_messages
 
 
+# TODO: Deal with response not found (500)? ResponseNotFound is not a list
 def get_error_messages(schema_errors: List[ValidationError]):
     error_msgs = [schema_error.message for schema_error in schema_errors]
     return error_msgs

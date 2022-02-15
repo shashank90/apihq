@@ -25,41 +25,67 @@ def validate(
     """
     logger.info(f"Validating openapi spec at {spec_path}...")
 
+    validate_out: str = None
+    final_messages: List = []
+    status_enum = ValidateStatusEnum.FIX_VALIDATION_ERROR
+    status: str = ValidateStatusEnum.FIX_VALIDATION_ERROR.name
+    is_lint_error: bool = False
+    result = {
+        "validate_out": validate_out,
+        "status": status,
+        "is_lint_error": is_lint_error,
+    }
+
     cmd_list = [LINT_CMD, "-j", spec_path]
     validate_output = run_cmd(cmd_list, timeout=10)
 
-    # Base YAML linter
+    validate_out = lint_yaml(validate_output)
+
+    # Base YAML linter.Used by Import YAML Api, where we aren't even accepting file. Hence, no db update
     if lint_only:
-        validate_out = lint_yaml(validate_output)
-        return validate_out
+        if validate_out:
+            result["is_lint_error"] = True
+        result["validate_out"] = validate_out
+        return result
 
     validate_out: str = preprocess_validate(validate_output)
+    logger.debug(validate_out)
 
-    validate_result: Dict = json.loads(validate_out)
+    try:
+        validate_result: Dict = json.loads(validate_out)
+        final_messages = process_validate(validate_result)
+        # Write validate output to data dir
+        validate_report_path = os.path.join(data_dir, VALIDATE_REPORT)
+        write_json(validate_report_path, final_messages)
+    except Exception as e:
+        logger.exception("Could not parse validate output into json. ")
+        status_enum = ValidateStatusEnum.LINT_ERROR
+        status = update_validate_status(spec_id, user_id, final_messages, status_enum)
 
-    final_messages = process_validate(validate_result)
+        # Could be a lint error. Return validate out as is (non-json output)
+        result["validate_out"] = lint_yaml(validate_out)
+        result["status"] = ValidateStatusEnum.LINT_ERROR.name
+        result["is_lint_error"] = True
+        return result
 
     # Update db status
-    status = update_validate_status(spec_id, user_id, final_messages)
+    status = update_validate_status(spec_id, user_id, final_messages, status_enum)
 
-    # Write validate output to data dir
-    validate_report_path = os.path.join(data_dir, VALIDATE_REPORT)
-    write_json(validate_report_path, final_messages)
-
-    return (status, final_messages)
+    result["validate_out"] = validate_out
+    result["is_lint_error"] = False
+    return result
 
 
-def update_validate_status(spec_id: str, user_id, messages: List[Dict]):
+def update_validate_status(
+    spec_id: str, user_id, messages: List[Dict], in_status: ValidateStatusEnum
+) -> str:
     """
     Logic that makes an api ready for scan
     """
-    status: ValidateStatusEnum = None
+    status: str = None
     # Update validation status. Right now logic may be restrict. TODO: Come up with a score instead ?
     if len(messages) > 0:
-        status = ValidateStatusEnum.FIX_VALIDATION_ERROR.name
-        update_validation_status(
-            spec_id, user_id, ValidateStatusEnum.FIX_VALIDATION_ERROR
-        )
+        update_validation_status(spec_id, user_id, in_status)
     else:
         status = ValidateStatusEnum.READY_FOR_SCAN.name
         update_validation_status(spec_id, user_id, ValidateStatusEnum.READY_FOR_SCAN)

@@ -27,3 +27,4 @@ black
 semgrep
 prance
 openapi-core
+fpdf

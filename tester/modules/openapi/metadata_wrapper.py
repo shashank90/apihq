@@ -28,8 +28,8 @@ def wrap_attribute_payload_metadata(
     if metadata:
         if "attribute" in metadata:
             metadata_obj["attribute"] = metadata.get("attribute")
-        if "remarks" in metadata:
-            metadata_obj["remarks"] = metadata.get("remarks")
+        if "message" in metadata:
+            metadata_obj["message"] = metadata.get("message")
         if "constraint" in metadata:
             metadata_obj["constraint"] = metadata.get("constraint")
         return metadata_obj

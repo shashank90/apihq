@@ -87,16 +87,14 @@ def get_urls(messages):
     return url_details
 
 
-def get_url_detail(request_id: str, url_details: List[Dict]):
+def get_zap_message_detail(request_id: str, zap_message_ids: List[Dict]):
     """
-    Filter out url detail from list of url objects
+    Given a request id, fetch zap message. Example structure: [{'request_id':'R1', 'zap_message_id':'M1', 'request_id':'R2', 'zap_message_id':'M2'}]
     """
-    filtered: List = filter(lambda x: x["request_id"] == request_id, url_details)
+    filtered: List = filter(lambda x: x["request_id"] == request_id, zap_message_ids)
     if filtered:
         filter_list = list(filtered)
-        if len(filter_list) > 1:
-            return get_proper_url(filter_list)
-        elif len(filter_list) == 1:
+        if len(filter_list) == 1:
             return filter_list[0]
     return None
 

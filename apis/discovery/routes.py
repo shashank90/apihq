@@ -97,18 +97,23 @@ def import_api(current_user):
 
         # Extract API paths and store in inventory table.
         # API inventory table has an FK dependency to API spec table
-        path_list = get_paths(spec_path)
-        for api_path, method, api_endpoint_url in path_list:
-            api_id = uuid_handler.get_uuid()
-            api_insert_record = {
-                "user_id": user_id,
-                "api_id": api_id,
-                "api_endpoint_url": api_endpoint_url,
-                "spec_id": spec_id,
-                "http_method": method,
-                "added_by": added_by,
-            }
-            add_api_to_inventory(user_id, api_path, api_insert_record)
+        try:
+            path_list = get_paths(spec_path)
+            for api_path, method, api_endpoint_url in path_list:
+                api_id = uuid_handler.get_uuid()
+                api_insert_record = {
+                    "user_id": user_id,
+                    "api_id": api_id,
+                    "api_endpoint_url": api_endpoint_url,
+                    "spec_id": spec_id,
+                    "http_method": method,
+                    "added_by": added_by,
+                }
+                add_api_to_inventory(user_id, api_path, api_insert_record)
+        except Exception as e:
+            logger.info(
+                f"Could not extract paths. Uploaded file {spec_path} may not adhere to OpenAPI standard"
+            )
 
         response = jsonify(
             {"spec_id": spec_id, "message": "File uploaded successfully"}

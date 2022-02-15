@@ -1,10 +1,15 @@
+from multiprocessing.spawn import prepare
 import re
 from typing import Dict, List, Tuple, Type
 from urllib.parse import urljoin
+
+import urllib3
+from tester.modules.openapi.file_payload_handler import get_generated_file_handles
 from utils.constants import (
     MESSAGE,
     FILE_ATTRIBUTE_TYPE,
     REQUEST_ID,
+    DATA_DIR,
     UPLOAD_JSON_FILE,
     UPLOAD_TXT_FILE,
 )
@@ -37,7 +42,7 @@ from tester.modules.openapi.openapi_util import (
 )
 
 
-VALID_REMARKS = "All valid"
+VALID_message = "All valid"
 INLINE = "inline"
 PARENT_ATTRIBUTE = "parent_attribute"
 # Http Connection Read Timeout in seconds
@@ -50,6 +55,8 @@ INLINE_OBJ = "InlineObject"
 PARAM_OBJ = "ParamObject"
 TEST_SPEC_PATH = "../openapi_specs/openapi3.yml"
 MODEL_PACKAGE = "tester.modules.openapi.python_sdk.model"
+# Assuming pdf is most popular file upload type? This assumption may be wrong
+DEFAULT_VALID_FILE_TYPE = "yaml"
 
 logger = Logger(__name__)
 
@@ -59,7 +66,7 @@ logger = Logger(__name__)
 # 3. Send such requests iteratively
 
 # Important wrapper objects:
-# 1. Metadata object(dict)(payload metadata) that wraps generated payload along with remarks and constraint information
+# 1. Metadata object(dict)(payload metadata) that wraps generated payload along with message and constraint information
 # 2. Metadata object(dict)(payloads metadata) that wraps positive(valid) and negative payloads
 
 # Unsupported formats:
@@ -88,7 +95,7 @@ def get_json_payloads(
     spec = kwargs.get("spec")
     path = kwargs.get("path")
     configuration = kwargs.get("configuration")
-    txn_dir = kwargs.get("txn_dir")
+    data_dir = kwargs.get("data_dir")
     pkg_name = kwargs.get("pkg_name")
 
     # Prepare individual lists of fuzzed values for each attribute and add those lists to below list
@@ -98,7 +105,7 @@ def get_json_payloads(
         pytype = get_python_type(
             param,
             openapi_types,
-            txn_dir,
+            data_dir,
             parent_attribute=kwargs.get("parent_attribute"),
         )
 
@@ -118,7 +125,7 @@ def get_json_payloads(
             # which means that it has a key(parent attribute). Since, all application/json values must have string keys
             array_item_payloads = []
             python_type = get_class_type(param, openapi_types)
-            if is_generated_class(python_type, txn_dir):
+            if is_generated_class(python_type, data_dir):
                 # Assuming array is of a single kind of object
                 if param in openapi_types and len(openapi_types[param]) > 0:
                     # Change here to accomodate more than one kind of object inside the array
@@ -133,7 +140,7 @@ def get_json_payloads(
                         spec=spec,
                         path=path,
                         configuration=configuration,
-                        txn_dir=txn_dir,
+                        data_dir=data_dir,
                         pkg_name=pkg_name,
                     )
                     # Transform single attribute payload values into array payloads
@@ -143,8 +150,8 @@ def get_json_payloads(
             # For given parent attribute extract validation info directly from passed spec
             # since generator isn't generating for array of primitives at the moment (bug in generator?)
             else:
-                item_validations = openapi_parser.get_array_validation(
-                    path, parent_attr, spec
+                item_validations = openapi_parser.get_from_spec(
+                    path, spec, key=parent_attr, type="array"
                 )
                 property_validation_pairs = form_validation_openapi_type_details(
                     item_validations
@@ -165,7 +172,7 @@ def get_json_payloads(
                             spec=spec,
                             path=path,
                             configuration=configuration,
-                            txn_dir=txn_dir,
+                            data_dir=data_dir,
                             pkg_name=pkg_name,
                         )
                         # Transform single attribute payload values into array payloads
@@ -175,13 +182,22 @@ def get_json_payloads(
                         array_item_payloads.append(arr_payloads)
 
             combined_payloads = merge_sibling_mixed_attributes(
-                array_item_payloads, txn_dir
+                array_item_payloads, data_dir
             )
             outer_param_payloads.append(combined_payloads)
 
         # If param is file
         elif pytype == "file":
-            file_attr_payloads = get_attribute_payloads_file(param, txn_dir)
+            valid_file_types = openapi_parser.get_from_spec(path, spec, type="file")
+
+            # If file type isn't specified in file description section, then pick a default.
+            # TODO: Think of other data sources?
+            if len(valid_file_types) == 0:
+                valid_file_types = [DEFAULT_VALID_FILE_TYPE]
+
+            file_attr_payloads = get_attribute_payloads_file(
+                param, data_dir, valid_file_types=valid_file_types
+            )
             outer_param_payloads.append(file_attr_payloads)
 
         # If param is an object
@@ -198,7 +214,7 @@ def get_json_payloads(
 
             # Enumerate inline object attributes
             attr_payloads = get_attribute_payloads_obj(
-                obj_validations, openapi_types, txn_dir
+                obj_validations, openapi_types, data_dir
             )
 
             # Merge enumerated primitive attribute payloads
@@ -225,7 +241,7 @@ def get_json_payloads(
                         spec=spec,
                         path=path,
                         configuration=configuration,
-                        txn_dir=txn_dir,
+                        data_dir=data_dir,
                         pkg_name=pkg_name,
                     )
 
@@ -240,7 +256,7 @@ def get_json_payloads(
                         spec=spec,
                         path=path,
                         configuration=configuration,
-                        txn_dir=txn_dir,
+                        data_dir=data_dir,
                         pkg_name=pkg_name,
                     )
 
@@ -250,7 +266,7 @@ def get_json_payloads(
                     child_obj_attr_payloads,
                     obj,
                     parent_attr,
-                    txn_dir=txn_dir,
+                    data_dir=data_dir,
                 )
 
             outer_param_payloads.append(obj_attr_payloads)
@@ -258,7 +274,7 @@ def get_json_payloads(
     # print(param_payloads)
 
     # Merge path and request body params to create a list of unique requests
-    combined_payloads = merge_sibling_mixed_attributes(outer_param_payloads, txn_dir)
+    combined_payloads = merge_sibling_mixed_attributes(outer_param_payloads, data_dir)
 
     # pretty_print(combined_payloads)
     # print(combined_payloads)
@@ -337,7 +353,9 @@ def form_validation_openapi_type_details(derived_validations: Dict) -> List:
     return prop_validation_pairs
 
 
-def get_python_type(klass: Type[object], openapi_types, txn_dir, parent_attribute=None):
+def get_python_type(
+    klass: Type[object], openapi_types, data_dir, parent_attribute=None
+):
     """
     Extract openapi type for given field's class
     """
@@ -354,7 +372,7 @@ def get_python_type(klass: Type[object], openapi_types, txn_dir, parent_attribut
                 return "bool"
             elif v[0] == io.IOBase:
                 return "file"
-            elif is_generated_class(v[0], txn_dir):
+            elif is_generated_class(v[0], data_dir):
                 return "generated class"
 
         if k == "requestBody":
@@ -413,12 +431,12 @@ def is_primitive(param: str) -> bool:
     return param.__class__.__module__ == "builtins"
 
 
-def is_generated_class(klass: Type[object], txn_dir) -> bool:
+def is_generated_class(klass: Type[object], data_dir) -> bool:
     """
     Check if given class name is openapi generated one
     """
     gen_classes_path = [
-        extract_class(module) for module in get_generated_modules(txn_dir)
+        extract_class(module) for module in get_generated_modules(data_dir)
     ]
     class_name = klass.__name__
     if class_name in gen_classes_path:
@@ -426,15 +444,15 @@ def is_generated_class(klass: Type[object], txn_dir) -> bool:
     return False
 
 
-def get_generated_modules(txn_dir) -> List:
+def get_generated_modules(data_dir) -> List:
     """
     Get generated models/classes
     """
-    gen_classes_path = get_gen_classes(txn_dir)
+    gen_classes_path = get_gen_classes(data_dir)
     return [get_module_name(item) for item in os.listdir(gen_classes_path)]
 
 
-def merge_sibling_mixed_attributes(param_payloads, txn_dir) -> List:
+def merge_sibling_mixed_attributes(param_payloads, data_dir) -> List:
     """
     Merge all attributes at same level into an array with atmost one attribute with negative payload
     """
@@ -454,10 +472,16 @@ def merge_sibling_mixed_attributes(param_payloads, txn_dir) -> List:
             attributes: List = []
             for m in range(i, param_payloads_len):
                 attributes.append(
-                    get_attribute_values(param_payloads[m]["valid"], txn_dir)
+                    get_attribute_values(
+                        param_payloads[m]["valid"],
+                        data_dir=data_dir,
+                        additional_info=param_payloads[m]["valid"].get(
+                            "additional_info"
+                        ),
+                    )
                 )
             attr_payload_metadata = wrap_attribute_payload_metadata(
-                value=attributes, remarks=VALID_REMARKS
+                value=attributes, message=VALID_message
             )
             valid_payload = attr_payload_metadata
 
@@ -469,16 +493,34 @@ def merge_sibling_mixed_attributes(param_payloads, txn_dir) -> List:
             # Iterate all attributes(and pick their valid values) before the one at index `i`
             for j in range(0, i):
                 attr_request_object.append(
-                    get_attribute_values(param_payloads[j]["valid"], txn_dir)
+                    get_attribute_values(
+                        param_payloads[j]["valid"],
+                        data_dir=data_dir,
+                        additional_info=param_payloads[j]["valid"].get(
+                            "additional_info"
+                        ),
+                    )
                 )
 
             # Pick the negative payload value for attribute at index `i`
-            attr_request_object.append(payload["value"])
+            attr_request_object.append(
+                get_attribute_values(
+                    payload,
+                    data_dir=data_dir,
+                    additional_info=payload.get("additional_info"),
+                )
+            )
 
             # Iterate all attributes(and pick their valid values) after the one at index `i`
             for k in range(i + 1, param_payloads_len):
                 attr_request_object.append(
-                    get_attribute_values(param_payloads[k]["valid"], txn_dir)
+                    get_attribute_values(
+                        param_payloads[k]["valid"],
+                        data_dir=data_dir,
+                        additional_info=param_payloads[k]["valid"].get(
+                            "additional_info"
+                        ),
+                    )
                 )
 
             attr_payload_metadata = wrap_attribute_payload_metadata(
@@ -525,7 +567,7 @@ def merge_sibling_primitive_attributes_obj(
                 _configuration=configuration, **inline_attributes
             )
             inline_metadata_obj = wrap_attribute_payload_metadata(
-                value=inline_object, remarks=VALID_REMARKS
+                value=inline_object, message=VALID_message
             )
             valid_payload = inline_metadata_obj
 
@@ -546,7 +588,7 @@ def merge_sibling_primitive_attributes_obj(
             inline_object = inline_obj(
                 _configuration=configuration, **inline_attributes
             )
-            # Bubble up negative payload attribute details like constraint and remarks.
+            # Bubble up negative payload attribute details like constraint and message.
             inline_metadata_obj = wrap_attribute_payload_metadata(
                 value=inline_object, attribute=attr_negative_payload, metadata=payload
             )
@@ -567,7 +609,7 @@ def merge_sibling_mixed_attributes_obj(
     parent_obj: object,
     parent_attribute: str = None,
     configuration=None,
-    txn_dir=None,
+    data_dir=None,
 ) -> List:
     """
     Merge sibling attributes(primitive, array, objects) of an object by merging child object into parent object.
@@ -576,13 +618,21 @@ def merge_sibling_mixed_attributes_obj(
     negative_payloads = []
 
     # Form an all positive(valid) object
-    child_attribute = get_attribute_values(child_attr_obj["valid"])
-    attributes = get_attribute_values(parent_attr_obj["valid"])
+    child_attribute = get_attribute_values(
+        child_attr_obj["valid"],
+        data_dir=data_dir,
+        additional_info=child_attr_obj["valid"].get("additional_info"),
+    )
+    attributes = get_attribute_values(
+        parent_attr_obj["valid"],
+        data_dir=data_dir,
+        additional_info=parent_attr_obj["valid"].get("additional_info"),
+    )
     attributes[parent_attribute] = child_attribute
     parent_object = parent_obj(_configuration=configuration, **attributes)
 
     inline_metadata_obj = wrap_attribute_payload_metadata(
-        value=parent_object, remarks=VALID_REMARKS
+        value=parent_object, message=VALID_message
     )
     valid_payload = inline_metadata_obj
 
@@ -590,8 +640,14 @@ def merge_sibling_mixed_attributes_obj(
     # child positive
     for item in parent_attr_obj["negative"]:
         attribute = item["attribute"]
-        attributes = get_attribute_values(item)
-        attributes[parent_attribute] = get_attribute_values(child_attr_obj["valid"])
+        attributes = get_attribute_values(
+            item, data_dir=data_dir, additional_info=item.get("additional_info")
+        )
+        attributes[parent_attribute] = get_attribute_values(
+            child_attr_obj["valid"],
+            data_dir=data_dir,
+            additional_info=child_attr_obj["valid"].get("additional_info"),
+        )
         parent_object = parent_obj(_configuration=configuration, **attributes)
         # print(parent_object)
         parent_metadata_obj = wrap_attribute_payload_metadata(
@@ -603,8 +659,14 @@ def merge_sibling_mixed_attributes_obj(
     # child negative
     for item in child_attr_obj["negative"]:
         attribute = item["attribute"]
-        child_attribute = get_attribute_values(item)
-        attributes = get_attribute_values(parent_attr_obj["valid"])
+        child_attribute = get_attribute_values(
+            item, data_dir=data_dir, additional_info=item.get("additional_info")
+        )
+        attributes = get_attribute_values(
+            parent_attr_obj["valid"],
+            data_dir=data_dir,
+            additional_info=parent_attr_obj["valid"].get("additional_info"),
+        )
         attributes[parent_attribute] = child_attribute
         parent_object = parent_obj(_configuration=configuration, **attributes)
 
@@ -622,25 +684,27 @@ def merge_sibling_mixed_attributes_obj(
     return attr_payloads
 
 
-def get_attribute_values(obj, txn_dir=None):
+def get_attribute_values(obj, data_dir=None, additional_info=None):
     """
     Get attribute values (valid & negative) from object. Use data_store property if attribute is an object or else extract values directly(primitive)
     """
     if obj:
-        if hasattr(obj["value"], "_data_store"):
+        if "value" in obj and hasattr(obj["value"], "_data_store"):
             return copy.deepcopy(obj["value"]._data_store)
-        elif isinstance(obj["value"], io.IOBase):
+        elif "value" in obj and isinstance(obj["value"], io.IOBase):
             # If value is file object, replace it with a new file for each composed payload
             # as the generator api calling logic closes file object(s) after sending them
-            # obj_copy = {x: obj[x] for x in obj if x not in "value"}
-            return get_txt_file_payload(txn_dir)
+            file_handle: Dict = get_file_payloads(
+                data_dir, file_type=additional_info["file_type"]
+            )
+            return file_handle["file_handle"]
         else:
             return copy.deepcopy(obj["value"])
     return {}
 
 
 def get_attribute_payloads_obj(
-    validations: Dict, openapi_types: Dict, txn_dir: str
+    validations: Dict, openapi_types: Dict, data_dir: str
 ) -> List:
     """
     Generate (fuzzed) values based on various validation constraints for each attribute
@@ -648,7 +712,7 @@ def get_attribute_payloads_obj(
     attribute_payloads = []
     for k, v in validations.items():
         # 'v' is a dict of validation constraints for given attribute 'k'
-        pytype = get_python_type(k, txn_dir, openapi_types)
+        pytype = get_python_type(k, data_dir, openapi_types)
         if pytype == "str" or pytype == "int":
             attribute_payload = get_attribute_payloads_primitive(k, v, pytype)
             attribute_payloads.append(attribute_payload)
@@ -701,7 +765,7 @@ def get_attribute_positive_payload_str(
 
     value = fuzzer.get_valid_str(max_length, pattern)
     payload_metadata = wrap_attribute_payload_metadata(
-        value=value, attribute=attribute, remarks=VALID_REMARKS
+        value=value, attribute=attribute, message=VALID_message
     )
     return payload_metadata
 
@@ -723,7 +787,7 @@ def get_attribute_positive_payload_int(
 
     value = fuzzer.get_valid_int(min_length, max_length)
     payload_metadata = wrap_attribute_payload_metadata(
-        value=value, attribute=attribute, remarks=VALID_REMARKS
+        value=value, attribute=attribute, message=VALID_message
     )
     return payload_metadata
 
@@ -738,44 +802,61 @@ def get_attribute_negative_payloads_str(
     for k1, v1 in validation_constraints.items():
         if k1 == "max_length":
             value = fuzzer.get_length_fuzz_str(v1)
-            remarks = f"Invalid value for {attribute}, length must be less than or equal to {v1}"
+            message = f"Invalid value for {attribute}, length must be less than or equal to {v1}"
             constraint = "Max Length"
             payload_metadata = wrap_attribute_payload_metadata(
-                value=value, attribute=attribute, remarks=remarks, constraint=constraint
+                value=value, attribute=attribute, message=message, constraint=constraint
             )
             neg_attr_details.append(payload_metadata)
         if k1 == "regex":
             regex = v1["pattern"]
             value = fuzzer.get_regex_fuzz_str(regex)
-            remarks = (
+            message = (
                 f"Invalid value for {attribute}, must match regular expression {regex}"
             )
             constraint = "Pattern"
             payload_metadata = wrap_attribute_payload_metadata(
-                value=value, attribute=attribute, remarks=remarks, constraint=constraint
+                value=value, attribute=attribute, message=message, constraint=constraint
             )
             neg_attr_details.append(payload_metadata)
     return neg_attr_details
 
 
-def get_attribute_payloads_file(attribute: str, txn_dir) -> List[Dict]:
+def get_attribute_payloads_file(
+    attribute: str, data_dir, valid_file_types=None
+) -> List[Dict]:
     """
     Prepare file payloads
     """
     neg_attr_payloads = []
+    # File type picked from spec
+    valid_file_type = None
+    if len(valid_file_types) > 0:
+        valid_file_type = valid_file_types[0]
 
-    # Assign already opened file
+    file_payloads: Dict = get_file_payloads(data_dir, valid_file_type)
+
+    valid_file_payload = file_payloads["valid"]
+    negative_file_payloads = file_payloads["negative"]
+
     valid_attr_payload = wrap_attribute_payload_metadata(
-        value=get_txt_file_payload(txn_dir), attribute=attribute, remarks=VALID_REMARKS
+        value=valid_file_payload["file_handle"],
+        attribute=attribute,
+        message="Upload valid file type: " + valid_file_payload["file_type"],
+        additional_info={"file_type": valid_file_type},
     )
 
-    negative_attr_payload = wrap_attribute_payload_metadata(
-        value=get_txt_file_payload(txn_dir),
-        attribute=attribute,
-        remarks="Test with .txt file format",
-        constraint="file format",
-    )
-    neg_attr_payloads.append(negative_attr_payload)
+    for negative_file_payload in negative_file_payloads:
+        file_handle = negative_file_payload["file_handle"]
+        file_type = negative_file_payload["file_type"]
+        negative_attr_payload = wrap_attribute_payload_metadata(
+            value=file_handle,
+            attribute=attribute,
+            message="Upload incorrect file type: " + file_type,
+            constraint="file type",
+            additional_info={"file_type": file_type},
+        )
+        neg_attr_payloads.append(negative_attr_payload)
 
     attribute_payloads = wrap_attribute_payloads_metadata(
         attribute, FILE_ATTRIBUTE_TYPE, valid_attr_payload, neg_attr_payloads
@@ -784,13 +865,36 @@ def get_attribute_payloads_file(attribute: str, txn_dir) -> List[Dict]:
     return attribute_payloads
 
 
-def get_txt_file_payload(txn_dir):
+def get_file_payloads(data_dir, valid_file_type=None, file_type=None) -> Dict:
     """
-    Return txt file as payload
+    Return generated file handles
     """
-    uuid_file_name = str(uuid.uuid1()) + ".txt"
-    upload_file_path = os.path.join(txn_dir, uuid_file_name)
-    return open(upload_file_path, "w+")
+    # Get file handle for given file_type
+    if file_type:
+        file_handle = get_generated_file_handles(data_dir, file_type)
+        return file_handle
+
+    # File type picked from spec(after parsing) or the default
+    elif valid_file_type:
+        return prepare_file_payloads(valid_file_type, data_dir)
+
+
+def prepare_file_payloads(in_file_type: str, data_dir: str) -> List[Dict]:
+    valid_negative_file_payloads: Dict = {}
+    negative_file_payloads = []
+    valid_file_handle = None
+    # Generate all file handles and separate out valid & negative ones.
+    file_handles = get_generated_file_handles(data_dir, file_type=None)
+    for file_handle in file_handles:
+        if in_file_type == file_handle["file_type"]:
+            valid_file_handle = file_handle
+        else:
+            negative_file_payloads.append(file_handle)
+
+    valid_negative_file_payloads["valid"] = valid_file_handle
+    valid_negative_file_payloads["negative"] = negative_file_payloads
+
+    return valid_negative_file_payloads
 
 
 def get_attribute_negative_payloads_int(
@@ -803,18 +907,18 @@ def get_attribute_negative_payloads_int(
     for k1, v1 in validation_constraints.items():
         if k1 == "minimum":
             value = fuzzer.get_min_int(v1)
-            remarks = "Min length violation"
+            message = "Min length violation"
             constraint = "Min Length"
             payload_metadata = wrap_attribute_payload_metadata(
-                value=value, attribute=attribute, remarks=remarks, constraint=constraint
+                value=value, attribute=attribute, message=message, constraint=constraint
             )
             neg_attr_details.append(payload_metadata)
         if k1 == "maximum":
             value = fuzzer.get_max_int(v1)
-            remarks = "Max length violation"
+            message = "Max length violation"
             constraint = "Max length"
             payload_metadata = wrap_attribute_payload_metadata(
-                value=value, attribute=attribute, remarks=remarks, constraint=constraint
+                value=value, attribute=attribute, message=message, constraint=constraint
             )
             neg_attr_details.append(payload_metadata)
     return neg_attr_details
@@ -931,12 +1035,12 @@ def get_endpoint_objs(api_obj) -> List:
     return [getattr(api_obj, item) for item in endpoint_obj_names]
 
 
-def get_api_instances(api_client: object, txn_dir: str, pkg_name: str) -> List:
+def get_api_instances(api_client: object, data_dir: str, pkg_name: str) -> List:
     """
     Prepare list of api instances from generated openapi files
     """
     api_instance_lis = []
-    api_path = get_api_dir(txn_dir)
+    api_path = get_api_dir(data_dir)
     for file_name in os.listdir(api_path):
         # Skip __init__.py
         if file_name in SKIP_FILES:
@@ -961,7 +1065,7 @@ def extract_payloads(attribute_payloads: List[Dict]) -> Tuple[List, List[List]]:
     for item in attribute_payloads["negative"]:
         request_metadata.append(
             {
-                "remarks": item.get("remarks"),
+                "message": item.get("message"),
                 "constraint": item.get("constraint"),
                 "attribute": item.get("attribute"),
             }
@@ -1019,7 +1123,7 @@ def _invoke_apis(
     api_client_module = get_api_client_module(gen_package_name)
     exceptions_module = get_exceptions_module(gen_package_name)
     response_list: List[Dict] = []
-    request_metadata_list: List[Dict] = []
+    request_metadata: List[Dict] = []
     with api_client_module.ApiClient(configuration) as api_client:
 
         spec = get_openapi_spec(spec_path)
@@ -1047,11 +1151,11 @@ def _invoke_apis(
             spec=spec,
             path=api_path,
             configuration=configuration,
-            txn_dir=data_dir,
+            data_dir=data_dir,
             pkg_name=gen_package_name,
         )
 
-        request_metadata_list, attribute_payloads = extract_payloads(
+        request_metadata, attribute_payloads = extract_payloads(
             combined_fuzzed_payloads
         )
         # print(attribute_payloads)
@@ -1062,38 +1166,65 @@ def _invoke_apis(
         http_method = get_api_http_method(endpoint_obj).lower()
 
         # Pass fuzzed payloads one at a time
-        resp_data = None
-        resp_status = None
+        response_data = None
+        response_status = None
         logger.info(f"Sending fuzzed requests for api: {api_path}")
 
         for req_metadata, attribute_payload in zip(
-            request_metadata_list, attribute_payloads
+            request_metadata, attribute_payloads
         ):
+            # Set additional headers
+
+            # Set request_id header
             # Generate and  attach unique request id for each request
-            # Use it for matching actual request (captured via zap) and response
-            # request_id = uuid.uuid4().hex
-            # TODO remove header from har(http archive file) after saving
-            api_client.set_default_header(REQUEST_ID, data_dir)
+            # Use it to capture request proxied through zap
+            request_id = uuid.uuid4().hex
+            api_client.set_default_header(REQUEST_ID, request_id)
+
+            api_client.set_default_header(DATA_DIR, data_dir)
 
             # Set auth headers
             for auth_header in auth_headers:
                 for header_name, header_value in auth_header.items():
                     api_client.set_default_header(header_name, header_value)
 
-            req_metadata[REQUEST_ID] = data_dir
+            req_metadata[REQUEST_ID] = request_id
 
             try:
                 logger.info(f"Sending request: {attribute_payload}")
-                (resp_data, resp_status, resp_headers) = getattr(
-                    api_instance, api_func_name
-                )(*attribute_payload, _request_timeout=READ_TIMEOUT)
+
+                # If payload is a list
+                if isinstance(attribute_payload, list):
+                    api_function = getattr(api_instance, api_func_name)
+                    response: urllib3.HTTPResponse = api_function(
+                        *attribute_payload,
+                        _request_timeout=READ_TIMEOUT,
+                        _preload_content=False,
+                        _check_return_type=False,
+                    )
+                    response_data = response.data
+                    response_status = response.status
+                else:
+                    # If payload is primitive
+                    response: urllib3.HTTPResponse = getattr(
+                        api_instance, api_func_name
+                    )(
+                        attribute_payload,
+                        _request_timeout=READ_TIMEOUT,
+                        _preload_content=False,
+                        _check_return_type=False,
+                    )
+                    response_data = response.data
+                    response_status = response.status
 
             except exceptions_module.ApiValueError as ae:
                 logger.info(f"Api Value Error:  {str(ae)}")
             except exceptions_module.ApiException as api_exception_object:
                 # print(api_exception_object)
-                resp_data = api_exception_object.body
-                resp_status = api_exception_object.status
+                response_data = api_exception_object.body
+                response_status = api_exception_object.status
+            except exceptions_module.ApiAttributeError as ae:
+                logger.info(f"Api Attribute Error: {str(ae)}")
 
             # Form response object for each request
             full_api_path = urljoin(host_url, api_path)
@@ -1101,17 +1232,17 @@ def _invoke_apis(
             # Now that we are storing the har(http archive) file.
             # These details can be picked up from har data itself in conformance.py file
             response_obj = {
-                REQUEST_ID: data_dir,
+                REQUEST_ID: request_id,
                 "full_api_path": full_api_path,
                 # "path_params": path_params,
                 "mimetype": mimetype,
                 "http_method": http_method,
-                "response_data": resp_data,
-                "response_status": resp_status,
+                "response_data": response_data,
+                "response_status": response_status,
             }
             response_list.append(response_obj)
 
-    return (request_metadata_list, response_list)
+    return (request_metadata, response_list)
 
 
 if __name__ == "__main__":
