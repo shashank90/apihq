@@ -53,3 +53,6 @@ ISSUE_ID = "issue_id"
 
 SPEC_STRING = "spec_string.yaml"
 YAML_LINT_ERROR_PREFIX = "Invalid YAML uploaded. Error: "
+
+ERROR_TYPE_REQUEST = "Request Validation"
+ERROR_TYPE_RESPONSE = "Response Validation"

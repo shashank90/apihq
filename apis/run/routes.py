@@ -14,7 +14,7 @@ from db.model.api_run import ApiRun, RunStatusEnum
 from db.model.api_spec import ApiSpec
 from db.model.api_inventory import ApiInventory
 from log.factory import Logger
-from tester.modules.openapi.conformance import ISSUES_FILE, run
+from tester.modules.openapi.conformance import ISSUES_FILE, REQUESTS_FILE, run
 from utils import uuid_handler
 from utils.file_handler import read_json
 
@@ -113,8 +113,12 @@ def get_issues(current_user, run_id):
     data_dir: str = spec.data_dir
 
     issues_file = os.path.join(data_dir, ISSUES_FILE)
-    issues: Dict = read_json(issues_file)
+    issues: List[Dict] = read_json(issues_file)
 
-    response = jsonify({"message": "success", "issues": issues})
+    requests_file = os.path.join(data_dir, REQUESTS_FILE)
+    requests: List[Dict] = read_json(requests_file)
+
+    response = jsonify({"message": "success", "issues": issues, "requests": requests})
+
     response.status_code = 200
     return response

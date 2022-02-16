@@ -12,24 +12,39 @@ export default function Issues(props) {
   const [issueSelected, setIssueSelected] = useState(false);
   const [issueDetail, setIssueDetail] = useState({});
   const [issues, setIssues] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const authCtx = useContext(AuthContext);
 
   const params = useParams();
   let runId = params.runId;
-  console.log(runId);
+  console.log("runId: " + runId);
 
   function showIssueDetails(id) {
     console.log("Row with id clicked: " + id);
     // console.log(data);
+    // Find issue by id and corresponding request
     const issueS = issues.filter((item) => {
       return item.id === id;
     });
     if (issueS) {
       const issue = issueS[0];
       console.log(issue);
-      setIssueDetail(issue);
+      const requestId = issue.requestId;
+      console.log("requestId: " + requestId);
+
+      // Set corresponding request
+      const requestS = requests.filter((request) => {
+        return request.request_id === requestId;
+      });
+
+      let requestSelected = null;
+      if (requestS) {
+        requestSelected = requestS[0];
+        // console.log(request);
+      }
+      setIssueDetail({ issue: issue, request: requestSelected });
       setIssueSelected(true);
     }
   }
@@ -61,11 +76,13 @@ export default function Issues(props) {
       const transformedIssues = data.issues.map((issue, index) => {
         return {
           id: index + 1,
+          requestId: issue.request_id,
           description: issue.description,
           message: issue.message,
         };
       });
       setIssues(transformedIssues);
+      setRequests(data.requests);
     } catch (error) {
       setError(error.message);
     }
@@ -127,7 +144,10 @@ export default function Issues(props) {
 
   if (issueSelected) {
     return (
-      <IssueDetails detail={issueDetail} setIssueSelected={setIssueSelected} />
+      <IssueDetails
+        issueDetail={issueDetail}
+        setIssueSelected={setIssueSelected}
+      />
     );
   } else {
     return (
