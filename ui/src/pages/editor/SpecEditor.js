@@ -7,22 +7,22 @@ import "ace-builds/src-noconflict/mode-yaml";
 import "ace-builds/src-noconflict/theme-github";
 import { useHistory } from "react-router";
 import Buttons from "../../components/common/Buttons";
-import buttons from "../../components/common/buttons.module.css";
 import ValidationResponse from "../../components/validationResponse/ValidationResponse";
 import { useParams } from "react-router-dom";
 import AuthContext from "../../store/auth-context";
+import { TEMPLATE } from "../../store/constants";
 
 const fileSaveBaseURL = "http://localhost:3000/apis/v1/spec_strings";
 const getSpecBaseURL = "http://localhost:3000/apis/v1/specs";
 
-const addSpecMessage =
-  "Add new OpenAPI spec. Use below petstore sample as template";
-const validateSpecMessage = "Validate spec";
+const addSpecMessage = "Validate Spec";
 
 export default function SpecEditor(props) {
   const [spec, setSpec] = useState(defaultValue);
   const [collectionName, setCollectionName] = useState("");
-  const [validationStatus, setValidationStatus] = useState("");
+  const [validationStatus, setValidationStatus] = useState(
+    "Hit Validate to get started!"
+  );
   const [validationResponse, setValidationResponse] = useState("");
   const [validationLoading, setValidationLoading] = useState(false);
   const [validationError, setValidationError] = useState(null);
@@ -57,6 +57,10 @@ export default function SpecEditor(props) {
   const actionButtonLabel = "Validate";
 
   const fetchSpecHandler = useCallback(async () => {
+    if (specId == TEMPLATE) {
+      console.log("Show spec template");
+      return;
+    }
     setSpecLoading(true);
     setSpecError(null);
     const getSpecURL = getSpecBaseURL + "/" + specId;
@@ -69,9 +73,14 @@ export default function SpecEditor(props) {
         },
       });
       const data = await response.json();
+
       console.log(data);
       if (!response.ok) {
-        throw new Error("Something went wrong!");
+        console.log("Response status: " + response.status);
+        if ("error" in data) {
+          throw new Error(data.error.message);
+        }
+        throw new Error(data.message);
       }
       if ("spec_string" in data) {
         // convert json object to yaml
@@ -145,10 +154,12 @@ export default function SpecEditor(props) {
     // Create spec
     let fileSaveURL = fileSaveBaseURL;
     let http_method = "POST";
-    if (specId) {
+    // Update spec string for existing spec, else create new one
+    if (specId && specId != TEMPLATE) {
       fileSaveURL = fileSaveBaseURL + "/" + specId;
       http_method = "PUT";
     }
+
     try {
       const response = await fetch(fileSaveURL, {
         method: http_method,
@@ -162,9 +173,14 @@ export default function SpecEditor(props) {
       // Parse response data
       const data = await response.json();
       console.log(data);
-
       if (!response.ok) {
         console.log("Response status: " + response.status);
+        if ("error" in data) {
+          if ("status" in data.error) {
+            setValidationStatus(data.error.status);
+          }
+          throw new Error(data.error.message);
+        }
         throw new Error(data.message);
       } else {
         if ("validate_output" in data) {

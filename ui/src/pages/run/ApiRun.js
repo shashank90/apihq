@@ -2,12 +2,13 @@ import styles from "./apiRun.module.css";
 import React, { useState, useCallback, useEffect, useContext } from "react";
 import topbarStyles from "../../components/common/topbarstyles.module.css";
 import buttons from "../../components/common/buttons.module.css";
-import { DataGrid } from "@material-ui/data-grid";
+// import { DataGrid } from "@material-ui/data-grid";
 import { Link } from "react-router-dom";
 import ReactDOM from "react-dom";
 import APIDropdownModal from "../../components/apiSelector/ApiSelectorModal";
 import Backdrop from "../../components/common/Backdrop";
 import AuthContext from "../../store/auth-context";
+import DataTable from "../../components/dataTable/DataTable";
 
 const getRunsURL = "http://localhost:3000/apis/v1/runs";
 
@@ -66,6 +67,10 @@ export default function APIScan() {
 
   useEffect(() => {
     fetchRunHandler();
+    // const interval = setInterval(() => {
+    //   fetchRunHandler();
+    // }, 20000);
+    // return () => clearInterval(interval);
   }, [fetchRunHandler]);
 
   const columns = [
@@ -124,15 +129,7 @@ export default function APIScan() {
 
   // console.log(dropdownModalIsOpen);
 
-  let content = (
-    <DataGrid
-      rows={runs}
-      disableSelectionOnClick
-      columns={columns}
-      pageSize={8}
-      checkboxSelection
-    />
-  );
+  let content = <DataTable data={runs} columns={columns} />;
 
   if (error) {
     content = <p>{error}</p>;

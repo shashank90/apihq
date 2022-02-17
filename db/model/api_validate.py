@@ -4,6 +4,7 @@ from db.database import Base
 
 
 class ValidateStatusEnum(enum.Enum):
+    LINT_ERROR = "lint_error"
     FIX_VALIDATION_ERROR = "fix_validation_error"
     READY_FOR_SCAN = "ready_for_scan"
 

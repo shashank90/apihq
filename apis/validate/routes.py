@@ -26,6 +26,7 @@ from utils.constants import (
     CRAWLER,
     SPEC_STRING,
     VALIDATE_REPORT,
+    YAML_LINT_ERROR_PREFIX,
 )
 from utils.file_handler import read_content, write_content
 
@@ -73,23 +74,41 @@ def create_openapi_str(current_user):
 
     # Extract API paths and store in inventory table.
     # API inventory table has an FK dependency to API spec table
-    path_list = get_paths(spec_path)
-    for api_path, method, api_endpoint_url in path_list:
-        api_id = uuid_handler.get_uuid()
-        api_insert_record = {
-            "user_id": user_id,
-            "api_id": api_id,
-            "api_endpoint_url": api_endpoint_url,
-            "spec_id": spec_id,
-            "http_method": method,
-            "added_by": added_by,
-        }
-        add_api_to_inventory(user_id, api_path, api_insert_record)
+    path_error_out = None
+    try:
+        path_list = get_paths(spec_path)
+        for api_path, method, api_endpoint_url in path_list:
+            api_id = uuid_handler.get_uuid()
+            api_insert_record = {
+                "user_id": user_id,
+                "api_id": api_id,
+                "api_endpoint_url": api_endpoint_url,
+                "spec_id": spec_id,
+                "http_method": method,
+                "added_by": added_by,
+            }
+            add_api_to_inventory(user_id, api_path, api_insert_record)
+
+    except Exception as e:
+        path_error_out = str(e)
+        logger.warning("Could not extract paths. " + path_error_out)
 
     # Run validate on newly created spec
-    status, validate_output = validate(data_dir, user_id, spec_id, spec_path)
+    output = validate(data_dir, user_id, spec_id, spec_path)
+    lint_output = output.get("validate_out")
+    status = output.get("status")
 
-    resp = jsonify(
+    is_lint_error = output.get("is_lint_error")
+    if is_lint_error:
+        error_msg = YAML_LINT_ERROR_PREFIX + lint_output
+        response = jsonify({"error": {"message": error_msg, "status": status}})
+        response.status_code = 400
+        return response
+
+    validate_output = output.get("validate_out")
+    status = output.get("status")
+
+    response = jsonify(
         {
             "spec_id": spec_id,
             "message": "File created successfully",
@@ -97,8 +116,8 @@ def create_openapi_str(current_user):
             "status": status,
         }
     )
-    resp.status_code = 201
-    return resp
+    response.status_code = 201
+    return response
 
 
 @validate_bp.route("/apis/v1/spec_strings/<spec_id>", methods=["PUT"])
@@ -131,32 +150,40 @@ def update_openapi_str(current_user, spec_id):
     update_spec(spec_id, collection_name)
 
     # Update API paths in inventory table
-    path_list = get_paths(spec_path)
-    for api_path, method, api_endpoint_url in path_list:
-        api_id = uuid_handler.get_uuid()
-        api_insert_record = {
-            "user_id": user_id,
-            "spec_id": spec_id,
-            "api_id": api_id,
-            "api_endpoint_url": api_endpoint_url,
-            "http_method": method,
-        }
-        add_api_to_inventory(user_id, api_path, api_insert_record)
+    path_error_out = None
+    try:
+        path_list = get_paths(spec_path)
+        for api_path, method, api_endpoint_url in path_list:
+            api_id = uuid_handler.get_uuid()
+            api_insert_record = {
+                "user_id": user_id,
+                "api_id": api_id,
+                "api_endpoint_url": api_endpoint_url,
+                "spec_id": spec_id,
+                "http_method": method,
+            }
+            add_api_to_inventory(user_id, api_path, api_insert_record)
 
-    # Run audit on newly created spec
-    status, validate_output = validate(data_dir, user_id, spec_id, spec_path)
+    except Exception as e:
+        path_error_out = str(e)
+        logger.warning("Could not extract paths. " + path_error_out)
+
+    output = validate(data_dir, user_id, spec_id, spec_path)
+    validate_output = output.get("validate_out")
+    status = output.get("status")
 
     # TODO: Write audit output to file system
 
-    resp = jsonify(
+    response = jsonify(
         {
             "spec_id": spec_id,
             "message": "File updated successfully",
             "validate_output": validate_output,
+            "status": status,
         }
     )
-    resp.status_code = 200
-    return resp
+    response.status_code = 200
+    return response
 
 
 @validate_bp.route("/apis/v1/specs/<spec_id>", methods=["GET"])
@@ -229,11 +256,13 @@ def audit_api(current_user, spec_id):
     # Run OpenAPI spec audit asynchronously
     # t = threading.Thread(target=audit, args=[data_dir, spec_path])
     # t.start()
-    status, validate_output = validate(data_dir, spec_path)
+    output = validate(data_dir, spec_path)
+    validate_out = output.get("validate_out")
+    status = output.get("status")
 
     # TODO: Need to come up with an audit score
 
-    response = jsonify({"message": "success", "validate_output": validate_output})
+    response = jsonify({"message": "success", "validate_output": validate_out})
     response.status_code = 200
 
     return response

@@ -1,6 +1,7 @@
 from operator import and_
 import os
 from typing import Dict, List
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 from db.database import get_session
 import uuid
@@ -72,20 +73,30 @@ def get_validation_status(spec_id: str) -> str:
 
 def get_run_records(user_id: str) -> List[ApiRun]:
     """
-    Get API Run records for a given user
+    Get api run records for a given user
     """
     session: Session = get_session()
-    api_runs = session.query(ApiRun).filter_by(user_id=user_id)
+    api_runs = (
+        session.query(ApiRun)
+        .filter_by(user_id=user_id)
+        .order_by(desc(ApiRun.time_updated))
+    )
     return api_runs
 
 
 def get_api_details(api_id: str) -> ApiInventory:
+    """
+    Get api record given api_id
+    """
     session: Session = get_session()
     api_run = session.query(ApiInventory).filter_by(api_id=api_id).first()
     return api_run
 
 
 def get_run_details(run_id: str) -> ApiRun:
+    """
+    Get run record given run_id
+    """
     session: Session = get_session()
     api = session.query(ApiRun).filter_by(run_id=run_id).first()
     return api

@@ -2,12 +2,22 @@
   display: flex;
   flex-direction: column;
 }
+.collection_name_container {
+  margin-top: 10px;
+  margin-left: 10px;
+}
 .file_upload_container {
   margin-top: 10px;
   text-align: center;
-  margin-left: 80px;
 }
 .error_text {
   color: red;
   font-size: 14px;
+}
+.collection_name_label {
+  margin-right: 5px;
+}
+
+.file_selector_label {
+  margin-right: 5px;
 }

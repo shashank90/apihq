@@ -82,12 +82,15 @@ def import_api(current_user):
 
         # Lint and check if valid YAML
         response = {}
-        lint_output = validate(data_dir, user_id, spec_id, spec_path, lint_only=True)
-        if lint_output:
+        output = validate(data_dir, user_id, spec_id, spec_path, lint_only=True)
+        is_lint_error = output.get("is_lint_error")
+        lint_output = output.get("validate_out")
+        if is_lint_error:
             error_msg = YAML_LINT_ERROR_PREFIX + lint_output
             response = jsonify({"error": {"message": error_msg}})
             response.status_code = 400
-            # Remove data dir
+
+            # Rejecting file and hence removing data dir
             logger.info(f"Incoming YAML lint failed. Removing data dir {data_dir}")
             shutil.rmtree(data_dir)
             return response
@@ -114,6 +117,9 @@ def import_api(current_user):
             logger.info(
                 f"Could not extract paths. Uploaded file {spec_path} may not adhere to OpenAPI standard"
             )
+
+        # Add validation status entry for uploaded file
+        validate(data_dir, user_id, spec_id, spec_path)
 
         response = jsonify(
             {"spec_id": spec_id, "message": "File uploaded successfully"}

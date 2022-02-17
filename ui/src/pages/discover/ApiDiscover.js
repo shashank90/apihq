@@ -6,7 +6,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect, useCallback, useContext } from "react";
 import ReactDOM from "react-dom";
 import Backdrop from "../../components/common/Backdrop";
-import FileUploadModal from "../../components/fileUpload/FileUploadModal";
+import AddApiModal from "../../components/addApi/AddApiModal";
 import { DeleteOutline } from "@material-ui/icons";
 import AuthContext from "../../store/auth-context";
 
@@ -44,7 +44,11 @@ export default function APIInventory() {
       const data = await response.json();
       console.log(data);
       if (!response.ok) {
-        throw new Error("Something went wrong!");
+        console.log("Response status: " + response.status);
+        if ("error" in data) {
+          throw new Error(data.error.message);
+        }
+        throw new Error(data.message);
       }
 
       const transformedApis = data.apis.map((api, index) => {
@@ -76,7 +80,9 @@ export default function APIInventory() {
       headerName: "API Path",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.apiPath}</div>;
+        return (
+          <div className={styles.TargetListItem}>{params.row.apiPath}</div>
+        );
       },
     },
     {
@@ -84,7 +90,9 @@ export default function APIInventory() {
       headerName: "Endpoint URL",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.apiPath}</div>;
+        return (
+          <div className={styles.TargetListItem}>{params.row.apiPath}</div>
+        );
       },
     },
     {
@@ -92,7 +100,9 @@ export default function APIInventory() {
       headerName: "HTTP Method",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.httpMethod}</div>;
+        return (
+          <div className={styles.TargetListItem}>{params.row.httpMethod}</div>
+        );
       },
     },
     {
@@ -100,7 +110,9 @@ export default function APIInventory() {
       headerName: "Status",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.addedBy}</div>;
+        return (
+          <div className={styles.TargetListItem}>{params.row.addedBy}</div>
+        );
       },
     },
     {
@@ -108,7 +120,9 @@ export default function APIInventory() {
       headerName: "Added by",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.addedBy}</div>;
+        return (
+          <div className={styles.TargetListItem}>{params.row.addedBy}</div>
+        );
       },
     },
     {
@@ -124,7 +138,7 @@ export default function APIInventory() {
                 state: { prevPath: location.pathname },
               }}
             >
-              <button className="msgListView">View</button>
+              <button className={styles.msgListView}>View</button>
             </Link>
           </>
         );
@@ -139,7 +153,7 @@ export default function APIInventory() {
           <>
             {/* <button className="msgListView">Edit</button> */}
             <DeleteOutline
-              className="TargetListDelete"
+              className={styles.TargetListDelete}
               onClick={() => handleDelete(params.row.id)}
             />
           </>
@@ -174,7 +188,7 @@ export default function APIInventory() {
           document.getElementById("backdrop-root")
         )}
         {ReactDOM.createPortal(
-          <FileUploadModal
+          <AddApiModal
             onCancel={closeModalHandler}
             onConfirm={closeModalHandler}
           />,
@@ -184,9 +198,9 @@ export default function APIInventory() {
     );
   } else {
     return (
-      <div className="TargetList">
+      <div className={styles.TargetList}>
         <div className={topbarStyles.new_action_container}>
-          <h1 className="TargetTitle">Discover</h1>
+          <h1 className={styles.TargetTitle}>Discover</h1>
           <div className={styles.import_api_options}>
             <button
               className={buttons.new_action_btn}
