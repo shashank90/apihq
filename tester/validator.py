@@ -57,6 +57,7 @@ def validate(
         # Write validate output to data dir
         validate_report_path = os.path.join(data_dir, VALIDATE_REPORT)
         write_json(validate_report_path, final_messages)
+        validate_out = final_messages
     except Exception as e:
         logger.exception("Could not parse validate output into json. ")
         status_enum = ValidateStatusEnum.LINT_ERROR

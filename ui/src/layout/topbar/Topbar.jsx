@@ -7,6 +7,9 @@ import AuthContext from '../../store/auth-context';
 export default function Topbar() {
   const authCtx = useContext(AuthContext);
   const isLoggedIn = authCtx.isLoggedIn;
+  const logoutHandler = () => {
+    authCtx.logout();
+  };
 
   return (
     <div className={styles.topbar}>
@@ -23,14 +26,9 @@ export default function Topbar() {
                     <Link to='/login'>Login</Link>
                   </li>
                 )}
-                {/* {isLoggedIn && (
-                  <li>
-                    <Link to='/profile'>Profile</Link>
-                  </li>
-                )} */}
                 {isLoggedIn && (
                   <li className={styles.item}>
-                    <button className={styles.logout_btn}>Logout</button>
+                    <button className={styles.logout_btn} onClick={()=>logoutHandler()}>Logout</button>
                   </li>
                 )}
               </ul>

@@ -81,8 +81,9 @@ def get_runs(current_user):
                 {
                     "run_id": api_run.run_id,
                     "api_endpoint_url": api_run.api.api_endpoint_url,
-                    "http_method": "",
+                    "http_method": api_run.api.http_method,
                     "status": api_run.status.name,
+                    "updated": api_run.time_updated,
                 }
             )
 

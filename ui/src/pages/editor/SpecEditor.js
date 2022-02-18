@@ -83,8 +83,7 @@ export default function SpecEditor(props) {
         throw new Error(data.message);
       }
       if ("spec_string" in data) {
-        // convert json object to yaml
-        setSpec(jsyaml.dump(data.spec_string));
+        setSpec(data.spec_string);
       }
       if ("collection_name" in data) {
         setCollectionName(data.collection_name);

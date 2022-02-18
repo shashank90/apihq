@@ -2,11 +2,11 @@ import styles from "./apiDiscover.module.css";
 import topbarStyles from "../../components/common/topbarstyles.module.css";
 import buttons from "../../components/common/buttons.module.css";
 import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect, useCallback, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import ReactDOM from "react-dom";
 import Backdrop from "../../components/common/Backdrop";
 import AddApiModal from "../../components/addApi/AddApiModal";
-import { DeleteOutline } from "@material-ui/icons";
+// import { DeleteOutline } from "@material-ui/icons";
 import AuthContext from "../../store/auth-context";
 import DataTable from "../../components/dataTable/DataTable";
 import { DATA_REFRESH_FREQUENCY } from "../../store/constants";
@@ -72,12 +72,14 @@ export default function APIInventory() {
       const transformedApis = data.apis.map((api, index) => {
         return {
           id: index + 1,
+          apiId: api.api_id,
           specId: api.spec_id,
-          apiPath: api.api_path,
-          // endpointURL: api.endpoint_url,
+          // apiPath: api.api_path,
+          apiEndpointURL: api.api_endpoint_url,
           httpMethod: api.http_method,
+          updated: api.updated,
           // status: api.status,
-          addedBy: api.added_by,
+          // addedBy: api.added_by,
         };
       });
       updateApis(transformedApis);
@@ -98,29 +100,29 @@ export default function APIInventory() {
   const columns = [
     { field: "id", headerName: "ID", width: 50 },
     {
-      field: "API Path",
-      headerName: "API Path",
+      field: "Api Id",
+      headerName: "Api Id",
       width: 200,
       renderCell: (params) => {
-        return (
-          <div className={styles.TargetListItem}>{params.row.apiPath}</div>
-        );
+        return <div className={styles.TargetListItem}>{params.row.apiId}</div>;
       },
     },
     {
-      field: "Endpoint URL",
-      headerName: "Endpoint URL",
-      width: 200,
+      field: "Api Endpoint URL",
+      headerName: "Api Endpoint URL",
+      width: 350,
       renderCell: (params) => {
         return (
-          <div className={styles.TargetListItem}>{params.row.apiPath}</div>
+          <div className={styles.TargetListItem}>
+            {params.row.apiEndpointURL}
+          </div>
         );
       },
     },
     {
       field: "HTTP Method",
       headerName: "HTTP Method",
-      width: 200,
+      width: 180,
       renderCell: (params) => {
         return (
           <div className={styles.TargetListItem}>{params.row.httpMethod}</div>
@@ -128,22 +130,12 @@ export default function APIInventory() {
       },
     },
     {
-      field: "Status",
-      headerName: "Status",
+      field: "Updated",
+      headerName: "Updated",
       width: 200,
       renderCell: (params) => {
         return (
-          <div className={styles.TargetListItem}>{params.row.addedBy}</div>
-        );
-      },
-    },
-    {
-      field: "Added by",
-      headerName: "Added by",
-      width: 200,
-      renderCell: (params) => {
-        return (
-          <div className={styles.TargetListItem}>{params.row.addedBy}</div>
+          <div className={styles.TargetListItem}>{params.row.updated}</div>
         );
       },
     },
@@ -160,28 +152,38 @@ export default function APIInventory() {
                 state: { prevPath: location.pathname },
               }}
             >
-              <button className={styles.msgListView}>View</button>
+              <button className={buttons.green_btn}>View</button>
             </Link>
           </>
         );
       },
     },
-    {
-      field: "Action",
-      headerName: "Action",
-      width: 150,
-      renderCell: (params) => {
-        return (
-          <>
-            {/* <button className="msgListView">Edit</button> */}
-            <DeleteOutline
-              className={styles.TargetListDelete}
-              onClick={() => handleDelete(params.row.id)}
-            />
-          </>
-        );
-      },
-    },
+    // {
+    //   field: "Added by",
+    //   headerName: "Added by",
+    //   width: 200,
+    //   renderCell: (params) => {
+    //     return (
+    //       <div className={styles.TargetListItem}>{params.row.addedBy}</div>
+    //     );
+    //   },
+    // },
+    // {
+    //   field: "Action",
+    //   headerName: "Action",
+    //   width: 150,
+    //   renderCell: (params) => {
+    //     return (
+    //       <>
+    //         {/* <button className="msgListView">Edit</button> */}
+    //         <DeleteOutline
+    //           className={styles.TargetListDelete}
+    //           onClick={() => handleDelete(params.row.id)}
+    //         />
+    //       </>
+    //     );
+    //   },
+    // },
   ];
 
   let content = <DataTable data={apis} columns={columns} />;

@@ -124,14 +124,22 @@ def add_api_to_inventory(user_id: str, api_path: str, api_details: Dict):
     Insert or Update api path in inventory table based on whether it exists
     """
     session: Session = get_session()
-    api_path_obj = session.query(ApiInventory).filter_by(api_path=api_path).first()
+    api_path_obj = (
+        session.query(ApiInventory)
+        .filter(
+            and_(ApiInventory.user_id == user_id, ApiInventory.api_path == api_path)
+        )
+        .first()
+    )
     # http_method
     http_method = api_details.get("http_method")
     session: Session = get_session()
+
+    api_endpoint_url = api_details.get("api_endpoint_url")
+    spec_id = api_details.get("spec_id")
+
     if not api_path_obj:
         api_id = api_details.get("api_id")
-        api_endpoint_url = api_details.get("api_endpoint_url")
-        spec_id = api_details.get("spec_id")
         user_id = api_details.get("user_id")
         added_by = api_details.get("added_by")
         found_in_file = api_details.get("found_in_file")
@@ -151,17 +159,25 @@ def add_api_to_inventory(user_id: str, api_path: str, api_details: Dict):
         session.add(api_inventory_object)
         session.commit()
     else:
+        # Overwrite api path and endpoint url
+        api_path_obj.api_path = api_path
+        api_path_obj.api_endpoint_url = api_endpoint_url
+        api_path_obj.spec_id = spec_id
         # TODO: Chance of a bug: As per below logic, we are extending http methods for existing APIs
         # However, in case a http method for existing endpoint is deleted/deprecated from code.
         # It may still linger here as per method extension logic
-        temp: List = api_path_obj.http_method.split(",")
         # Extend http methods if incoming method isn't part of existing list
-        if http_method and temp and http_method not in temp:
-            temp.append(http_method)
-            temp.sort()
-            methoD = ",".join(temp)
-            api_path_obj.method = methoD
-            session.commit()
+        if http_method:
+            temp: List = api_path_obj.http_method.split(",")
+            if temp and http_method not in temp:
+                temp.append(http_method)
+                temp.sort()
+                methoD = ",".join(temp)
+                api_path_obj.http_method = methoD
+                session.commit()
+            else:
+                api_path_obj.http_method = http_method
+                session.commit()
 
 
 def get_api_inventory(user_id):
@@ -169,7 +185,11 @@ def get_api_inventory(user_id):
     Get discovered APIs given user id
     """
     session: Session = get_session()
-    inventory = session.query(ApiInventory).filter_by(user_id=user_id)
+    inventory = (
+        session.query(ApiInventory)
+        .filter_by(user_id=user_id)
+        .order_by(desc(ApiInventory.time_updated))
+    )
     return inventory
 
 

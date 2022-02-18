@@ -138,7 +138,7 @@ export default function APIDropdownModal(props) {
         return {
           apiEndpointURL: api.api_endpoint_url,
           apiId: api.api_id,
-          http_method: api.http_method,
+          httpMethod: api.http_method,
         };
         // endpointURL: api.endpoint_url,
       });
@@ -172,9 +172,14 @@ export default function APIDropdownModal(props) {
     });
     console.log(selectedApi);
     if (selectedApi) {
-      // Pick the first one assuming only single match happens
-      const methods = selectedApi.http_method.split(",");
-      setHttpMethods(methods);
+      console.log(apiEndpointURL);
+      if (selectedApi.apiEndpointURL === defaultApiEndpointURLSelectMessage) {
+        setHttpMethods([defaultApiEndpointURLSelectMessage]);
+      } else {
+        // Pick the first one assuming only single match happens
+        const methods = selectedApi.httpMethod.split(",");
+        setHttpMethods(methods);
+      }
     }
   }
 
@@ -269,7 +274,9 @@ export default function APIDropdownModal(props) {
       <form onSubmit={handleSubmit}>
         <h3>API Run</h3>
         <div>
-          <label htmlFor="url_selector">Endpoint URL: </label>
+          <label htmlFor="url_selector" className={apiStyles.url_label}>
+            Endpoint URL:{" "}
+          </label>
           <select
             className={apiStyles.url_value}
             id="url_selector"
@@ -285,10 +292,12 @@ export default function APIDropdownModal(props) {
             })}
           </select>
         </div>
-        <div>
-          <label htmlFor="method_selector">Http Method: </label>
+        <div className={apiStyles.container}>
+          <label htmlFor="method_selector" className={apiStyles.method_label}>
+            HTTP method:
+          </label>
           <select
-            className={apiStyles.url_value}
+            className={apiStyles.method_value}
             id="method_selector"
             value={httpMethod}
             onChange={handleHttpMethodChange}

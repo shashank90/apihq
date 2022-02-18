@@ -194,6 +194,7 @@ def get_discovered_apis(current_user):
             "http_method": api.http_method,
             "added_by": api.added_by.name,
             "message": api.message,
+            "updated": api.time_updated,
         }
         for api in api_list
     ]

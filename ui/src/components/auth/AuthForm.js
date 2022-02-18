@@ -90,8 +90,11 @@ const AuthForm = () => {
       } else {
         // Mark success message and exit after timeout
         console.log(message + " successful!");
-        if ("token" in data) {
-          authCtx.login(data.token);
+        if ("token" in data && "expires_in" in data) {
+          const expirationTime = new Date(
+            new Date().getTime() + data.expires_in * 1000
+          );
+          authCtx.login(data.token, expirationTime.toISOString());
           history.replace("/");
         }
       }

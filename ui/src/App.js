@@ -1,20 +1,32 @@
 import Sidebar from "./layout/sidebar/Sidebar";
+import { useContext } from "react";
 import Topbar from "./layout/topbar/Topbar";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Redirect,
+} from "react-router-dom";
 import "./App.css";
 import Issues from "./pages/findings/Issues";
 import SpecEditor from "./pages/editor/SpecEditor";
 import ApiDiscover from "./pages/discover/ApiDiscover";
 import ApiRun from "./pages/run/ApiRun";
 import Auth from "./pages/auth/Auth";
+import AuthContext from "./store/auth-context";
 
 function App() {
+  const authCtx = useContext(AuthContext);
+
   return (
     <Router>
       <Topbar />
       <Switch>
-        <Route exact path="/login" component={LoginContainer} />
-        <Route component={DefaultContainer} />
+        {!authCtx.isLoggedIn && (
+          <Route exact path="/login" component={LoginContainer} />
+        )}
+        {authCtx.isLoggedIn && <Route component={DefaultContainer} />}
+        {!authCtx.isLoggedIn && <Redirect to="/login" />}
       </Switch>
     </Router>
   );
@@ -22,7 +34,6 @@ function App() {
 
 const LoginContainer = () => (
   <div className="container">
-    {/* <Route exact path="/" render={() => <Redirect to="/login" />} /> */}
     <Route path="/login" component={Auth} />
   </div>
 );

@@ -102,7 +102,9 @@ def get_paths(spec_path) -> Tuple[str, str]:
                 method = k2
         api_path = k1
         if host:
-            api_endpoint_url = os.path.join(host, api_path)
+            api_endpoint_url = host + api_path
+        else:
+            api_endpoint_url = api_path
         path_list.append((api_path, method, api_endpoint_url))
     return path_list
 

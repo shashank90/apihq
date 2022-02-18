@@ -1,5 +1,7 @@
 import threading
 import yaml
+from collections import OrderedDict
+
 import json
 from db.model.api_inventory import AddedByEnum
 from db.model.api_spec import ApiSpec
@@ -227,13 +229,19 @@ def retrieve_spec(current_user, spec_id):
     status = get_validation_status(spec_id)
 
     # Read YAML file
-    with open(spec_path, "r") as stream:
-        data = yaml.safe_load(stream)
+    with open(spec_path, "r") as f:
+        # yaml = ruamel.yaml.YAML()
+        # data = yaml.safe_load(stream)
+        # yaml.preserve_quotes = True
+        # s = yaml.safe_dump(f, sort_keys=False)
+
+        data = yaml.safe_load(f)
+        unsorted_data = yaml.dump(data, sort_keys=False)
         response = jsonify(
             {
                 "message": "success",
                 "collection_name": collection_name,
-                "spec_string": data,
+                "spec_string": unsorted_data,
                 "validate_output": validate_output,
                 "status": status,
             }

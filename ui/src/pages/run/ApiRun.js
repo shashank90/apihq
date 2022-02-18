@@ -1,5 +1,5 @@
 import styles from "./apiRun.module.css";
-import React, { useState, useCallback, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import topbarStyles from "../../components/common/topbarstyles.module.css";
 import buttons from "../../components/common/buttons.module.css";
 // import { DataGrid } from "@material-ui/data-grid";
@@ -70,8 +70,9 @@ export default function APIScan() {
           return {
             id: index + 1,
             runId: api.run_id,
-            httpMethod: api.http_method,
             endpointURL: api.api_endpoint_url,
+            httpMethod: api.http_method,
+            updated: api.updated,
             status: api.status,
           };
         });
@@ -96,35 +97,43 @@ export default function APIScan() {
   const columns = [
     { field: "id", headerName: "ID", width: 100 },
     {
-      field: "HTTP Method",
-      headerName: "HTTP Method",
+      field: "Run Id",
+      headerName: "Run Id",
       width: 200,
       renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.httpMethod}</div>;
+        return <div className="TargetListItem">{params.row.runId}</div>;
       },
     },
     {
       field: "Endpoint URL",
       headerName: "Endpoint URL",
-      width: 200,
+      width: 350,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.endpointURL}</div>;
       },
     },
-    // {
-    //   field: "Last Run",
-    //   headerName: "Last Run",
-    //   width: 200,
-    //   renderCell: (params) => {
-    //     return <div className="TargetListItem">{params.row.site}</div>;
-    //   },
-    // },
+    {
+      field: "HTTP Method",
+      headerName: "HTTP Method",
+      width: 170,
+      renderCell: (params) => {
+        return <div className="TargetListItem">{params.row.httpMethod}</div>;
+      },
+    },
     {
       field: "Status",
       headerName: "Status",
       width: 200,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.status}</div>;
+      },
+    },
+    {
+      field: "Updated",
+      headerName: "Updated",
+      width: 200,
+      renderCell: (params) => {
+        return <div className="TargetListItem">{params.row.updated}</div>;
       },
     },
     {
@@ -139,7 +148,7 @@ export default function APIScan() {
                 pathname: `/apis/run/issues/${params.row.runId}`,
               }}
             >
-              <button className="msgListView">View</button>
+              <button className={buttons.green_btn}>View</button>
             </Link>
           </>
         );

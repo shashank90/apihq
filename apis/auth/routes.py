@@ -16,6 +16,8 @@ logger = Logger(__name__)
 MISSING_EMAIL_PASSWORD = "MISSING_EMAIL_PASSWORD"
 INVALID_USER = "INVALID_USER"
 INCORRECT_PASSWORD = "INCORRECT_PASSWORD"
+EXPIRES_IN_MINUTES = 60
+EXPIRES_IN_SECONDS = EXPIRES_IN_MINUTES * 60
 
 # route for logging user in
 @auth_bp.route("/login", methods=["POST"])
@@ -51,13 +53,22 @@ def login():
         token = jwt.encode(
             {
                 "user_id": user.user_id,
-                "exp": datetime.utcnow() + timedelta(minutes=90),
+                "exp": datetime.utcnow() + timedelta(minutes=EXPIRES_IN_MINUTES),
             },
             current_app.config["SECRET_KEY"],
             algorithm="HS256",
         ).decode("utf-8")
 
-        return make_response(jsonify({"message": "success", "token": token}), 201)
+        return make_response(
+            jsonify(
+                {
+                    "message": "success",
+                    "token": token,
+                    "expires_in": EXPIRES_IN_SECONDS,
+                }
+            ),
+            201,
+        )
     # returns 403 if password is wrong
     return make_response(
         "Could not verify",
