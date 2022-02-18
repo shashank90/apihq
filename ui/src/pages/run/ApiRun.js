@@ -9,6 +9,7 @@ import APIDropdownModal from "../../components/apiSelector/ApiSelectorModal";
 import Backdrop from "../../components/common/Backdrop";
 import AuthContext from "../../store/auth-context";
 import DataTable from "../../components/dataTable/DataTable";
+import { DATA_REFRESH_FREQUENCY } from "../../store/constants";
 
 const getRunsURL = "http://localhost:3000/apis/v1/runs";
 
@@ -27,9 +28,26 @@ export default function APIScan() {
     setDropdownModalIsOpen(false);
   }
 
-  const fetchRunHandler = useCallback(async () => {
+  function updateRuns(fetchedRuns) {
+    if (runs.length > 0) {
+      if (JSON.stringify(runs) === JSON.stringify(fetchedRuns)) {
+        console.log("Matched!!. No change");
+      } else {
+        console.log("Change DETECTED..");
+        setRuns(fetchedRuns);
+      }
+    } else {
+      setRuns(fetchedRuns);
+    }
+  }
+  async function fetchApiRunDataFirstTime() {
     setLoading(true);
     setError(null);
+    fetchApiRunDataPeriodic();
+    setLoading(false);
+  }
+
+  async function fetchApiRunDataPeriodic() {
     try {
       const response = await fetch(getRunsURL, {
         method: "GET",
@@ -48,7 +66,7 @@ export default function APIScan() {
         }
         throw new Error(data.message);
       } else {
-        const runs = data.runs.map((api, index) => {
+        const fetchedRuns = data.runs.map((api, index) => {
           return {
             id: index + 1,
             runId: api.run_id,
@@ -57,21 +75,23 @@ export default function APIScan() {
             status: api.status,
           };
         });
-        setRuns(runs);
+        updateRuns(fetchedRuns);
       }
     } catch (error) {
       setError(error.message);
     }
-    setLoading(false);
-  }, []);
+  }
 
   useEffect(() => {
-    fetchRunHandler();
-    // const interval = setInterval(() => {
-    //   fetchRunHandler();
-    // }, 20000);
-    // return () => clearInterval(interval);
-  }, [fetchRunHandler]);
+    console.log("Fetch Api Run data on first load...");
+    fetchApiRunDataFirstTime();
+    const interval = setInterval(() => {
+      fetchApiRunDataPeriodic();
+    }, DATA_REFRESH_FREQUENCY);
+    return () => clearInterval(interval);
+  }, []);
+
+  // console.log(dropdownModalIsOpen);
 
   const columns = [
     { field: "id", headerName: "ID", width: 100 },
@@ -126,8 +146,6 @@ export default function APIScan() {
       },
     },
   ];
-
-  // console.log(dropdownModalIsOpen);
 
   let content = <DataTable data={runs} columns={columns} />;
 

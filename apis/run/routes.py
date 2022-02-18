@@ -34,24 +34,27 @@ def run_api(current_user, api_id):
     user_id = current_user.user_id
     logger.info(f"Running API from spec {api_id} for user {user_id}")
     content = request.get_json()
-    api_path = content.get("api_path")
+    api_endpoint_url = content.get("api_endpoint_url")
+    http_method = content.get("http_method")
     auth_headers = content.get("auth_headers")
     t_auth_headers = transform_headers(auth_headers)
-    logger.info(f"api_path: {api_path} and auth_headers: {t_auth_headers}")
+    logger.info(
+        f"api_endpoint_url: {api_endpoint_url}; http method :{http_method} auth_headers: {t_auth_headers}"
+    )
 
     run_id = uuid_handler.get_uuid()
     add_run_details(run_id, api_id, user_id, RunStatusEnum.INITIATED)
 
     api: ApiInventory = get_api_details(api_id)
     spec_id = api.spec_id
-    api_path = api.api_path
+    api_endpoint_url = api.api_path
     spec: ApiSpec = get_spec(spec_id)
     data_dir = spec.data_dir
     file_name = spec.file_name
 
     spec_path = os.path.join(data_dir, file_name)
     t = threading.Thread(
-        target=run, args=[run_id, api_path, spec_path, data_dir, t_auth_headers]
+        target=run, args=[run_id, api_endpoint_url, spec_path, data_dir, t_auth_headers]
     )
     t.start()
 

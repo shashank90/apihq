@@ -190,6 +190,7 @@ def get_discovered_apis(current_user):
             "api_id": api.api_id,
             "api_path": api.api_path,
             "api_endpoint_url": api.api_endpoint_url,
+            # coma separated http methods (string)
             "http_method": api.http_method,
             "added_by": api.added_by.name,
             "message": api.message,

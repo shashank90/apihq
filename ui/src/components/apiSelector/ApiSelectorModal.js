@@ -10,14 +10,17 @@ const getApisURL = "http://localhost:3000/apis/v1/discovered";
 const runAPIBaseURL = "http://localhost:3000/apis/v1/run";
 
 export default function APIDropdownModal(props) {
-  const defaultSelectMessage = "Select Endpoint URL";
+  const defaultApiEndpointURLSelectMessage = "Select Endpoint URL";
+  const defaultHttpMethodSelectMessage = "Select Http Method";
   const [apis, setApis] = useState([]);
+  const [apiEndpointURL, setApiEndpointURL] = useState("");
+  const [httpMethods, setHttpMethods] = useState([]);
+  const [httpMethod, setHttpMethod] = useState("");
   const [dataLoading, setDataLoading] = useState(false);
   const [dataLoadingError, setDataLoadingError] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
-  const [apiEndpointURL, setApiPath] = useState("");
   const [headerPairs, setHeaderPairs] = useState([]);
   const authCtx = useContext(AuthContext);
 
@@ -26,23 +29,20 @@ export default function APIDropdownModal(props) {
   const isNextBtnVisible = false;
   const actionButtonLabel = "Run";
 
-  const history = useHistory();
-
   const handleOnBack = (e) => {
     e.preventDefault();
     props.onCancel();
-    // history.push("/apis/run");
   };
 
   function getApiId(apiEndpointURL) {
-    if (apiEndpointURL == defaultSelectMessage) {
+    if (apiEndpointURL == defaultApiEndpointURLSelectMessage) {
       return null;
     }
-    console.log("api path: " + apiEndpointURL);
+    console.log("api endpoint url: " + apiEndpointURL);
     for (let x in apis) {
       let api = apis[x];
       // console.log(api.apiPath);
-      if (api.apiEndpointURL == apiEndpointURL) {
+      if (api.apiEndpointURL === apiEndpointURL) {
         return api.apiId;
       }
     }
@@ -69,7 +69,8 @@ export default function APIDropdownModal(props) {
     console.log(transformedHeaderPairs);
 
     const body = {
-      api_path: apiEndpointURL,
+      api_endpoint_url: apiEndpointURL,
+      http_method: httpMethod,
       auth_headers: transformedHeaderPairs,
     };
     const runAPIURL = runAPIBaseURL + "/" + apiId;
@@ -134,15 +135,20 @@ export default function APIDropdownModal(props) {
 
       // Set Api paths
       const transformedApis = data.apis.map((api, index) => {
-        return { apiEndpointURL: api.api_endpoint_url, apiId: api.api_id };
+        return {
+          apiEndpointURL: api.api_endpoint_url,
+          apiId: api.api_id,
+          http_method: api.http_method,
+        };
         // endpointURL: api.endpoint_url,
       });
       // Add default entry
       transformedApis.unshift({
-        apiEndpointURL: defaultSelectMessage,
+        apiEndpointURL: defaultApiEndpointURLSelectMessage,
         apiId: "",
       });
       setApis(transformedApis);
+      setHttpMethods([defaultHttpMethodSelectMessage]);
     } catch (error) {
       setDataLoadingError(error.message);
     }
@@ -153,9 +159,28 @@ export default function APIDropdownModal(props) {
     fetchApisHandler();
   }, [fetchApisHandler]);
 
-  function handleApiPathChange(event) {
+  function handleApiEndpointUrlChange(event) {
     event.preventDefault();
-    setApiPath(event.target.value);
+    setApiEndpointURL(event.target.value);
+    // Get http method corresponding to selected endpoint URL
+    const selectedURL = event.target.value;
+    let selectedApi = null;
+    console.log(apis);
+    console.log(selectedURL);
+    selectedApi = apis.find((api) => {
+      return selectedURL === api.apiEndpointURL;
+    });
+    console.log(selectedApi);
+    if (selectedApi) {
+      // Pick the first one assuming only single match happens
+      const methods = selectedApi.http_method.split(",");
+      setHttpMethods(methods);
+    }
+  }
+
+  function handleHttpMethodChange(event) {
+    event.preventDefault();
+    setHttpMethod(event.target.value);
   }
 
   const addHeaderPair = (e) => {
@@ -244,17 +269,34 @@ export default function APIDropdownModal(props) {
       <form onSubmit={handleSubmit}>
         <h3>API Run</h3>
         <div>
-          <label htmlFor="url_selector">API Endpoint URL: </label>
+          <label htmlFor="url_selector">Endpoint URL: </label>
           <select
             className={apiStyles.url_value}
             id="url_selector"
             value={apiEndpointURL}
-            onChange={handleApiPathChange}
+            onChange={handleApiEndpointUrlChange}
           >
             {apis.map((api, index) => {
               return (
                 <option key={index} value={api.apiEndpointURL}>
                   {api.apiEndpointURL}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="method_selector">Http Method: </label>
+          <select
+            className={apiStyles.url_value}
+            id="method_selector"
+            value={httpMethod}
+            onChange={handleHttpMethodChange}
+          >
+            {httpMethods.map((method, index) => {
+              return (
+                <option key={index} value={method}>
+                  {method}
                 </option>
               );
             })}

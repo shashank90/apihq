@@ -1,7 +1,6 @@
 import styles from "./apiDiscover.module.css";
 import topbarStyles from "../../components/common/topbarstyles.module.css";
 import buttons from "../../components/common/buttons.module.css";
-import { DataGrid } from "@material-ui/data-grid";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect, useCallback, useContext } from "react";
 import ReactDOM from "react-dom";
@@ -9,6 +8,8 @@ import Backdrop from "../../components/common/Backdrop";
 import AddApiModal from "../../components/addApi/AddApiModal";
 import { DeleteOutline } from "@material-ui/icons";
 import AuthContext from "../../store/auth-context";
+import DataTable from "../../components/dataTable/DataTable";
+import { DATA_REFRESH_FREQUENCY } from "../../store/constants";
 
 const getApisURL = "http://localhost:3000/apis/v1/discovered";
 
@@ -30,9 +31,26 @@ export default function APIInventory() {
 
   function handleDelete() {}
 
-  const fetchApisHandler = useCallback(async () => {
+  function updateApis(fetchedApis) {
+    if (apis.length > 0) {
+      if (JSON.stringify(apis) === JSON.stringify(fetchedApis)) {
+        console.log("Matched!!. No change");
+      } else {
+        console.log("Change DETECTED..");
+        setApis(fetchedApis);
+      }
+    } else {
+      setApis(fetchedApis);
+    }
+  }
+
+  async function fetchApiInventoryDataFirstTime() {
     setIsLoading(true);
     setError(null);
+    fetchApiInventoryDataPeriodic();
+    setIsLoading(false);
+  }
+  async function fetchApiInventoryDataPeriodic() {
     try {
       const response = await fetch(getApisURL, {
         method: "GET",
@@ -62,16 +80,20 @@ export default function APIInventory() {
           addedBy: api.added_by,
         };
       });
-      setApis(transformedApis);
+      updateApis(transformedApis);
     } catch (error) {
       setError(error.message);
     }
-    setIsLoading(false);
-  }, []);
+  }
 
   useEffect(() => {
-    fetchApisHandler();
-  }, [fetchApisHandler]);
+    console.log("Fetch Api Inventory data on first load...");
+    fetchApiInventoryDataFirstTime();
+    const interval = setInterval(() => {
+      fetchApiInventoryDataPeriodic();
+    }, DATA_REFRESH_FREQUENCY);
+    return () => clearInterval(interval);
+  }, []);
 
   const columns = [
     { field: "id", headerName: "ID", width: 50 },
@@ -162,15 +184,7 @@ export default function APIInventory() {
     },
   ];
 
-  let content = (
-    <DataGrid
-      rows={apis}
-      disableSelectionOnClick
-      columns={columns}
-      pageSize={8}
-      checkboxSelection
-    />
-  );
+  let content = <DataTable data={apis} columns={columns} />;
 
   if (error) {
     content = <p>{error}</p>;
