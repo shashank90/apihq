@@ -1,0 +1,42 @@
+[
+    {
+        "rule": "operation-tag-defined" ,
+        "info" : {
+            "headline":"Grouping Operations with Tags",
+            "description": "You can assign a list of tags to each API operation. Tagged operations may be handled differently by tools and libraries. For example, Swagger UI uses tags to group the displayed operations.",
+            "example" : "paths:\n  /pet/findByStatus:\n    get:\n      summary: Finds pets by Status\n      tags:\n        - pets\n      ...\n  /pet:\n    post:\n      summary: Adds a new pet to the store\n      tags:\n        - pets\n      ...\ntags:\n  - name: pets\n    description: Everything about your Pets\n    externalDocs:\n      url: http://docs.my-api.com/pet-operations.htm\n  - name: store\n    description: Access to Petstore orders\n    externalDocs:\n      url: http://docs.my-api.com/store-orders.htm"
+        }
+    },
+    {
+        "rule": "operation-description" ,
+        "info" : {
+            "headline":"Operation Description",
+            "description": "For each path, you can define operations (HTTP methods) that can be used to access that path like get, post, put, patch, delete, head, and options. And a description can be added for each such operation",
+            "example" : "paths:\n  /users/{id}:\n    get:\n      summary: Gets a user by ID.\n      description: >\n        A detailed description of the operation.\n        GitHub Flavored Markdown can be used for rich text representation\""
+        }
+    },
+    {
+        "rule": "string-boundary" ,
+        "info" : {
+            "headline":"String Boundary",
+            "description": "Add string boundary to limit input length",
+            "example" : "post:\n  description: Creates a new pet in the store\n  operationId: addPet\n  requestBody:\n    description: Pet to add to the store\n    required: true\n    content:\n      application/json:\n        schema:\n          $ref: \"#/components/schemas/NewPet\"\n\n\nNewPet:\n  type: object\n  description: JSON defining a Pet object\n  required:\n    - name\n  properties:\n    name:\n      type: string\n      maxLength: 10\n      pattern: ^[A-Za-z0-9]{3,10}$"
+        }
+    },
+    {
+        "rule": "oas3-api-servers" ,
+        "info" : {
+            "headline":"OpenAPI servers",
+            "description": "OpenAPI servers must be present and non-empty array",
+            "example" : "servers:\n  - url: https://example.com/api\n    description: Production server\n  - url: https://staging.example.com/api\n    description: Staging server\n  - url: http://localhost:3001\n    description: Development server"
+        }
+    },
+    {
+        "rule": "default" ,
+        "info" : {
+            "headline":"Yet to Add",
+            "description": "Please contact support",
+            "example" : ""
+        }
+    }
+]

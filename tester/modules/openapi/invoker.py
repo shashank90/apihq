@@ -46,7 +46,7 @@ VALID_message = "All valid"
 INLINE = "inline"
 PARENT_ATTRIBUTE = "parent_attribute"
 # Http Connection Read Timeout in seconds
-READ_TIMEOUT = 5
+READ_TIMEOUT = 10
 SKIP_FILES = ["__init__.py", "__pycache__"]
 STR = "str"
 INT = "int"

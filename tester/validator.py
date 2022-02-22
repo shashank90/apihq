@@ -7,6 +7,7 @@ import json
 from typing import List, Dict
 from utils.constants import VALIDATE_REPORT
 from db.model.api_validate import ValidateStatusEnum
+from utils.file_cache_handler import get_validater_rule_info
 
 from utils.file_handler import write_json
 from utils.os_cmd_runner import run_cmd
@@ -15,6 +16,11 @@ from utils.os_cmd_runner import run_cmd
 logger = Logger(__name__)
 LINT_CMD = "lint-openapi"
 YAML_EXCEPTION = "YAMLException:"
+DEFAULT_RULE_DESCRIPTION = {
+    "heading": "Yet to add",
+    "description": "Yet to add",
+    "example": "Contact support",
+}
 
 
 def validate(
@@ -49,7 +55,8 @@ def validate(
         return result
 
     validate_out: str = preprocess_validate(validate_output)
-    logger.debug(validate_out)
+
+    # logger.debug(validate_out)
 
     try:
         validate_result: Dict = json.loads(validate_out)
@@ -104,22 +111,31 @@ def process_validate(validate_out: Dict) -> Dict:
     for key, items in validate_out.items():
         if key == "errors" or key == "warnings":
             for item in items:
+                rule_description = get_rule_description(item["rule"])
                 path = ".".join(item["path"])
                 item["path"] = path
-                item[
-                    "example"
-                ] = "This is a good example \n for you to follow. \n Add a sample yaml"
+                item["heading"] = rule_description.get("heading")
+                item["description"] = rule_description.get("description")
+                item["example"] = rule_description.get("example")
                 final_messages.append(item)
 
     return {"messages": final_messages}
+
+
+def get_rule_description(rule):
+    validater_info_rules: List[Dict] = get_validater_rule_info()
+    for info_obj in validater_info_rules:
+        info_rule = info_obj["rule"]
+        if info_rule == rule:
+            return info_obj["info"]
+    return DEFAULT_RULE_DESCRIPTION
 
 
 def preprocess_validate(audit_output: str) -> str:
     """
     Preprocess audit output such that it can be displayed with proper formatting
     """
-    # return re.sub( r"(^\n[Warning\]\s+[a-zA-Z\s.,\n]*).validaterc file.\n\n", "", audit_output)
-    return re.sub(r"(^[Warning\]\s+[a-zA-Z\s.,\n]*).validaterc file.", "", audit_output)
+    return re.sub(r"(^[Warning\]\s+['_\-()a-zA-Z\s.,\n]*)", "", audit_output)
 
 
 def lint_yaml(audit_output: str) -> str:

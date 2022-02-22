@@ -56,3 +56,8 @@ YAML_LINT_ERROR_PREFIX = "Invalid YAML uploaded. Error: "
 
 ERROR_TYPE_REQUEST = "Request Validation"
 ERROR_TYPE_RESPONSE = "Response Validation"
+
+VALIDATER_RULE_INFO_FILE_NAME = "validater_rule_info.json"
+VALIDATER_RULE_INFO_FILE_PATH = os.path.join(
+    TEMP_DIR, "utils", VALIDATER_RULE_INFO_FILE_NAME
+)

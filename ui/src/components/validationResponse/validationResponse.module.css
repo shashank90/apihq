@@ -27,11 +27,19 @@
   margin-top: 10px;
   margin-right: 10px;
 }
-
+.description_container {
+  margin-top: 10px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
 .example_body {
   border: 1px solid gray;
   border-radius: 5px;
-  margin-left: 10px;
+  margin-left: 20px;
   margin-right: 50px;
   margin-top: 10px;
+  margin-bottom: 10px;
+  width: 500px;
+  height: 550px;
+  overflow: auto;
 }

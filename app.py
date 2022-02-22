@@ -11,6 +11,7 @@ from apis.validate.routes import validate_bp
 from apis.run.routes import run_bp
 from utils.constants import WORK_DIR
 from utils.file_handler import remove_files
+from utils.file_cache_handler import init_cache
 
 logger = Logger(__name__)
 
@@ -52,7 +53,8 @@ def create_app():
 if __name__ == "__main__":
     # Initialise logger
     init_logger()
+    # Initialize file cache
+    init_cache()
     # Initialize app
-    create_app()
 
-    # tester.test()
+    create_app()

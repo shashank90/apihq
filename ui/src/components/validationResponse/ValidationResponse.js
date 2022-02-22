@@ -3,8 +3,16 @@ import styles from "./validationResponse.module.css";
 import React, { useState } from "react";
 
 export default function ValidationResponse(props) {
+  console.log("In Validation Response component...");
   const [showExample, setShowExample] = useState(false);
-  const [example, setExample] = useState("");
+  const [exampleData, setExampleData] = useState({
+    description: "",
+    example: "",
+  });
+
+  console.log("props show example " + props.showExample);
+  console.log("component showExample " + showExample);
+
   const validationResponse = props.response;
   console.log(validationResponse);
 
@@ -15,7 +23,12 @@ export default function ValidationResponse(props) {
   function showExampleHandler(index) {
     setShowExample(true);
     const responseObject = validationResponse.messages[index];
-    setExample(responseObject.example);
+    setExampleData(responseObject);
+  }
+
+  // Hide example if validate button is hit freshly and if example is already being shown
+  if (showExample && !props.showExample && exampleData.description) {
+    setShowExample(false);
   }
 
   let content = <div></div>;
@@ -34,7 +47,7 @@ export default function ValidationResponse(props) {
     return (
       <div className={styles.example_container}>
         <div className={styles.example_head}>
-          <div className={styles.example_heading}>Example</div>
+          <div className={styles.example_heading}>Description</div>
           <div className={styles.example_back_btn}>
             <button
               className={buttons.action_btn}
@@ -44,7 +57,11 @@ export default function ValidationResponse(props) {
             </button>
           </div>
         </div>
-        <div className={styles.example_body}>{example}</div>
+        <div className={styles.description_container}>
+          {exampleData.description}
+        </div>
+        <div className={styles.example_heading}>Example</div>
+        <div className={styles.example_body}>{exampleData.example}</div>
       </div>
     );
   } else {

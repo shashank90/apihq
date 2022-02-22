@@ -29,6 +29,7 @@ export default function SpecEditor(props) {
   const [specLoading, setSpecLoading] = useState(false);
   const [specError, setSpecError] = useState(null);
   const authCtx = useContext(AuthContext);
+  const showExample = false;
 
   // Use this to go back to appropriate previous page
   // const location = useLocation();
@@ -37,9 +38,10 @@ export default function SpecEditor(props) {
 
   const params = useParams();
   let specId = params.specId;
-  console.log(specId);
+  // console.log(specId);
 
   function onChange(newValue) {
+    console.log(newValue);
     setSpec(newValue);
     // var obj = jsyaml.load(newValue);
     // var jsonStr = JSON.stringify(obj);
@@ -117,18 +119,22 @@ export default function SpecEditor(props) {
   //Validation response content
   let validationContent = <div></div>;
 
-  if (validationResponse) {
-    validationContent = (
-      <div className={styles.validate_content}>
-        <ValidationResponse response={validationResponse} />
-      </div>
-    );
-  }
   if (validationError) {
     validationContent = <p className={styles.error_text}>{validationError}</p>;
   }
   if (validationLoading) {
     validationContent = <p>Loading...</p>;
+  }
+  if (validationResponse) {
+    console.log(validationResponse);
+    validationContent = (
+      <div className={styles.validate_content}>
+        <ValidationResponse
+          response={validationResponse}
+          showExample={showExample}
+        />
+      </div>
+    );
   }
 
   const handleOnBack = () => {
@@ -171,7 +177,7 @@ export default function SpecEditor(props) {
 
       // Parse response data
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       if (!response.ok) {
         console.log("Response status: " + response.status);
         if ("error" in data) {
@@ -183,7 +189,9 @@ export default function SpecEditor(props) {
         throw new Error(data.message);
       } else {
         if ("validate_output" in data) {
-          setValidationResponse(data.validate_output);
+          const validate_output = data.validate_output;
+          // console.log(validate_output);
+          setValidationResponse(validate_output);
         }
       }
     } catch (error) {
