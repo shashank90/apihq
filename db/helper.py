@@ -62,6 +62,20 @@ def update_validation_status(spec_id: str, user_id: str, status: ValidateStatusE
     session.commit()
 
 
+def get_api_status(spec_id: str) -> str:
+    """
+    Given spec id, get validation status
+    """
+    spec: ApiSpec = get_spec(spec_id)
+    return spec.validate_result.status.name
+
+
+def get_apis():
+    """
+    Get apis given spec_id
+    """
+
+
 def get_validation_status(spec_id: str) -> str:
     """
     Get validation status given spec_id

@@ -1,17 +1,13 @@
 import buttons from "../../components/common/buttons.module.css";
 import styles from "./validationResponse.module.css";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function ValidationResponse(props) {
-  console.log("In Validation Response component...");
   const [showExample, setShowExample] = useState(false);
   const [exampleData, setExampleData] = useState({
     description: "",
     example: "",
   });
-
-  console.log("props show example " + props.showExample);
-  console.log("component showExample " + showExample);
 
   const validationResponse = props.response;
   console.log(validationResponse);
@@ -26,10 +22,12 @@ export default function ValidationResponse(props) {
     setExampleData(responseObject);
   }
 
-  // Hide example if validate button is hit freshly and if example is already being shown
-  if (showExample && !props.showExample && exampleData.description) {
-    setShowExample(false);
-  }
+  // Hide selected example if new validation response is received(upon hitting validate button)
+  useEffect(() => {
+    if (showExample) {
+      setShowExample(false);
+    }
+  }, [validationResponse]);
 
   let content = <div></div>;
 

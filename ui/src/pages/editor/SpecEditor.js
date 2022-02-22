@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect, useContext } from "react";
 import styles from "./specEditor.module.css";
 import AceEditor from "react-ace";
 import { defaultValue } from "./defaultTemplate.js";
-import jsyaml from "js-yaml";
 import "ace-builds/src-noconflict/mode-yaml";
 import "ace-builds/src-noconflict/theme-github";
 import { useHistory } from "react-router";
@@ -29,7 +28,6 @@ export default function SpecEditor(props) {
   const [specLoading, setSpecLoading] = useState(false);
   const [specError, setSpecError] = useState(null);
   const authCtx = useContext(AuthContext);
-  const showExample = false;
 
   // Use this to go back to appropriate previous page
   // const location = useLocation();
@@ -129,10 +127,7 @@ export default function SpecEditor(props) {
     console.log(validationResponse);
     validationContent = (
       <div className={styles.validate_content}>
-        <ValidationResponse
-          response={validationResponse}
-          showExample={showExample}
-        />
+        <ValidationResponse response={validationResponse} />
       </div>
     );
   }

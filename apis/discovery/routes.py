@@ -4,13 +4,10 @@ import os
 import shutil
 from flask import Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
+from db.model.api_validate import ValidateStatusEnum
 from tester.validator import validate
 from apis.auth.decorators.decorator import token_required
-from db.helper import (
-    add_api_to_inventory,
-    add_spec,
-    get_api_inventory,
-)
+from db.helper import add_api_to_inventory, add_spec, get_api_inventory, get_api_status
 from db.model.api_inventory import ApiInventory, AddedByEnum
 from tester.modules.openapi.openapi_parser import get_paths
 from utils import uuid_handler
@@ -139,6 +136,42 @@ def allowed_discovery_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+@discovery_bp.route("/apis/v1/discovered", methods=["GET"])
+@token_required
+def get_discovered_apis(current_user):
+    """
+    Return discovered APIs from inventory table
+    """
+    user_id = current_user.user_id
+    logger.info(f"Returning APIs discovered for user {user_id}")
+    api_list = get_api_inventory(user_id)
+
+    apis = [
+        {
+            "spec_id": api.spec_id,
+            "status": get_api_status(api.spec_id),
+            "api_id": api.api_id,
+            "api_path": api.api_path,
+            "api_endpoint_url": api.api_endpoint_url,
+            # coma separated http methods (string)
+            "http_method": api.http_method,
+            "added_by": api.added_by.name,
+            "message": api.message,
+            "updated": api.time_updated,
+        }
+        for api in api_list
+    ]
+
+    # Query param to fetch apis with given status
+    status = request.args.get("status")
+    if status:
+        apis = list(filter(lambda d: d["status"] == status, apis))
+
+    response = jsonify({"message": "success", "apis": apis})
+    response.status_code = 200
+    return response
+
+
 @discovery_bp.route("/apis/v1/discover/agent", methods=["POST"])
 @token_required
 def discover_api(current_user):
@@ -172,42 +205,3 @@ def discover_api(current_user):
     resp.status_code = 201
 
     return resp
-
-
-@discovery_bp.route("/apis/v1/discovered", methods=["GET"])
-@token_required
-def get_discovered_apis(current_user):
-    """
-    Return discovered APIs from inventory table
-    """
-    user_id = current_user.user_id
-    logger.info(f"Returning APIs discovered for user {user_id}")
-    api_list = get_api_inventory(user_id)
-
-    apis = [
-        {
-            "spec_id": api.spec_id,
-            "api_id": api.api_id,
-            "api_path": api.api_path,
-            "api_endpoint_url": api.api_endpoint_url,
-            # coma separated http methods (string)
-            "http_method": api.http_method,
-            "added_by": api.added_by.name,
-            "message": api.message,
-            "updated": api.time_updated,
-        }
-        for api in api_list
-    ]
-
-    resp = jsonify({"message": "success", "apis": apis})
-    resp.status_code = 200
-    return resp
-
-
-def store_file(file):
-    file_name = file.filename
-    logger.info(f"Saving target recon file {file_name}")
-    contents = file.read()
-    md5_hash = hashlib.md5()
-    md5_hash.update(contents)
-    digest = md5_hash.hexdigest()

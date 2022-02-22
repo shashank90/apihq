@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback, useContext } from "react";
 import apiStyles from "./apiSelectorModal.module.css";
 import buttons from "../common/buttons.module.css";
 import Buttons from "../common/Buttons";
-import { useHistory } from "react-router";
 import { DeleteOutline } from "@material-ui/icons";
 import AuthContext from "../../store/auth-context";
+import { READY_FOR_SCAN } from "../../store/constants";
 
-const getApisURL = "http://localhost:3000/apis/v1/discovered";
+const getApisURL =
+  "http://localhost:3000/apis/v1/discovered?status=" + READY_FOR_SCAN;
 const runAPIBaseURL = "http://localhost:3000/apis/v1/run";
 
 export default function APIDropdownModal(props) {
