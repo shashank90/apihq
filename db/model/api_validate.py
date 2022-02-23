@@ -6,7 +6,10 @@ from db.database import Base
 class ValidateStatusEnum(enum.Enum):
     LINT_ERROR = "lint_error"
     FIX_VALIDATION_ERROR = "fix_validation_error"
-    READY_FOR_SCAN = "ready_for_scan"
+    RUN_API = "run_api"
+
+
+VSEnum = Enum(ValidateStatusEnum, inherit_schema=True)
 
 
 class ApiValidate(Base):
@@ -15,8 +18,9 @@ class ApiValidate(Base):
     id = Column(Integer, primary_key=True)
     spec_id = Column(String(40), ForeignKey("api_spec.spec_id", ondelete="CASCADE"))
     user_id = Column(String, ForeignKey("user.user_id"))  # Who initiated validate
-    status = Column(Enum(ValidateStatusEnum), nullable=False)
     score = Column(Integer, nullable=True)
+    status = Column(VSEnum, nullable=False)
+    message = Column(String(160), nullable=True)
     time_created = Column(DateTime, default=func.now(), nullable=False)
     time_updated = Column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

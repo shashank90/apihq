@@ -10,6 +10,7 @@ import ValidationResponse from "../../components/validationResponse/ValidationRe
 import { useParams } from "react-router-dom";
 import AuthContext from "../../store/auth-context";
 import { TEMPLATE } from "../../store/constants";
+import { SPEC_STRING_MAX_LENGTH } from "../../store/constants";
 
 const fileSaveBaseURL = "http://localhost:3000/apis/v1/spec_strings";
 const getSpecBaseURL = "http://localhost:3000/apis/v1/specs";
@@ -27,34 +28,31 @@ export default function SpecEditor(props) {
   const [validationError, setValidationError] = useState(null);
   const [specLoading, setSpecLoading] = useState(false);
   const [specError, setSpecError] = useState(null);
+  const isBackBtnVisible = true;
+  let isActionBtnVisible = true;
+  const isNextBtnVisible = false;
+  const history = useHistory();
+  const actionButtonLabelSteady = "Validate";
+  const actionButtonLabelRunning = "Validating";
   const authCtx = useContext(AuthContext);
-
-  // Use this to go back to appropriate previous page
-  // const location = useLocation();
-  // const prevPath = location.state.prevPath;
-  // console.log(prevPath);
 
   const params = useParams();
   let specId = params.specId;
   // console.log(specId);
 
   function onChange(newValue) {
-    console.log(newValue);
+    // console.log(newValue);
+    if (newValue.length > SPEC_STRING_MAX_LENGTH) {
+      setSpecError(
+        "Spec length cannot exceed " + SPEC_STRING_MAX_LENGTH + " characters"
+      );
+    }
     setSpec(newValue);
-    // var obj = jsyaml.load(newValue);
-    // var jsonStr = JSON.stringify(obj);
-    // console.log(jsonStr);
   }
 
   function handleCollectionNameChange(event) {
     setCollectionName(event.target.value);
   }
-
-  const isBackBtnVisible = true;
-  const isActionBtnVisible = true;
-  const isNextBtnVisible = false;
-  const history = useHistory();
-  const actionButtonLabel = "Validate";
 
   const fetchSpecHandler = useCallback(async () => {
     if (specId == TEMPLATE) {
@@ -148,6 +146,7 @@ export default function SpecEditor(props) {
 
     e.preventDefault();
     setValidationLoading(true);
+    isActionBtnVisible = false;
 
     const spec_object = { collection_name: collectionName, spec_string: spec };
 
@@ -202,15 +201,24 @@ export default function SpecEditor(props) {
       <div className={styles.header_container}>
         <form>
           <div className={styles.btn_container}>
-            <Buttons
-              isBackBtnVisible={isBackBtnVisible}
-              onBackHandle={handleOnBack}
-              isActionBtnVisible={isActionBtnVisible}
-              onActionHandle={handleOnAction}
-              actionButtonLabel={actionButtonLabel}
-              isNextBtnVisible={isNextBtnVisible}
-              onNextHandle={handleOnAction}
-            />
+            {!validationLoading && (
+              <Buttons
+                isBackBtnVisible={isBackBtnVisible}
+                onBackHandle={handleOnBack}
+                isActionBtnVisible={isActionBtnVisible}
+                onActionHandle={handleOnAction}
+                actionButtonLabel={actionButtonLabelSteady}
+              />
+            )}
+            {validationLoading && (
+              <Buttons
+                isBackBtnVisible={isBackBtnVisible}
+                onBackHandle={handleOnBack}
+                isActionBtnVisible={isActionBtnVisible}
+                onActionHandle={handleOnAction}
+                actionButtonLabel={actionButtonLabelRunning}
+              />
+            )}
           </div>
           <div className={styles.header_msg_container}>
             <div className={styles.msg_container}>
@@ -231,6 +239,7 @@ export default function SpecEditor(props) {
                   size="30"
                   value={collectionName}
                   onChange={handleCollectionNameChange}
+                  maxlength="30"
                 ></input>
               </div>
               <div className={styles.status_container}>

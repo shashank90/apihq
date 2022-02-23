@@ -32,10 +32,10 @@
         }
     },
     {
-        "rule": "default" ,
+        "rule": "malformed-spec" ,
         "info" : {
-            "headline":"Yet to Add",
-            "description": "Please contact support",
+            "headline":"Malformed Spec",
+            "description": "One or more nodes are misplaced. Or node type isn't specified properly",
             "example" : ""
         }
     }

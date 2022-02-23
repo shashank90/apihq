@@ -5,7 +5,7 @@ import re
 import os
 import json
 from typing import List, Dict
-from utils.constants import VALIDATE_REPORT
+from utils.constants import DEFAULT_LINT_ERROR_MESSAGE, VALIDATE_REPORT
 from db.model.api_validate import ValidateStatusEnum
 from utils.file_cache_handler import get_validater_rule_info
 
@@ -58,20 +58,34 @@ def validate(
 
     # logger.debug(validate_out)
 
+    validate_report_path = os.path.join(data_dir, VALIDATE_REPORT)
     try:
         validate_result: Dict = json.loads(validate_out)
         final_messages = process_validate(validate_result)
         # Write validate output to data dir
-        validate_report_path = os.path.join(data_dir, VALIDATE_REPORT)
         write_json(validate_report_path, final_messages)
         validate_out = final_messages
     except Exception as e:
-        logger.exception("Could not parse validate output into json. ")
+        logger.error(
+            f"Could not deserialize validate output into json(dict) for spec_id: [{spec_id}]. Error: {str(e)}"
+        )
         status_enum = ValidateStatusEnum.LINT_ERROR
-        status = update_validate_status(spec_id, user_id, final_messages, status_enum)
+        status = update_validate_status(spec_id, user_id, None, status_enum)
 
         # Could be a lint error. Return validate out as is (non-json output)
-        result["validate_out"] = lint_yaml(validate_out)
+        if validate_out and len(validate_out) > 0:
+            lint_out = lint_yaml(validate_out)
+            lint_error_message = get_default_lint_error_message(lint_out)
+            result["validate_out"] = lint_error_message
+            logger.info(
+                f"Hence writing validate_output directly to file for spec_id: [{spec_id}]"
+            )
+            write_json(validate_report_path, lint_error_message)
+        else:
+            lint_error_message = get_default_lint_error_message(None)
+            result["validate_out"] = lint_error_message
+            write_json(validate_report_path, lint_error_message)
+
         result["status"] = ValidateStatusEnum.LINT_ERROR.name
         result["is_lint_error"] = True
         return result
@@ -84,19 +98,43 @@ def validate(
     return result
 
 
+def get_default_lint_error_message(validate_out):
+    """
+    Default lint error message to be written to json file
+    """
+    if validate_out:
+        return {"messages": [{"message": validate_out, "path": "", "line": ""}]}
+    return {
+        "messages": [
+            {
+                "message": DEFAULT_LINT_ERROR_MESSAGE,
+                "path": "",
+                "line": "",
+                "rule": "malformed-spec",
+            }
+        ]
+    }
+
+
 def update_validate_status(
-    spec_id: str, user_id, messages: List[Dict], in_status: ValidateStatusEnum
+    spec_id: str, user_id, message_object: Dict, in_status: ValidateStatusEnum
 ) -> str:
     """
     Logic that makes an api ready for scan
     """
     status: str = None
-    # Update validation status. Right now logic may be restrict. TODO: Come up with a score instead ?
-    if len(messages) > 0:
-        update_validation_status(spec_id, user_id, in_status)
+    if message_object:
+        messages = message_object.get("messages")
+        # Update validation status. Right now logic may be restrict. TODO: Come up with a score instead ?
+        if len(messages) > 0:
+            update_validation_status(spec_id, user_id, in_status)
+        else:
+            update_validation_status(spec_id, user_id, ValidateStatusEnum.RUN_API)
+            status = ValidateStatusEnum.RUN_API.name
     else:
-        status = ValidateStatusEnum.READY_FOR_SCAN.name
-        update_validation_status(spec_id, user_id, ValidateStatusEnum.READY_FOR_SCAN)
+        status = in_status.name
+        update_validation_status(spec_id, user_id, in_status)
+
     return status
 
 

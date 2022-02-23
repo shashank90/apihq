@@ -1110,6 +1110,7 @@ def extract_path_params(api_path):
 
 
 def _invoke_apis(
+    run_id: str,
     api_path: str,
     spec_path: str,
     data_dir: str,
@@ -1143,7 +1144,9 @@ def _invoke_apis(
         validations: Dict = get_api_validations(endpoint_obj)
         openapi_types: Dict = get_api_param_types(endpoint_obj)
 
-        logger.info(f"Preparing fuzzed payloads for api: {api_path}")
+        logger.info(
+            f"Preparing fuzzed payloads with run_id: {run_id} for api: {api_path}"
+        )
         combined_fuzzed_payloads = get_json_payloads(
             input_params,
             openapi_types,
@@ -1168,7 +1171,13 @@ def _invoke_apis(
         # Pass fuzzed payloads one at a time
         response_data = None
         response_status = None
-        logger.info(f"Sending fuzzed requests for api: {api_path}")
+        logger.info(
+            f"Sending fuzzed requests with run_id: {run_id} for api: {api_path}"
+        )
+
+        # Counter to keep track of how many tests ran(payloads were sent)
+        payload_count = len(attribute_payloads)
+        counter = 0
 
         for req_metadata, attribute_payload in zip(
             request_metadata, attribute_payloads
@@ -1191,7 +1200,9 @@ def _invoke_apis(
             req_metadata[REQUEST_ID] = request_id
 
             try:
-                logger.info(f"Sending request: {attribute_payload}")
+                logger.info(
+                    f"Sending request: {attribute_payload} with run_id: {run_id} for request_id: {request_id}"
+                )
 
                 # If payload is a list
                 if isinstance(attribute_payload, list):
@@ -1217,14 +1228,17 @@ def _invoke_apis(
                     response_data = response.data
                     response_status = response.status
 
+                counter = counter + 1
             except exceptions_module.ApiValueError as ae:
-                logger.info(f"Api Value Error:  {str(ae)}")
-            except exceptions_module.ApiException as api_exception_object:
-                # print(api_exception_object)
-                response_data = api_exception_object.body
-                response_status = api_exception_object.status
+                logger.error(f"Api Value Error:  {str(ae)}")
+            except exceptions_module.ApiException as api_exception:
+                logger.error(f"Api Exception Error: {str(api_exception)}")
+                response_data = api_exception.body
+                response_status = api_exception.status
             except exceptions_module.ApiAttributeError as ae:
-                logger.info(f"Api Attribute Error: {str(ae)}")
+                logger.error(f"Api Attribute Error: {str(ae)}")
+            except Exception:
+                logger.exception(f"Invocation failed for {request_id}")
 
             # Form response object for each request
             full_api_path = urljoin(host_url, api_path)
@@ -1241,6 +1255,10 @@ def _invoke_apis(
                 "response_status": response_status,
             }
             response_list.append(response_obj)
+
+        logger.info(f"Payloads generated: {payload_count}, sent: {counter}")
+        if counter == payload_count:
+            logger.info(f"All generated payloads were sent")
 
     return (request_metadata, response_list)
 

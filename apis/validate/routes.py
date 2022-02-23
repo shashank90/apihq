@@ -3,6 +3,7 @@ import yaml
 from collections import OrderedDict
 
 import json
+from apis.response_handler.decorator import handle_response
 from db.model.api_inventory import AddedByEnum
 from db.model.api_spec import ApiSpec
 import os
@@ -41,7 +42,7 @@ logger = Logger(__name__)
 
 @validate_bp.route("/apis/v1/spec_strings", methods=["POST"])
 @token_required
-# Accept: application/json
+@handle_response
 def create_openapi_str(current_user):
     user_id = current_user.user_id
     logger.info(f"Creating OpenAPI spec string for user {user_id}")
@@ -124,7 +125,7 @@ def create_openapi_str(current_user):
 
 @validate_bp.route("/apis/v1/spec_strings/<spec_id>", methods=["PUT"])
 @token_required
-# Accept: application/json
+@handle_response
 def update_openapi_str(current_user, spec_id):
     user_id = current_user.user_id
     logger.info(f"Updating OpenAPI spec string {spec_id} for user {user_id}")
@@ -190,6 +191,7 @@ def update_openapi_str(current_user, spec_id):
 
 @validate_bp.route("/apis/v1/specs/<spec_id>", methods=["GET"])
 @token_required
+@handle_response
 def retrieve_spec(current_user, spec_id):
     user_id = current_user.user_id
 
@@ -229,19 +231,25 @@ def retrieve_spec(current_user, spec_id):
     status = get_validation_status(spec_id)
 
     # Read YAML file
+    spec_string = None
     with open(spec_path, "r") as f:
-        # yaml = ruamel.yaml.YAML()
-        # data = yaml.safe_load(stream)
-        # yaml.preserve_quotes = True
-        # s = yaml.safe_dump(f, sort_keys=False)
+        try:
+            data = yaml.safe_load(f)
+            spec_string = yaml.dump(data, sort_keys=False)
+        except Exception as e:
+            logger.error(
+                f"YAML safe loader could not load openapi yaml as it's malformed. Error: {str(e)}"
+            )
+            logger.info(
+                f"Hence. Reading file contents from spec: [{spec_path}] directly"
+            )
+            spec_string = read_content(spec_path)
 
-        data = yaml.safe_load(f)
-        unsorted_data = yaml.dump(data, sort_keys=False)
         response = jsonify(
             {
                 "message": "success",
                 "collection_name": collection_name,
-                "spec_string": unsorted_data,
+                "spec_string": spec_string,
                 "validate_output": validate_output,
                 "status": status,
             }
@@ -252,6 +260,7 @@ def retrieve_spec(current_user, spec_id):
 
 @validate_bp.route("/apis/v1/specs/validate/<spec_id>", methods=["GET"])
 @token_required
+@handle_response
 def audit_api(current_user, spec_id):
     user_id = current_user.user_id
     logger.info(f"Validating API spec {spec_id} for user {user_id}...")

@@ -1,5 +1,7 @@
 export const TEMPLATE = "template";
+export const SPEC_STRING_MAX_LENGTH = 8192;
 // Data fetch frequency in milliseconds
 export const DATA_REFRESH_FREQUENCY = 15000;
 
-export const READY_FOR_SCAN = "FIX_VALIDATION_ERROR";
+export const RUN_API = "RUN_API";
+export const COMPLETED = "COMPLETED";

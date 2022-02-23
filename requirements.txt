@@ -28,3 +28,4 @@ semgrep
 prance
 openapi-core
 fpdf
+marshmallow

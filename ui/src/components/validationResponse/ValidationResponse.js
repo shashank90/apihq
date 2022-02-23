@@ -1,6 +1,7 @@
 import buttons from "../../components/common/buttons.module.css";
 import styles from "./validationResponse.module.css";
 import React, { useEffect, useState } from "react";
+import AceEditor from "react-ace";
 
 export default function ValidationResponse(props) {
   const [showExample, setShowExample] = useState(false);
@@ -59,7 +60,25 @@ export default function ValidationResponse(props) {
           {exampleData.description}
         </div>
         <div className={styles.example_heading}>Example</div>
-        <div className={styles.example_body}>{exampleData.example}</div>
+        {/* <div className={styles.example_body}>{exampleData.example}</div> */}
+        <div className={styles.example_body}>
+          <AceEditor
+            mode="yaml"
+            theme="github"
+            // onChange={onChange}
+            readOnly={true}
+            fontSize={18}
+            width="495px"
+            height="545px"
+            tabSize={2}
+            showPrintMargin
+            showGutter={true}
+            highlightActiveLine
+            name="openapi-editor"
+            value={exampleData.example}
+            editorProps={{ $blockScrolling: true }}
+          />
+        </div>
       </div>
     );
   } else {

@@ -4,10 +4,9 @@ import buttons from "../common/buttons.module.css";
 import Buttons from "../common/Buttons";
 import { DeleteOutline } from "@material-ui/icons";
 import AuthContext from "../../store/auth-context";
-import { READY_FOR_SCAN } from "../../store/constants";
+import { RUN_API } from "../../store/constants";
 
-const getApisURL =
-  "http://localhost:3000/apis/v1/discovered?status=" + READY_FOR_SCAN;
+const getApisURL = "http://localhost:3000/apis/v1/discovered?status=" + RUN_API;
 const runAPIBaseURL = "http://localhost:3000/apis/v1/run";
 
 export default function APIDropdownModal(props) {

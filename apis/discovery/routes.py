@@ -4,6 +4,7 @@ import os
 import shutil
 from flask import Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
+from apis.response_handler.decorator import handle_response
 from db.model.api_validate import ValidateStatusEnum
 from tester.validator import validate
 from apis.auth.decorators.decorator import token_required
@@ -19,7 +20,6 @@ from log.factory import Logger
 from utils.constants import (
     CRAWLER,
     ALLOWED_EXTENSIONS,
-    SPEC_STRING,
     UNNAMED,
     YAML_LINT_ERROR_PREFIX,
 )
@@ -38,6 +38,7 @@ discovery_bp = Blueprint("discovery_bp", __name__)
 
 @discovery_bp.route("/apis/v1/specs", methods=["POST"])
 @token_required
+@handle_response
 # Accept: multipart/form-data
 def import_api(current_user):
     user_id = current_user.user_id
@@ -110,8 +111,8 @@ def import_api(current_user):
                     "added_by": added_by,
                 }
                 add_api_to_inventory(user_id, api_path, api_insert_record)
-        except Exception as e:
-            logger.info(
+        except Exception:
+            logger.exception(
                 f"Could not extract paths. Uploaded file {spec_path} may not adhere to OpenAPI standard"
             )
 
@@ -138,6 +139,7 @@ def allowed_discovery_file(filename):
 
 @discovery_bp.route("/apis/v1/discovered", methods=["GET"])
 @token_required
+@handle_response
 def get_discovered_apis(current_user):
     """
     Return discovered APIs from inventory table
@@ -174,6 +176,7 @@ def get_discovered_apis(current_user):
 
 @discovery_bp.route("/apis/v1/discover/agent", methods=["POST"])
 @token_required
+@handle_response
 def discover_api(current_user):
     """
     Receive apis from code repository crawler

@@ -4,6 +4,7 @@ import { useHistory } from "react-router-dom";
 import AuthContext from "../../store/auth-context";
 import classes from "./AuthForm.module.css";
 import styles from "../common/errors.css";
+import { SignalCellularConnectedNoInternet0BarSharp } from "@material-ui/icons";
 
 const signupURL = "http://localhost:3000/signup";
 const loginURL = "http://localhost:3000/login";
@@ -20,8 +21,12 @@ const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const switchAuthModeHandler = () => {
+    if (error) {
+      setError("");
+    }
     setIsLogin((prevState) => !prevState);
   };
 
@@ -89,7 +94,8 @@ const AuthForm = () => {
         throw new Error(data.message);
       } else {
         // Mark success message and exit after timeout
-        console.log(message + " successful!");
+        let successMsg = message + " successful!";
+        console.log(successMsg);
         if ("token" in data && "expires_in" in data) {
           const expirationTime = new Date(
             new Date().getTime() + data.expires_in * 1000
@@ -97,11 +103,26 @@ const AuthForm = () => {
           authCtx.login(data.token, expirationTime.toISOString());
           history.replace("/");
         }
+        // Signup successful
+        if (!isLogin) {
+          setMessage(successMsg);
+          setIsLogin(true);
+          setMessage("");
+        }
       }
     } catch (error) {
       setError(error.message);
     }
   };
+
+  let content = <div></div>;
+
+  if (error) {
+    content = <div className={styles.error_text}>{error}</div>;
+  }
+  if (message) {
+    content = <div>{message}</div>;
+  }
 
   return (
     <div className={classes.center}>
@@ -111,12 +132,24 @@ const AuthForm = () => {
           {!isLogin && (
             <div className={classes.control}>
               <label htmlFor="name">Name</label>
-              <input type="name" id="name" required ref={nameInputRef} />
+              <input
+                type="name"
+                id="name"
+                required
+                ref={nameInputRef}
+                maxlength="40"
+              />
             </div>
           )}
           <div className={classes.control}>
             <label htmlFor="email">Email</label>
-            <input type="email" id="email" required ref={emailInputRef} />
+            <input
+              type="email"
+              id="email"
+              required
+              ref={emailInputRef}
+              maxlength="40"
+            />
           </div>
           <div className={classes.control}>
             <label htmlFor="password">Password</label>
@@ -124,15 +157,22 @@ const AuthForm = () => {
               type="password"
               id="password"
               required
+              maxlength="40"
               ref={passwordInputRef}
             />
           </div>
           {!isLogin && (
             <div className={classes.control}>
               <label htmlFor="company">Company</label>
-              <input type="company" id="company" ref={companyInputRef} />
+              <input
+                type="company"
+                id="company"
+                ref={companyInputRef}
+                maxlength="40"
+              />
             </div>
           )}
+          {content}
           <div className={classes.actions}>
             {!loading && (
               <button>{isLogin ? "Login" : "Create Account"}</button>
@@ -147,7 +187,6 @@ const AuthForm = () => {
             </button>
           </div>
         </form>
-        <div className={styles.error_text}>{error}</div>
       </section>
     </div>
   );

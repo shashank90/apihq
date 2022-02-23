@@ -11,6 +11,9 @@ class RunStatusEnum(enum.Enum):
     ERROR = "error"
 
 
+RSEnum = Enum(RunStatusEnum, inherit_schema=True)
+
+
 class ApiRun(Base):
     __tablename__ = "api_run"
 
@@ -19,8 +22,9 @@ class ApiRun(Base):
     api_id = Column(String(40), ForeignKey("api_inventory.api_id", ondelete="CASCADE"))
     http_method = Column(String(20), nullable=True)
     user_id = Column(String, ForeignKey("user.user_id"))  # Who initiated the run
-    status = Column(Enum(RunStatusEnum), nullable=False)
     score = Column(Integer, nullable=True)
+    status = Column(RSEnum, nullable=False)
+    message = Column(String(160), nullable=True)
     time_created = Column(DateTime, default=func.now(), nullable=False)
     time_updated = Column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

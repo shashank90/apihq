@@ -1,8 +1,10 @@
 import os
 from typing import Dict, List
 import threading
+from marshmallow import validate, ValidationError
 from flask import Blueprint, jsonify, request
 from apis.auth.decorators.decorator import token_required
+from apis.response_handler.decorator import handle_response
 from db.helper import (
     add_run_details,
     get_spec,
@@ -18,13 +20,14 @@ from tester.modules.openapi.conformance import ISSUES_FILE, REQUESTS_FILE, run
 from utils import uuid_handler
 from utils.file_handler import read_json
 
-run_bp = Blueprint("scan_bp", __name__)
+run_bp = Blueprint("run_bp", __name__)
 
 logger = Logger(__name__)
 
 
 @run_bp.route("/apis/v1/run/<api_id>", methods=["POST"])
 @token_required
+@handle_response
 # Sample request
 # { api_path: <api_path>, auth_headers: [{"<header_name1>": "<header_value1>"}, {"<header_name2>":"<header_value2>"}] }
 def run_api(current_user, api_id):
@@ -32,11 +35,12 @@ def run_api(current_user, api_id):
     Run a tests to detect if defined spec and implementation are aligned
     """
     user_id = current_user.user_id
-    logger.info(f"Running API from spec {api_id} for user {user_id}")
+    logger.info(f"Running API {api_id} for user {user_id}")
     content = request.get_json()
     api_endpoint_url = content.get("api_endpoint_url")
     http_method = content.get("http_method")
     auth_headers = content.get("auth_headers")
+
     t_auth_headers = transform_headers(auth_headers)
     logger.info(
         f"api_endpoint_url: {api_endpoint_url}; http method :{http_method} auth_headers: {t_auth_headers}"
@@ -66,6 +70,7 @@ def run_api(current_user, api_id):
 
 @run_bp.route("/apis/v1/runs", methods=["GET"])
 @token_required
+@handle_response
 def get_runs(current_user):
     """
     Run a tests to detect if defined spec and implementation are aligned
@@ -83,6 +88,7 @@ def get_runs(current_user):
                     "api_endpoint_url": api_run.api.api_endpoint_url,
                     "http_method": api_run.api.http_method,
                     "status": api_run.status.name,
+                    "message": api_run.message,
                     "updated": api_run.time_updated,
                 }
             )
@@ -102,6 +108,7 @@ def transform_headers(auth_headers: List[Dict]):
 
 @run_bp.route("/apis/v1/issues/<run_id>", methods=["GET"])
 @token_required
+@handle_response
 def get_issues(current_user, run_id):
     """
     Run a tests to detect if defined spec and implementation are aligned

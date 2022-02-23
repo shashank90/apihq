@@ -2,8 +2,10 @@ import os
 
 import shutil
 from typing import Dict, List
-from utils.constants import SDK_DIR
+from utils.constants import SDK_DIR, API_RUN_FAILED
 
+from db.helper import update_run_details
+from db.model.api_run import RunStatusEnum
 from tester.modules.openapi.invoker import _invoke_apis
 from tester.modules.openapi.openapi_util import (
     get_actual_gen_package_path,
@@ -19,11 +21,13 @@ from utils.os_cmd_runner import run_cmd
 logger = Logger(__name__)
 
 
-def generate_sdk(sdk_dir: str, spec_path: str, openapi_config_file_path: str):
+def generate_sdk(
+    run_id: str, sdk_dir: str, spec_path: str, openapi_config_file_path: str
+):
     """
     Generate python sdk from openapi spec(using openapi generator)
     """
-    logger.info("openapi sdk generation begins...")
+    logger.info(f"Openapi sdk generation begins for run_id {run_id}...")
     output = run_cmd(
         [
             "/home/shashank/bin/openapitools/openapi-generator-cli",
@@ -40,26 +44,37 @@ def generate_sdk(sdk_dir: str, spec_path: str, openapi_config_file_path: str):
         timeout=50,
     )
     # logger.info(output)
-    logger.info("openapi sdk generation complete")
+    logger.info(f"Openapi sdk generation complete for run_id {run_id}")
 
 
-def invoke_apis(data_dir: str, api_path: str, spec_path: str, auth_headers: List[Dict]):
+def invoke_apis(
+    run_id: str, data_dir: str, api_path: str, spec_path: str, auth_headers: List[Dict]
+):
     """
-    Perform API conformance test by generating and invoking requests given an api
+    Run Api tests by generating payloads from openapi spec and sending them
     """
     sdk_dir = os.path.join(data_dir, SDK_DIR)
 
-    # Write package name to file. Openapi generator places generated files under this package.
-    pkg = set_package_name(sdk_dir)
-    openapi_config_file_path = write_openapi_config(data_dir, pkg)
+    try:
+        # Write package name to file. Openapi generator places generated files under this package.
+        pkg = set_package_name(sdk_dir)
+        openapi_config_file_path = write_openapi_config(data_dir, pkg)
 
-    generate_sdk(sdk_dir, spec_path, openapi_config_file_path)
+        generate_sdk(run_id, sdk_dir, spec_path, openapi_config_file_path)
 
-    gen_pkg_name = get_generated_pkg_name(openapi_config_file_path)
+        gen_pkg_name = get_generated_pkg_name(openapi_config_file_path)
 
-    move_generated_files(gen_pkg_name)
+        move_generated_files(gen_pkg_name)
 
-    return _invoke_apis(api_path, spec_path, data_dir, gen_pkg_name, auth_headers)
+        return _invoke_apis(
+            run_id, api_path, spec_path, data_dir, gen_pkg_name, auth_headers
+        )
+
+    except Exception:
+        update_run_details(run_id, RunStatusEnum.ERROR, API_RUN_FAILED)
+        logger.exception(f"Openapi sdk generation failed for run_id: {run_id}")
+
+    return None
 
 
 def move_generated_files(gen_pkg_name: str):

@@ -19,6 +19,9 @@ class AddedByEnum(enum.Enum):
     USER = "user"
 
 
+AddByEnum = Enum(AddedByEnum, inherit_schema=True)
+
+
 class ApiInventory(Base):
     __tablename__ = "api_inventory"
 
@@ -30,13 +33,13 @@ class ApiInventory(Base):
     user_id = Column(
         String, ForeignKey("user.user_id")
     )  # User who discovered the api(crawler or actual user)
-    added_by = Column(Enum(AddedByEnum), nullable=False)
+    added_by = Column(AddByEnum, nullable=False)
     api_path = Column(String(120), nullable=False)
     api_endpoint_url = Column(String(120), nullable=True)
     http_method = Column(String(20), nullable=False)
     found_in_file = Column(String(40), nullable=True)
     # Add additional remarks to be displayed
-    message = Column(String(60), nullable=True)
+    message = Column(String(160), nullable=True)
     time_created = Column(DateTime, default=func.now(), nullable=False)
     time_updated = Column(
         DateTime, default=func.now(), onupdate=func.now(), nullable=False

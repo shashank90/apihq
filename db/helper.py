@@ -7,6 +7,8 @@ from db.database import get_session
 import uuid
 from db.model.api_inventory import ApiInventory
 from db.model.api_spec import ApiSpec
+from db.model.user_login import Login
+from db.model.user_api_run_limit import UserApiRunLimit
 from db.model.api_run import ApiRun, RunStatusEnum
 from db.model.user import User
 from db.model.api_validate import ApiValidate, ValidateStatusEnum
@@ -15,7 +17,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 def add_user(name: str, email: str, password: str, company_name: str):
     """
-    Create and insert user object given input params
+    Create user object in db given input params
     """
     user = User(
         user_id=str(uuid.uuid4()),
@@ -28,6 +30,7 @@ def add_user(name: str, email: str, password: str, company_name: str):
     session: Session = get_session()
     session.add(user)
     session.commit()
+    return user
 
 
 def get_user(email: str = None, user_id: str = None):
@@ -51,7 +54,9 @@ def update_validation_status(spec_id: str, user_id: str, status: ValidateStatusE
     Update spec validation status
     """
     session: Session = get_session()
-    api_validate = session.query(ApiValidate).filter_by(spec_id=spec_id).first()
+    api_validate = (
+        session.query(ApiValidate).filter(ApiValidate.spec_id == spec_id).first()
+    )
     # Update status
     if api_validate:
         api_validate.status = status
@@ -68,12 +73,6 @@ def get_api_status(spec_id: str) -> str:
     """
     spec: ApiSpec = get_spec(spec_id)
     return spec.validate_result.status.name
-
-
-def get_apis():
-    """
-    Get apis given spec_id
-    """
 
 
 def get_validation_status(spec_id: str) -> str:
@@ -107,6 +106,20 @@ def get_api_details(api_id: str) -> ApiInventory:
     return api_run
 
 
+def add_login_details(user_id: str, ip_addr: str = None):
+    session: Session = get_session()
+    login_details: Login = Login(user_id, ip_addr)
+    session.add(login_details)
+    session.commit()
+
+
+def add_api_run_limit(user_id: str, limit: int):
+    session: Session = get_session()
+    user_api_run_limit: UserApiRunLimit = UserApiRunLimit(user_id, limit)
+    session.add(user_api_run_limit)
+    session.commit()
+
+
 def get_run_details(run_id: str) -> ApiRun:
     """
     Get run record given run_id
@@ -126,10 +139,12 @@ def add_run_details(run_id: str, api_id: str, user_id: str, run_status: RunStatu
     session.commit()
 
 
-def update_run_details(run_id: str, run_status: RunStatusEnum):
+def update_run_details(run_id: str, run_status: RunStatusEnum, message=None):
     session: Session = get_session()
     api_run = session.query(ApiRun).filter_by(run_id=run_id).first()
     api_run.status = run_status
+    if message:
+        api_run.message = message
     session.commit()
 
 

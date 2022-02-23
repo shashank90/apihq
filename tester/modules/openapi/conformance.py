@@ -1,22 +1,21 @@
-from http.client import BAD_REQUEST
 from pathlib import Path
 import base64
 from typing import List, Dict
-import uuid
-from urllib import request, response
 from urllib.parse import parse_qs, urlsplit
 from db.helper import update_run_details
 from db.model.api_run import RunStatusEnum
 
 # from body_parser import encode_multipart_formdata
 from utils.constants import (
+    API_RUN_FAILED,
     DESCRIPTION,
     ERROR_TYPE_REQUEST,
     ERROR_TYPE_RESPONSE,
+    HTTP_CREATED,
+    HTTP_OK,
     MESSAGE,
     REQUEST_ID,
     HAR_DIR,
-    RESPONSE_VALIDATION,
     ISSUE_ID,
     ZAP_MESSAGE_DIR,
 )
@@ -57,8 +56,6 @@ REQUEST_METADATA_FILE = "request_metadata.json"
 REQUEST_INTENT = "request_intent"
 BAD_REQUEST = "BAD_REQUEST"
 URL = "url"
-OK = 200
-CREATED = 201
 
 
 def get_har(zap: ZAPv2, zap_msg_id: str):
@@ -99,78 +96,83 @@ def run(
     Test API contract conformance by initiating requests that fall outside contract constraints
     """
     # Create and send payloads for each api
-    logger.info(f"Running API Tests for api path: {api_path}")
+    logger.info(f"Running API Tests with run_id {run_id} for api path: {api_path}")
 
-    update_run_details(run_id, RunStatusEnum.IN_PROGRESS)
+    try:
+        update_run_details(run_id, RunStatusEnum.IN_PROGRESS)
 
-    (request_metadata, response_list) = invoke_apis(
-        data_dir, api_path, spec_path, auth_headers
-    )
+        (request_metadata, response_list) = invoke_apis(
+            run_id, data_dir, api_path, spec_path, auth_headers
+        )
 
-    write_request_metadata(data_dir, request_metadata)
+        write_request_metadata(data_dir, request_metadata)
 
-    openapi_core_spec = get_openapi_spec(spec_path)
+        openapi_core_spec = get_openapi_spec(spec_path)
 
-    zap: ZAPv2 = get_zap()
-    zap_messages = get_zap_message_ids(data_dir)
+        zap: ZAPv2 = get_zap()
+        zap_messages = get_zap_message_ids(data_dir)
 
-    # Validate each response against OpenAPI spec for each api
-    response_validation_errors: List[str] = []
-    request_validation_errors: List[str] = []
-    requests = []
-    issues: List[Dict] = []
-    for response_object in response_list:
+        # Validate each response against OpenAPI spec for each api
+        response_validation_errors: List[str] = []
+        request_validation_errors: List[str] = []
+        requests = []
+        issues: List[Dict] = []
+        for response_object in response_list:
 
-        full_api_path = response_object.get("full_api_path")
-        # path_params = response_object.get("path_params")
-        response_status = response_object.get("response_status")
+            full_api_path = response_object.get("full_api_path")
+            # path_params = response_object.get("path_params")
+            response_status = response_object.get("response_status")
 
-        request_id = response_object.get(REQUEST_ID)
-        request_detail = get_zap_message_details(request_id, zap_messages)
-        zap_msg_id = request_detail.get("zap_message_id")
-        har_data = save_har(data_dir, request_id, zap, zap_msg_id)
+            request_id = response_object.get(REQUEST_ID)
+            request_detail = get_zap_message_details(request_id, zap_messages)
+            zap_msg_id = request_detail.get("zap_message_id")
+            har_data = save_har(data_dir, request_id, zap, zap_msg_id)
 
-        add_requests(request_id, har_data, requests)
+            add_requests(request_id, har_data, requests)
 
-        # req_details: Dict = get_request_details(har_data)
-        # req_details["path_params"] = path_params
+            # req_details: Dict = get_request_details(har_data)
+            # req_details["path_params"] = path_params
 
-        # Request validation errors. Record invalid requests that went through
-        if response_status == OK or response_status == CREATED:
-            add_request_error(
-                request_id, request_validation_errors, request_metadata, issues
+            # Request validation errors. Record invalid requests that went through
+            if response_status == HTTP_OK or response_status == HTTP_CREATED:
+                add_request_error(
+                    request_id, request_validation_errors, request_metadata, issues
+                )
+
+            # Response validation errors
+            res_error_messages = get_response_validation_errors(
+                full_api_path, openapi_core_spec, response_object
             )
 
-        # Response validation errors
-        res_error_messages = get_response_validation_errors(
-            full_api_path, openapi_core_spec, response_object
+            add_response_error(
+                request_id, response_validation_errors, res_error_messages, issues
+            )
+
+        error_response_validation_file = os.path.join(
+            data_dir, ERROR_RESPONSE_VALIDATION_FILE
         )
 
-        add_response_error(
-            request_id, response_validation_errors, res_error_messages, issues
+        error_request_validation_file = os.path.join(
+            data_dir, ERROR_REQUEST_VALIDATION_FILE
         )
 
-    error_response_validation_file = os.path.join(
-        data_dir, ERROR_RESPONSE_VALIDATION_FILE
-    )
+        # TODO: Save this to db (Add a request_id and connect table to requests table) so it can be joined with requests table
+        write_json(error_response_validation_file, response_validation_errors)
 
-    error_request_validation_file = os.path.join(
-        data_dir, ERROR_REQUEST_VALIDATION_FILE
-    )
+        write_json(error_request_validation_file, request_validation_errors)
 
-    # TODO: Save this to db (Add a request_id and connect table to requests table) so it can be joined with requests table
-    write_json(error_response_validation_file, response_validation_errors)
+        requests_file = os.path.join(data_dir, REQUESTS_FILE)
+        write_json(requests_file, requests)
 
-    write_json(error_request_validation_file, request_validation_errors)
+        issues_file = os.path.join(data_dir, ISSUES_FILE)
+        write_json(issues_file, issues)
 
-    requests_file = os.path.join(data_dir, REQUESTS_FILE)
-    write_json(requests_file, requests)
+        # Update final db status
+        update_run_details(run_id, RunStatusEnum.COMPLETED)
 
-    issues_file = os.path.join(data_dir, ISSUES_FILE)
-    write_json(issues_file, issues)
-
-    # Update final db status
-    update_run_details(run_id, RunStatusEnum.COMPLETED)
+    except Exception:
+        logger.exception(f"Api Test Run failed to complete for run_id {run_id}")
+        update_run_details(run_id, RunStatusEnum.ERROR, API_RUN_FAILED)
 
 
 def add_requests(request_id: str, har_data: Dict, requests: List):

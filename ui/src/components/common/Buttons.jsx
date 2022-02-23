@@ -11,6 +11,7 @@ export default function Buttons(props) {
   const onNextHandle = props.onNextHandle;
 
   const actionButtonLabel = props.actionButtonLabel
+  const actionButtonDisable = props.actionButtonDisable
 
   isBackBtnVisible = props.isBackBtnVisible;
   isActionBtnVisible = props.isActionBtnVisible;

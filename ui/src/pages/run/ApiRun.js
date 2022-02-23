@@ -10,6 +10,7 @@ import Backdrop from "../../components/common/Backdrop";
 import AuthContext from "../../store/auth-context";
 import DataTable from "../../components/dataTable/DataTable";
 import { DATA_REFRESH_FREQUENCY } from "../../store/constants";
+import { COMPLETED } from "../../store/constants";
 
 const getRunsURL = "http://localhost:3000/apis/v1/runs";
 
@@ -19,6 +20,7 @@ export default function APIScan() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const authCtx = useContext(AuthContext);
+  let buttonLabel = "Run API";
 
   function showDropdownHandler() {
     setDropdownModalIsOpen(true);
@@ -66,14 +68,17 @@ export default function APIScan() {
         }
         throw new Error(data.message);
       } else {
-        const fetchedRuns = data.runs.map((api, index) => {
+        const fetchedRuns = data.runs.map((run, index) => {
+          let showResult = run.status === COMPLETED ? true : false;
           return {
             id: index + 1,
-            runId: api.run_id,
-            endpointURL: api.api_endpoint_url,
-            httpMethod: api.http_method,
-            updated: api.updated,
-            status: api.status,
+            runId: run.run_id,
+            endpointURL: run.api_endpoint_url,
+            httpMethod: run.http_method,
+            updated: run.updated,
+            status: run.status,
+            message: run.message,
+            showResult: showResult,
           };
         });
         updateRuns(fetchedRuns);
@@ -92,14 +97,12 @@ export default function APIScan() {
     return () => clearInterval(interval);
   }, []);
 
-  // console.log(dropdownModalIsOpen);
-
   const columns = [
-    { field: "id", headerName: "ID", width: 100 },
+    { field: "id", headerName: "ID", width: 60 },
     {
       field: "Run Id",
       headerName: "Run Id",
-      width: 200,
+      width: 180,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.runId}</div>;
       },
@@ -113,9 +116,9 @@ export default function APIScan() {
       },
     },
     {
-      field: "HTTP Method",
-      headerName: "HTTP Method",
-      width: 170,
+      field: "Method",
+      headerName: "Method",
+      width: 160,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.httpMethod}</div>;
       },
@@ -123,15 +126,23 @@ export default function APIScan() {
     {
       field: "Status",
       headerName: "Status",
-      width: 200,
+      width: 130,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.status}</div>;
       },
     },
     {
+      field: "Message",
+      headerName: "Message",
+      width: 250,
+      renderCell: (params) => {
+        return <div className="TargetListItem">{params.row.message}</div>;
+      },
+    },
+    {
       field: "Updated",
       headerName: "Updated",
-      width: 200,
+      width: 160,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.updated}</div>;
       },
@@ -148,7 +159,12 @@ export default function APIScan() {
                 pathname: `/apis/run/issues/${params.row.runId}`,
               }}
             >
-              <button className={buttons.green_btn}>View</button>
+              <button
+                className={buttons.green_btn}
+                disabled={!params.row.showResult}
+              >
+                View
+              </button>
             </Link>
           </>
         );
@@ -163,6 +179,7 @@ export default function APIScan() {
   }
 
   if (loading) {
+    buttonLabel = "Running";
     content = <p>Loading...</p>;
   }
 
@@ -191,7 +208,7 @@ export default function APIScan() {
             className={buttons.new_action_btn}
             onClick={() => showDropdownHandler()}
           >
-            Run API
+            {buttonLabel}
           </button>
         </div>
         {content}

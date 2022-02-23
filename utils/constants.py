@@ -61,3 +61,27 @@ VALIDATER_RULE_INFO_FILE_NAME = "validater_rule_info.json"
 VALIDATER_RULE_INFO_FILE_PATH = os.path.join(
     TEMP_DIR, "utils", VALIDATER_RULE_INFO_FILE_NAME
 )
+
+# User visible messages
+API_RUN_FAILED = "Api run failed. Please contact support"
+
+# API Run limit
+API_RUN_LIMIT = 4
+
+# Http Response status
+HTTP_OK = 200
+HTTP_CREATED = 201
+HTTP_BAD_REQUEST = 400
+HTTP_UNAUTHORIZED = 401
+HTTP_FORBIDDEN = 403
+HTTP_RESOURCE_NOT_FOUND = 404
+
+# Http Response message types
+ERROR = "error"
+WARNING = "warning"
+INFO = "info"
+INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
+# Error message that doesn't reveal much
+GENERIC_ERROR_MESSAGE = "Something went wrong. Please contact support"
+
+DEFAULT_LINT_ERROR_MESSAGE = "Malformed OpenAPI YAML"
