@@ -29,3 +29,4 @@ prance
 openapi-core
 fpdf
 marshmallow
+gunicorn

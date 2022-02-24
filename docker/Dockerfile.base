@@ -1,0 +1,53 @@
+# Base image setup
+FROM ubuntu:20.04
+
+# Update Ubuntu software repository and install core dependencies
+RUN apt update && apt-get install --no-install-recommends -y tzdata curl sudo
+ENV TZ="Asia/Kolkata"
+
+# Add docker user
+# RUN useradd -ms /bin/bash dockerdev && echo "dockerdev:dockerdev" | chpasswd && adduser dockerdev sudo
+# RUN useradd -ms /bin/bash dockerdev && usermod -aG sudo ubuntu
+
+# USER dockerdev
+
+# Install more ubuntu packages
+RUN apt-get install -y \
+    software-properties-common \
+    build-essential \
+    libpq-dev \
+    python3.8 \
+    python3-pip \
+    python3.8-dev \
+    npm \
+    wget \
+    gunicorn \
+    nginx
+
+# Upgrade npm to latest stable version
+RUN npm install npm@latest -g && \
+    npm install n -g && \
+    n stable
+
+# Install node modules:
+#1. ibm-openapi validator for openapi spec validation
+RUN npm install -g ibm-openapi-validator
+RUN npm install -g @ibm-cloud/openapi-ruleset
+
+#2. openapi code generator
+# Pre-requisities for openapi generator
+# Install OpenJDK-8
+RUN apt-get install -y openjdk-8-jdk
+RUN apt-get install maven -y
+RUN apt-get install jq -y
+
+# Download openapi-generator-cli
+RUN mkdir -p ~/bin/openapitools
+RUN curl https://raw.githubusercontent.com/OpenAPITools/openapi-generator/master/bin/utils/openapi-generator-cli.sh > ~/bin/openapitools/openapi-generator-cli
+RUN chmod u+x ~/bin/openapitools/openapi-generator-cli
+RUN export PATH=$PATH:~/bin/openapitools/
+
+#3. newman for running postman collection via cli
+RUN npm install -g newman
+
+# Base image setup ends here

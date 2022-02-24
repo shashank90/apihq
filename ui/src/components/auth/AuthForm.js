@@ -6,8 +6,8 @@ import classes from "./AuthForm.module.css";
 import styles from "../common/errors.css";
 import { SignalCellularConnectedNoInternet0BarSharp } from "@material-ui/icons";
 
-const signupURL = "http://localhost:3000/signup";
-const loginURL = "http://localhost:3000/login";
+const signupURL = "/signup";
+const loginURL = "/login";
 
 const AuthForm = () => {
   const nameInputRef = useRef();

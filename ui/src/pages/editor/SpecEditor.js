@@ -12,8 +12,8 @@ import AuthContext from "../../store/auth-context";
 import { TEMPLATE } from "../../store/constants";
 import { SPEC_STRING_MAX_LENGTH } from "../../store/constants";
 
-const fileSaveBaseURL = "http://localhost:3000/apis/v1/spec_strings";
-const getSpecBaseURL = "http://localhost:3000/apis/v1/specs";
+const fileSaveBaseURL = "/apis/v1/spec_strings";
+const getSpecBaseURL = "/apis/v1/specs";
 
 const addSpecMessage = "Validate Spec";
 

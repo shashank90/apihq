@@ -1,0 +1,32 @@
+server {
+    listen 80;
+    root /home/dockerdev/apihq/ui/build;
+    index index.html;
+
+    server_name apihq.cymitra.com;
+
+    location / {
+        try_files $uri $uri/ =404;
+        add_header Cache-Control "no-cache";
+    }
+
+    location /static {
+        expires 1y;
+        add_header Cache-Control "public";
+    }
+
+    location /signup {
+        include proxy_params;
+        proxy_pass http://localhost:5000;
+    }
+
+    location /login {
+        include proxy_params;
+        proxy_pass http://localhost:5000;
+    }
+
+    location /apis {
+        include proxy_params;
+        proxy_pass http://localhost:5000;
+    }
+}

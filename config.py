@@ -11,18 +11,14 @@ class Config:
     """Base config."""
 
     SECRET_KEY = environ.get("SECRET_KEY")
-    SESSION_COOKIE_NAME = environ.get("SESSION_COOKIE_NAME")
-    SQLALCHEMY_DATABASE_URI = "sqlite:///site.db"
-
-    STATIC_FOLDER = "static"
-    TEMPLATES_FOLDER = "templates"
+    # SESSION_COOKIE_NAME = environ.get("SESSION_COOKIE_NAME")
 
 
 class ProdConfig(Config):
     FLASK_ENV = "production"
     DEBUG = False
     TESTING = False
-    DATABASE_URI = environ.get("PROD_DATABASE_URI")
+    DATABASE_URI = environ.get("DATABASE_URI")
 
 
 class DevConfig(Config):
@@ -30,4 +26,4 @@ class DevConfig(Config):
     DEBUG = True
     TESTING = True
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
-    DATABASE_URI = environ.get("DEV_DATABASE_URI")
+    DATABASE_URI = environ.get("DATABASE_URI")

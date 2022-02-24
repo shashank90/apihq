@@ -22,6 +22,7 @@
     "babel-plugin-named-asset-import": "^0.3.7",
     "babel-preset-react-app": "^10.0.0",
     "bfj": "^7.0.2",
+    "build": "^0.1.4",
     "camelcase": "^6.1.0",
     "case-sensitive-paths-webpack-plugin": "2.3.0",
     "css-loader": "4.3.0",
@@ -160,6 +161,5 @@
   "devDependencies": {
     "prettier": "2.5.1",
     "react-error-overlay": "^6.0.9"
-  },
-  "proxy": "http://localhost:5000"
+  }
 }

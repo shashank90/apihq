@@ -6,7 +6,7 @@ import Buttons from "../common/Buttons";
 import AuthContext from "../../store/auth-context";
 import { TEMPLATE } from "../../store/constants";
 
-const fileUploadURL = "http://localhost:3000/apis/v1/specs";
+const fileUploadURL = "/apis/v1/specs";
 export default function AddApiModal(props) {
   const [addApiOption, setAddApiOption] = useState(0); // 0: no show, 1: show yes, 2: show no.
   const [collectionName, setCollectionName] = useState("");

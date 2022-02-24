@@ -6,8 +6,8 @@ import { DeleteOutline } from "@material-ui/icons";
 import AuthContext from "../../store/auth-context";
 import { RUN_API } from "../../store/constants";
 
-const getApisURL = "http://localhost:3000/apis/v1/discovered?status=" + RUN_API;
-const runAPIBaseURL = "http://localhost:3000/apis/v1/run";
+const getApisURL = "/apis/v1/discovered?status=" + RUN_API;
+const runAPIBaseURL = "/apis/v1/run";
 
 export default function APIDropdownModal(props) {
   const defaultApiEndpointURLSelectMessage = "Select Endpoint URL";

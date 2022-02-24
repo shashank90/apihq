@@ -11,7 +11,7 @@ import AuthContext from "../../store/auth-context";
 import DataTable from "../../components/dataTable/DataTable";
 import { DATA_REFRESH_FREQUENCY } from "../../store/constants";
 
-const getApisURL = "http://localhost:3000/apis/v1/discovered";
+const getApisURL = "/apis/v1/discovered";
 
 export default function APIInventory() {
   const [apis, setApis] = useState([]);

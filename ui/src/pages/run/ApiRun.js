@@ -12,7 +12,7 @@ import DataTable from "../../components/dataTable/DataTable";
 import { DATA_REFRESH_FREQUENCY } from "../../store/constants";
 import { COMPLETED } from "../../store/constants";
 
-const getRunsURL = "http://localhost:3000/apis/v1/runs";
+const getRunsURL = "/apis/v1/runs";
 
 export default function APIScan() {
   const [runs, setRuns] = useState([]);

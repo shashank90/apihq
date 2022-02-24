@@ -6,7 +6,7 @@ import { useParams } from "react-router-dom";
 import IssueDetails from "./IssueDetails.js";
 import AuthContext from "../../store/auth-context";
 
-const getIssuesBaseURL = "http://localhost:3000/apis/v1/issues";
+const getIssuesBaseURL = "/apis/v1/issues";
 
 export default function Issues(props) {
   const [issueSelected, setIssueSelected] = useState(false);
