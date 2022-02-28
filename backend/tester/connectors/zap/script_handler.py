@@ -1,11 +1,14 @@
 from zapv2 import ZAPv2
 
-# from backend.utils.constants import ZAP_DUMP_REQUEST_SCRIPT
+from typing import List, Dict
+from backend.utils.constants import (
+    ZAP_DUMP_REQUEST_SCRIPT_NAME,
+    ZAP_DUMP_REQUEST_SCRIPT_PATH,
+)
+from backend.tester.connectors.zap.factory import get_zap
+from backend.log.factory import Logger
 
-# from tester.connectors.zap.factory import get_zap
-# from log.factory import Logger
-
-# logger = Logger(__name__)
+logger = Logger(__name__)
 
 
 def load(zap, script_name=None):
@@ -25,10 +28,23 @@ def enable(zap, script_name=None):
     print("Enabling {} script...".format(script_name))
 
 
-def list_scripts(zap, script_name=None):
-    print("List all scripts...")
-    scripts = zap.script.list_scripts
-    print(scripts)
+def list_scripts(zap: ZAPv2):
+    scripts = []
+    # logger.debug("List all scripts...")
+    try:
+        scripts = zap.script.list_scripts
+        # logger.debug(scripts)
+    except Exception as e:
+        logger.error(f"Could not list ZAP scripts. Error: {str(e)}")
+    return scripts
+
+
+def is_script_enabled(zap: ZAPv2, script_name=None):
+    scripts: List[Dict] = list_scripts(zap)
+    for script in scripts:
+        if script.get("name") == script_name:
+            return True
+    return False
 
 
 def remove_script(zap, script_name=None):
@@ -41,30 +57,28 @@ def add_script(zap: ZAPv2, script_name, script_type, script_engine, file_path):
     zap.script.load(script_name, script_type, script_engine, file_path)
 
 
-HOST = "http://localhost:8080"
-ZAP_KEY = "tspnihgu0jdnm4ml7irhvsun5b"
+def enable_request_dump_script():
+    """
+    Load and enable given script
+    """
+    script_name = ZAP_DUMP_REQUEST_SCRIPT_NAME
+    script_type = "httpsender"
+    script_engine = "jython"
+    file_path = ZAP_DUMP_REQUEST_SCRIPT_PATH
 
+    logger.info(f"Enabling {ZAP_DUMP_REQUEST_SCRIPT_PATH} script...")
 
-class ZAP:
-    def __init__(self, host, apikey=None):
-        self.host = host
-        # print("Initializing ZAP...")
-        self.zap = ZAPv2(proxies={"http": host}, apikey=apikey)
+    try:
+        zap: ZAPv2 = get_zap()
+        if is_script_enabled(zap, ZAP_DUMP_REQUEST_SCRIPT_NAME):
+            logger.info(f"Script {ZAP_DUMP_REQUEST_SCRIPT_NAME} already enabled!")
+            return
 
-    def get_zap(self):
-        return self.zap
-
-
-# Global var (Keeping a single instance)
-zap_instance = ZAP(host=HOST, apikey=ZAP_KEY)
-
-
-def get_zap():
-    return zap_instance.get_zap()
-
-
-def get_zap():
-    return zap_instance.get_zap()
+        add_script(zap, script_name, script_type, script_engine, file_path)
+        if is_script_enabled(zap, ZAP_DUMP_REQUEST_SCRIPT_NAME):
+            logger.info(f"Script {ZAP_DUMP_REQUEST_SCRIPT_NAME} enabled!")
+    except Exception as e:
+        logger.error(f"Could not enable script. Error: {str(e)}")
 
 
 def init():

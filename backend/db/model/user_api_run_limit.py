@@ -8,8 +8,9 @@ class UserApiRunLimit(Base):
     __tablename__ = "user_api_run_limit"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(String, ForeignKey("user.user_id"))  # Who initiated validate
-    limit = Column(Integer, nullable=False)
+    user_id = Column(String, ForeignKey("user.user_id"))
+    api_run_count = Column(Integer, nullable=True)
+    limit = Column(Integer, default=0)
     # This is login timestamp
     time_created = Column(DateTime, default=func.now(), nullable=False)
     time_updated = Column(

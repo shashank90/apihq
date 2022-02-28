@@ -46,7 +46,7 @@ VALID_message = "All valid"
 INLINE = "inline"
 PARENT_ATTRIBUTE = "parent_attribute"
 # Http Connection Read Timeout in seconds
-READ_TIMEOUT = 10
+READ_TIMEOUT = 20
 SKIP_FILES = ["__init__.py", "__pycache__"]
 STR = "str"
 INT = "int"
@@ -1238,7 +1238,7 @@ def _invoke_apis(
             except exceptions_module.ApiAttributeError as ae:
                 logger.error(f"Api Attribute Error: {str(ae)}")
             except Exception:
-                logger.exception(f"Invocation failed for {request_id}")
+                logger.exception(f"Test Invocation failed for request_id: {request_id}")
 
             # Form response object for each request
             full_api_path = urljoin(host_url, api_path)

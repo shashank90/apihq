@@ -1,105 +1,119 @@
 export const defaultValue = `${`
-openapi: "3.0.0"
+openapi: 3.0.0
 info:
   version: 1.0.0
-  title: Swagger Petstore
-  description: A sample API that uses a petstore as an example to demonstrate features in the OpenAPI 3.0 specification
+  title: Pet Store
 servers:
-  - url: http://petstore.swagger.io/api
-  paths:
-  /pets:
-    get:
-      description: |
-        Returns all pets from the system that the user has access to
-        Nam sed condimentum est. Maecenas tempor sagittis sapien, nec rhoncus sem sagittis sit amet. Aenean at gravida augue, ac iaculis sem. Curabitur odio lorem, ornare eget elementum nec, cursus id lectus. Duis mi turpis, pulvinar ac eros ac, tincidunt varius justo. In hac habitasse platea dictumst. Integer at adipiscing ante, a sagittis ligula. Aenean pharetra tempor ante molestie imperdiet. Vivamus id aliquam diam. Cras quis velit non tortor eleifend sagittis. Praesent at enim pharetra urna volutpat venenatis eget eget mauris. In eleifend fermentum facilisis. Praesent enim enim, gravida ac sodales sed, placerat id erat. Suspendisse lacus dolor, consectetur non augue vel, vehicula interdum libero. Morbi euismod sagittis libero sed lacinia.
-        Sed tempus felis lobortis leo pulvinar rutrum. Nam mattis velit nisl, eu condimentum ligula luctus nec. Phasellus semper velit eget aliquet faucibus. In a mattis elit. Phasellus vel urna viverra, condimentum lorem id, rhoncus nibh. Ut pellentesque posuere elementum. Sed a varius odio. Morbi rhoncus ligula libero, vel eleifend nunc tristique vitae. Fusce et sem dui. Aenean nec scelerisque tortor. Fusce malesuada accumsan magna vel tempus. Quisque mollis felis eu dolor tristique, sit amet auctor felis gravida. Sed libero lorem, molestie sed nisl in, accumsan tempor nisi. Fusce sollicitudin massa ut lacinia mattis. Sed vel eleifend lorem. Pellentesque vitae felis pretium, pulvinar elit eu, euismod sapien.
-      operationId: findPets
-      parameters:
-        - name: tags
-          in: query
-          description: tags to filter by
-          required: false
-          style: form
-          schema:
-            type: array
-            items:
-              type: string
-        - name: limit
-          in: query
-          description: maximum number of results to return
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pet'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+- url: http://localhost:80
+paths:
+  /apis/v1/pets:
     post:
-      description: Creates a new pet in the store. Duplicates are allowed
+      summary: Add new pet
+      tags:
+      - pets
+      description: Add new pet
       operationId: addPet
       requestBody:
-        description: Pet to add to the store
-        required: true
+        description: Add new pet
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewPet'
+              $ref: '#/components/schemas/addPet'
+      responses:
+        '201':
+          description: Pet added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pet_id:
+                    type: string
+                    pattern: ^\w+$
+                    maxLength: 20
+                  message:
+                    type: string
+                    pattern: ^\w+$
+                    maxLength: 30
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /apis/v1/pets:{pet_id}:
+    get:
+      description: Get pet from store
+      summary: Get pet from store
+      operationId: getPet
+      tags:
+      - pets
+      parameters:
+      - name: pet_id
+        in: path
+        required: true
+        description: Unique pet_id
+        schema:
+          type: string
+          pattern: ^\w+$
+          maxLength: 40
+          minLength: 0
       responses:
         '200':
-          description: pet response
+          description: Pet retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pet'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  name:
+                    type: string
+                    pattern: ^\w+$
+                    maxLength: 20
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
 components:
-schemas:
-  Pet:
-    allOf:
-      - $ref: '#/components/schemas/NewPet'
-      - type: object
-        required:
-        - id
-        properties:
-          id:
-            type: integer
-            format: int64
-
-  NewPet:
-    type: object
-    required:
-      - name  
-    properties:
-      name:
-        type: string
-      tag:
-        type: string    
-
-  Error:
-    type: object
-    required:
-      - code
-      - message
-    properties:
-      code:
-        type: integer
-        format: int32
-      message:
-        type: string `}`
+  schemas:
+    addPet:
+      type: object
+      required:
+      - pet_name
+      - breed
+      properties:
+        pet_name:
+          type: string
+          pattern: ^\w+$
+          maxLength: 30
+          minLength: 0
+          description: Pet name.
+        breed:
+          pattern: ^\w+$        
+          type: string
+          minLength: 0
+          maxLength: 30
+          description: Pet breed.
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+            - error
+            properties:
+              error:
+                type: object
+                required:
+                - code
+                - message
+                properties:
+                  code:
+                    type: string
+                    pattern: ^\w+$
+                    maxLength: 10
+                  message:
+                    type: string
+                    pattern: ^\w+$
+                    maxLength: 20
+tags:
+- name: pets
+  description: Everything about pets
+  `}`;

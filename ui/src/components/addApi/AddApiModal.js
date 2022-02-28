@@ -154,7 +154,7 @@ export default function AddApiModal(props) {
                 type="text"
                 required
                 size="30"
-                maxlength="30"
+                maxLength="30"
                 value={collectionName}
                 onChange={handleCollectionNameChange}
               ></input>

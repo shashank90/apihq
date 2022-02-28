@@ -21,22 +21,25 @@ logger = Logger(__name__)
 app = Flask(__name__)
 
 
-def setup_app():
+def setup_gunicorn_app():
     """
     Setup app, including db and api routes
     """
-
     app.config.from_object("config.ProdConfig")
     DATABASE_URI = app.config["DATABASE_URI"]
+
+    # Register Blueprints
+    register_blueprints(app)
+
     with app.app_context():
+
         # Initialize database
         init_db(DATABASE_URI)
+        # Initialize zap
+        start_zap()
 
         # Register Blueprints
-        app.register_blueprint(auth_bp)
-        app.register_blueprint(discovery_bp)
-        app.register_blueprint(validate_bp)
-        app.register_blueprint(run_bp)
+        register_blueprints(app)
 
     return app
 
@@ -51,15 +54,11 @@ def init_app():
     # Initialize file cache
     init_cache()
 
-    # Initialize app
-    setup_app()
-
-    # Initialize zap
-    start_zap()
-    # start_flask_app()
-
-
-init_app()
+    # Initialize app for dev/production
+    if __name__ == "__main__":
+        setup_flask_app()
+    else:
+        setup_gunicorn_app()
 
 
 def shutdown_app():
@@ -82,25 +81,27 @@ def shutdown_app():
 atexit.register(shutdown_app)
 
 
-def start_flask_app():
+def setup_flask_app():
     """
     Use this if using flask server directly. Or launch via gunicorn
     """
-    # app.secret_key = "secret key"
+    app.config.from_object("config.DevConfig")
+    DATABASE_URI = app.config["DATABASE_URI"]
+
+    # Register Blueprints
+    register_blueprints(app)
+
     logger.info("Starting Flask App server...")
     t = threading.Thread(target=lambda: app.run(debug=True, use_reloader=False))
     t.setDaemon(True)
     t.start()
 
     with app.app_context():
-        # Initialize database
-        init_db()
 
-        # Register Blueprints
-        app.register_blueprint(auth_bp)
-        app.register_blueprint(discovery_bp)
-        app.register_blueprint(validate_bp)
-        app.register_blueprint(run_bp)
+        # Initialize database
+        init_db(DATABASE_URI)
+        # Initialize zap
+        start_zap()
 
     try:
         while True:
@@ -110,3 +111,13 @@ def start_flask_app():
     except KeyboardInterrupt:
         logger.info("Exiting App...")
         exit(0)
+
+
+def register_blueprints(app):
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(discovery_bp)
+    app.register_blueprint(validate_bp)
+    app.register_blueprint(run_bp)
+
+
+init_app()

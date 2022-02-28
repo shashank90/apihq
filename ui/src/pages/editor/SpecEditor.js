@@ -30,7 +30,6 @@ export default function SpecEditor(props) {
   const [specError, setSpecError] = useState(null);
   const isBackBtnVisible = true;
   let isActionBtnVisible = true;
-  const isNextBtnVisible = false;
   const history = useHistory();
   const actionButtonLabelSteady = "Validate";
   const actionButtonLabelRunning = "Validating";
@@ -55,10 +54,10 @@ export default function SpecEditor(props) {
   }
 
   const fetchSpecHandler = useCallback(async () => {
-    if (specId == TEMPLATE) {
-      console.log("Show spec template");
-      return;
-    }
+    // if (specId == TEMPLATE) {
+    //   console.log("Show spec template");
+    //   return;
+    // }
     setSpecLoading(true);
     setSpecError(null);
     const getSpecURL = getSpecBaseURL + "/" + specId;
@@ -71,8 +70,8 @@ export default function SpecEditor(props) {
         },
       });
       const data = await response.json();
-
       console.log(data);
+
       if (!response.ok) {
         console.log("Response status: " + response.status);
         if ("error" in data) {
@@ -99,7 +98,11 @@ export default function SpecEditor(props) {
   }, []);
 
   useEffect(() => {
-    fetchSpecHandler();
+    if (specId != TEMPLATE) {
+      fetchSpecHandler();
+    } else {
+      console.log("Load default template...");
+    }
   }, [fetchSpecHandler]);
 
   // Spec String
@@ -122,7 +125,7 @@ export default function SpecEditor(props) {
     validationContent = <p>Loading...</p>;
   }
   if (validationResponse) {
-    console.log(validationResponse);
+    // console.log(validationResponse);
     validationContent = (
       <div className={styles.validate_content}>
         <ValidationResponse response={validationResponse} />
@@ -182,9 +185,11 @@ export default function SpecEditor(props) {
         }
         throw new Error(data.message);
       } else {
+        if ("status" in data) {
+          setValidationStatus(data.status);
+        }
         if ("validate_output" in data) {
           const validate_output = data.validate_output;
-          // console.log(validate_output);
           setValidationResponse(validate_output);
         }
       }
@@ -239,7 +244,7 @@ export default function SpecEditor(props) {
                   size="30"
                   value={collectionName}
                   onChange={handleCollectionNameChange}
-                  maxlength="30"
+                  maxLength="30"
                 ></input>
               </div>
               <div className={styles.status_container}>

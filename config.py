@@ -18,7 +18,7 @@ class ProdConfig(Config):
     FLASK_ENV = "production"
     DEBUG = False
     TESTING = False
-    DATABASE_URI = environ.get("DATABASE_URI")
+    DATABASE_URI = environ.get("PROD_DATABASE_URI")
 
 
 class DevConfig(Config):
@@ -26,4 +26,4 @@ class DevConfig(Config):
     DEBUG = True
     TESTING = True
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
-    DATABASE_URI = environ.get("DATABASE_URI")
+    DATABASE_URI = environ.get("DEV_DATABASE_URI")

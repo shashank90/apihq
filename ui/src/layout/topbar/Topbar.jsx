@@ -3,6 +3,7 @@ import styles from "./topbar.module.css";
 import { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../../store/auth-context';
+import logo from "../../icon/ApiHQ.png"
 
 export default function Topbar() {
   const authCtx = useContext(AuthContext);
@@ -10,12 +11,13 @@ export default function Topbar() {
   const logoutHandler = () => {
     authCtx.logout();
   };
+  
 
   return (
     <div className={styles.topbar}>
         <div className={styles.logo}>
           <Link to='/'>
-            <div>ApiHQ</div>
+            <div> <img src={logo} width="100" height="50" /></div>
           </Link>
         </div>
         <div className={styles.topbarMenuContainer}>

@@ -12,6 +12,7 @@ const runAPIBaseURL = "/apis/v1/run";
 export default function APIDropdownModal(props) {
   const defaultApiEndpointURLSelectMessage = "Select Endpoint URL";
   const defaultHttpMethodSelectMessage = "Select Http Method";
+  const fetchRunData = props.fetchRunData;
   const [apis, setApis] = useState([]);
   const [apiEndpointURL, setApiEndpointURL] = useState("");
   const [httpMethods, setHttpMethods] = useState([]);
@@ -108,6 +109,7 @@ export default function APIDropdownModal(props) {
 
   function exitOnTimeout() {
     const timer = setTimeout(() => {
+      fetchRunData();
       props.onCancel();
     }, 1000);
     return () => clearTimeout(timer);

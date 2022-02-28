@@ -5,10 +5,10 @@ services:
     build:
       context: ../
       dockerfile: ./docker/Dockerfile.dev
-    command: gunicorn --bind 127.0.0.1:5000 app:app --log-level debug --timeout 90 -w 1
-    expose:
-      - 80
-      - 443
+    command: bash -c "nginx -g "daemon off;" && gunicorn --bind 127.0.0.1:5000 app:app --log-level debug --timeout 90 -w 1"
+    ports:
+      - "80:80"
+      - "443:443"
     env_file:
       - ./.env
     depends_on:

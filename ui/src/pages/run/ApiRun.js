@@ -194,6 +194,7 @@ export default function APIScan() {
           <APIDropdownModal
             onCancel={closeDropdownHandler}
             onConfirm={closeDropdownHandler}
+            fetchRunData={fetchApiRunDataPeriodic}
           />,
           document.getElementById("overlay-root")
         )}

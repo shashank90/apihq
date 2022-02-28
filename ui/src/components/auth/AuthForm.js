@@ -1,10 +1,9 @@
-import { useState, useRef, useContext } from "react";
+import React, { useState, useRef, useContext } from "react";
 import { useHistory } from "react-router-dom";
 
 import AuthContext from "../../store/auth-context";
 import classes from "./AuthForm.module.css";
 import styles from "../common/errors.css";
-import { SignalCellularConnectedNoInternet0BarSharp } from "@material-ui/icons";
 
 const signupURL = "/signup";
 const loginURL = "/login";
@@ -19,6 +18,7 @@ const AuthForm = () => {
   const authCtx = useContext(AuthContext);
 
   const [isLogin, setIsLogin] = useState(true);
+  const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -28,6 +28,13 @@ const AuthForm = () => {
       setError("");
     }
     setIsLogin((prevState) => !prevState);
+  };
+
+  const checkboxHandler = () => {
+    // console.log("Toggle conditions checkbox");
+    // if agree === true, it will be set to false
+    // if agree === false, it will be set to true
+    setAgree(!agree);
   };
 
   const submitHandler = async (event) => {
@@ -69,6 +76,7 @@ const AuthForm = () => {
         email: enteredEmail,
         password: enteredPassword,
         companyName: enteredCompanyName,
+        agreeTerms: !agree,
       };
     }
 
@@ -133,22 +141,22 @@ const AuthForm = () => {
             <div className={classes.control}>
               <label htmlFor="name">Name</label>
               <input
-                type="name"
+                type="text"
                 id="name"
                 required
                 ref={nameInputRef}
-                maxlength="40"
+                maxLength="40"
               />
             </div>
           )}
           <div className={classes.control}>
             <label htmlFor="email">Email</label>
             <input
-              type="email"
+              type="text"
               id="email"
               required
               ref={emailInputRef}
-              maxlength="40"
+              maxLength="40"
             />
           </div>
           <div className={classes.control}>
@@ -157,20 +165,34 @@ const AuthForm = () => {
               type="password"
               id="password"
               required
-              maxlength="40"
+              maxLength="40"
               ref={passwordInputRef}
             />
           </div>
           {!isLogin && (
-            <div className={classes.control}>
-              <label htmlFor="company">Company</label>
-              <input
-                type="company"
-                id="company"
-                ref={companyInputRef}
-                maxlength="40"
-              />
-            </div>
+            <React.Fragment>
+              <div className={classes.control}>
+                <label htmlFor="company">Company</label>
+                <input
+                  type="text"
+                  id="company"
+                  ref={companyInputRef}
+                  maxLength="40"
+                />
+              </div>
+              <div>
+                <input
+                  type="checkbox"
+                  id="terms"
+                  onChange={checkboxHandler}
+                  required
+                />
+                <label htmlFor="terms" className={classes.termsLabel}>
+                  I agree to the following{"  "}
+                  <a href="https://cymitra.com">terms and conditions</a>
+                </label>
+              </div>
+            </React.Fragment>
           )}
           {content}
           <div className={classes.actions}>

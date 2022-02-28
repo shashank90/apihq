@@ -62,7 +62,7 @@ export default function Message(props) {
           value={uri}
           onChange={handleURIChange}
         />
-        <div className="request-header-label">
+        <div className={styles.requestHeaderLabel}>
           <label>Request Header</label>
         </div>
         <textarea

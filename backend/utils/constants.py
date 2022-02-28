@@ -65,10 +65,10 @@ VALIDATER_RULE_INFO_FILE_PATH = os.path.join(
 )
 
 # User visible messages
-API_RUN_FAILED = "Api run failed. Please contact support"
+API_RUN_FAILED = "API run failed. Please contact support"
 
 # API Run limit
-API_RUN_LIMIT = 4
+API_RUN_LIMIT = 3
 
 # Http Response status
 HTTP_OK = 200
@@ -92,11 +92,11 @@ DEFAULT_LINT_ERROR_MESSAGE = "Malformed OpenAPI YAML"
 DUMP_REQUEST_SCRIPT_RELATIVE_PATH = (
     "backend/tester/connectors/zap/scripts/dump_request.py"
 )
-DUMP_REQUEST_SCRIPT_PATH = os.path.join(BASE_DIR, DUMP_REQUEST_SCRIPT_RELATIVE_PATH)
 ZAP_HOME_PATH = "zapHomePath"
-ZAP_EXE = "/opt/zap/zap.sh"
+ZAP_EXE = "/opt/zaproxy/zap.sh"
 IS_ZAP_RUNNING_CHECK_LIMIT = 5
 INITIAL_ZAP_SLEEP_COUNT = 30
-ZAP_DUMP_REQUEST_SCRIPT = os.path.join(
+ZAP_DUMP_REQUEST_SCRIPT_NAME = "Dump Request"
+ZAP_DUMP_REQUEST_SCRIPT_PATH = os.path.join(
     BASE_DIR, "backend/tester/connectors/zap/scripts/dump_request.py"
 )

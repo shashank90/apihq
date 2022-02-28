@@ -94,6 +94,7 @@ def validate(
     status = update_validate_status(spec_id, user_id, final_messages, status_enum)
 
     result["validate_out"] = validate_out
+    result["status"] = status
     result["is_lint_error"] = False
     return result
 

@@ -124,6 +124,7 @@ def signup():
     name, email = data.get("name"), data.get("email")
     password = data.get("password")
     company_name = data.get("companyName")
+    agree_terms = data.get("agreeTerms")
 
     # checking for existing user
     user: User = get_user(email=email)

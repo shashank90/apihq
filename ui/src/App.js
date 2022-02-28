@@ -1,6 +1,7 @@
 import Sidebar from "./layout/sidebar/Sidebar";
-import { useContext } from "react";
+import React, { useContext } from "react";
 import Topbar from "./layout/topbar/Topbar";
+import Bottombar from "./layout/bottombar/Bottombar";
 import {
   BrowserRouter as Router,
   Switch,
@@ -33,9 +34,12 @@ function App() {
 }
 
 const LoginContainer = () => (
-  <div className="container">
-    <Route path="/login" component={Auth} />
-  </div>
+  <React.Fragment>
+    <div className="container">
+      <Route path="/login" component={Auth} />
+    </div>
+    <Bottombar />
+  </React.Fragment>
 );
 
 const DefaultContainer = () => (

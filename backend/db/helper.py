@@ -250,3 +250,28 @@ def add_spec(
     spec = ApiSpec(spec_id, user_id, collection_name, file_name, data_dir)
     session.add(spec)
     session.commit()
+
+
+def update_api_run_count(user_id: str):
+    """
+    Increment api run count for given user
+    """
+    session: Session = get_session()
+    user_api_run_limit: UserApiRunLimit = (
+        session.query(UserApiRunLimit).filter_by(user_id=user_id).first()
+    )
+    user_api_run_limit.api_run_counter = user_api_run_limit.api_run_counter + 1
+    session.commit()
+
+
+def get_api_run_count(user_id: str) -> int:
+    """
+    Return api run count for given user
+    """
+    session: Session = get_session()
+    user_api_run_limit: UserApiRunLimit = (
+        session.query(UserApiRunLimit).filter_by(user_id=user_id).first()
+    )
+    count = user_api_run_limit.api_run_count
+    limit = user_api_run_limit.limit
+    return (count, limit)

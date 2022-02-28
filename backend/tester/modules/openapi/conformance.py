@@ -4,6 +4,7 @@ from typing import List, Dict
 from urllib.parse import parse_qs, urlsplit
 from backend.db.helper import update_run_details
 from backend.db.model.api_run import RunStatusEnum
+from backend.tester.connectors.zap.script_handler import enable_request_dump_script
 
 # from body_parser import encode_multipart_formdata
 from backend.utils.constants import (
@@ -103,6 +104,9 @@ def run(
     try:
         update_run_details(run_id, RunStatusEnum.IN_PROGRESS)
 
+        # Enable ZAP request dump script
+        enable_request_dump_script()
+
         (request_metadata, response_list) = invoke_apis(
             run_id, data_dir, api_path, spec_path, auth_headers
         )
@@ -166,6 +170,9 @@ def run(
         requests_file = os.path.join(data_dir, REQUESTS_FILE)
         write_json(requests_file, requests)
 
+        prepare_final_issues(
+            request_validation_errors, response_validation_errors, issues
+        )
         issues_file = os.path.join(data_dir, ISSUES_FILE)
         write_json(issues_file, issues)
 
@@ -205,7 +212,9 @@ def add_requests(request_id: str, har_data: Dict, requests: List):
                 response_object["status"] = response["status"]
                 if "headers" in response:
                     headers = response["headers"]
-                    response_object["header"] = form_headers(headers)
+                    response_object["header"] = form_headers(
+                        headers, status=response.get("status")
+                    )
                 if "content" in response:
                     content = response["content"]
                     if "text" in content:
@@ -233,13 +242,17 @@ def extract_str(content):
     return string
 
 
-def form_headers(headers: List[Dict]):
+def form_headers(headers: List[Dict], status: str = None):
     """
     Create header string from list of header name/value pair
     """
     header_str = ""
     for header in headers:
         header_str = header_str + header["name"] + ":" + header["value"] + "\n"
+
+    # Append status to headers
+    if status:
+        header_str = header_str + "Status" + ":" + str(status) + "\n"
 
     return header_str
 
@@ -268,7 +281,7 @@ def add_response_error(
     error: Dict = get_error(request_id, res_error_messages, ERROR_TYPE_RESPONSE)
     response_validation_errors.append(error)
 
-    add_final_issues(error, issues)
+    # add_issue(error, issues)
 
 
 def add_request_error(
@@ -283,7 +296,7 @@ def add_request_error(
     request_validation_errors.append(error)
 
     # Add to list of final issues
-    add_final_issues(error, issues)
+    # add_issue(error, issues)
 
 
 def get_error(request_id: str, error_messages: List[str], error_type: str) -> Dict:
@@ -298,7 +311,22 @@ def get_error(request_id: str, error_messages: List[str], error_type: str) -> Di
     }
 
 
-def add_final_issues(error: Dict, final_issues: List[Dict]):
+def prepare_final_issues(
+    request_errors: List[Dict], response_errors: List[Dict], final_issues: List[Dict]
+):
+    """
+    Add up all issues(request, response) in that order
+    """
+    # Add request errors
+    for error in request_errors:
+        add_issue(error, final_issues)
+
+    # Add response errors
+    for error in response_errors:
+        add_issue(error, final_issues)
+
+
+def add_issue(error: Dict, final_issues: List[Dict]):
     """
     Add error to cumulative list of issues
     """

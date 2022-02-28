@@ -1,9 +1,12 @@
+from http.client import HTTPResponse
 import os
 from typing import Dict, List
 import threading
 from marshmallow import validate, ValidationError
+from backend.apis.model.http_error import HttpResponse
 from flask import Blueprint, jsonify, request
 from backend.apis.auth.decorators.decorator import token_required
+from backend.apis.input_validator.validator import is_api_run_limit_exceeded
 from backend.apis.response_handler.decorator import handle_response
 from backend.db.helper import (
     add_run_details,
@@ -19,10 +22,16 @@ from backend.log.factory import Logger
 from backend.tester.modules.openapi.conformance import ISSUES_FILE, REQUESTS_FILE, run
 from backend.utils import uuid_handler
 from backend.utils.file_handler import read_json
+from backend.utils.constants import (
+    HTTP_BAD_REQUEST,
+    ERROR,
+)
 
 run_bp = Blueprint("run_bp", __name__)
 
 logger = Logger(__name__)
+
+API_RUN_LIMIT_EXCEEDED = "API_RUN_LIMIT_EXCEEDED"
 
 
 @run_bp.route("/apis/v1/run/<api_id>", methods=["POST"])
@@ -45,6 +54,13 @@ def run_api(current_user, api_id):
     logger.info(
         f"api_endpoint_url: {api_endpoint_url}; http method :{http_method} auth_headers: {t_auth_headers}"
     )
+    if is_api_run_limit_exceeded():
+        raise HttpResponse(
+            message="API Run limit for user exceeded",
+            code=API_RUN_LIMIT_EXCEEDED,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
+        )
 
     run_id = uuid_handler.get_uuid()
     add_run_details(run_id, api_id, user_id, RunStatusEnum.INITIATED)
@@ -62,7 +78,7 @@ def run_api(current_user, api_id):
     )
     t.start()
 
-    response = jsonify({"message": "API triggered successfully"})
+    response = jsonify({"message": "API Tests triggered successfully"})
     response.status_code = 200
 
     return response
