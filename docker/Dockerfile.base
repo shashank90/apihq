@@ -40,14 +40,14 @@ RUN npm install -g @ibm-cloud/openapi-ruleset
 RUN apt-get install -y openjdk-8-jdk
 RUN apt-get install maven -y
 RUN apt-get install jq -y
-
-# Download openapi-generator-cli
-RUN mkdir -p ~/bin/openapitools
-RUN curl https://raw.githubusercontent.com/OpenAPITools/openapi-generator/master/bin/utils/openapi-generator-cli.sh > ~/bin/openapitools/openapi-generator-cli
-RUN chmod u+x ~/bin/openapitools/openapi-generator-cli
-RUN export PATH=$PATH:~/bin/openapitools/
+RUN npm install @openapitools/openapi-generator-cli -g
+RUN openapi-generator-cli version-manager set 5.4.0
 
 #3. newman for running postman collection via cli
 RUN npm install -g newman
+
+# Setup ZAP
+RUN wget -q -O - https://github.com/zaproxy/zaproxy/releases/download/v2.11.0/ZAP_2.11.0_Linux.tar.gz | tar zxf - -C /opt
+RUN ln -s /opt/ZAP_2.11.0 /opt/zaproxy
 
 # Base image setup ends here

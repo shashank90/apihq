@@ -1114,6 +1114,7 @@ def _invoke_apis(
     api_path: str,
     spec_path: str,
     data_dir: str,
+    run_dir: str,
     gen_package_name: str,
     auth_headers: List[Dict],
 ) -> List[Dict]:
@@ -1190,7 +1191,7 @@ def _invoke_apis(
             request_id = uuid.uuid4().hex
             api_client.set_default_header(REQUEST_ID, request_id)
 
-            api_client.set_default_header(DATA_DIR, data_dir)
+            api_client.set_default_header(DATA_DIR, run_dir)
 
             # Set auth headers
             for auth_header in auth_headers:
@@ -1231,13 +1232,17 @@ def _invoke_apis(
                 counter = counter + 1
             except exceptions_module.ApiValueError as ae:
                 logger.error(f"Api Value Error:  {str(ae)}")
+                counter = counter + 1
             except exceptions_module.ApiException as api_exception:
                 logger.error(f"Api Exception Error: {str(api_exception)}")
                 response_data = api_exception.body
                 response_status = api_exception.status
+                counter = counter + 1
             except exceptions_module.ApiAttributeError as ae:
                 logger.error(f"Api Attribute Error: {str(ae)}")
+                counter = counter + 1
             except Exception:
+                counter = counter + 1
                 logger.exception(f"Test Invocation failed for request_id: {request_id}")
 
             # Form response object for each request

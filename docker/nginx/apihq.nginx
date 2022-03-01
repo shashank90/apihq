@@ -1,9 +1,9 @@
 server {
     listen 80;
-    root /home/dockerdev/apihq/ui/build;
+    root /usr/share/nginx/html;
     index index.html;
 
-    server_name apihq.cymitra.com;
+    server_name apihq.io;
 
     location / {
         try_files $uri $uri/ =404;
@@ -17,16 +17,16 @@ server {
 
     location /signup {
         include proxy_params;
-        proxy_pass http://localhost:5000;
+        proxy_pass http://backend:5000;
     }
 
     location /login {
         include proxy_params;
-        proxy_pass http://localhost:5000;
+        proxy_pass http://backend:5000;
     }
 
     location /apis {
         include proxy_params;
-        proxy_pass http://localhost:5000;
+        proxy_pass http://backend:5000;
     }
 }

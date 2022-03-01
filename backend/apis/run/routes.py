@@ -21,7 +21,7 @@ from backend.db.model.api_inventory import ApiInventory
 from backend.log.factory import Logger
 from backend.tester.modules.openapi.conformance import ISSUES_FILE, REQUESTS_FILE, run
 from backend.utils import uuid_handler
-from backend.utils.file_handler import read_json
+from backend.utils.file_handler import get_run_dir_path, read_json
 from backend.utils.constants import (
     HTTP_BAD_REQUEST,
     ERROR,
@@ -54,7 +54,7 @@ def run_api(current_user, api_id):
     logger.info(
         f"api_endpoint_url: {api_endpoint_url}; http method :{http_method} auth_headers: {t_auth_headers}"
     )
-    if is_api_run_limit_exceeded():
+    if is_api_run_limit_exceeded(user_id):
         raise HttpResponse(
             message="API Run limit for user exceeded",
             code=API_RUN_LIMIT_EXCEEDED,
@@ -139,10 +139,11 @@ def get_issues(current_user, run_id):
     spec: ApiSpec = get_spec(spec_id)
     data_dir: str = spec.data_dir
 
-    issues_file = os.path.join(data_dir, ISSUES_FILE)
+    run_dir = get_run_dir_path(data_dir, run_id)
+    issues_file = os.path.join(run_dir, ISSUES_FILE)
     issues: List[Dict] = read_json(issues_file)
 
-    requests_file = os.path.join(data_dir, REQUESTS_FILE)
+    requests_file = os.path.join(run_dir, REQUESTS_FILE)
     requests: List[Dict] = read_json(requests_file)
 
     response = jsonify({"message": "success", "issues": issues, "requests": requests})

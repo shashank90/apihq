@@ -1,4 +1,9 @@
-from backend.utils.constants import ERROR, GENERIC_ERROR_MESSAGE, INTERNAL_SERVER_ERROR
+from backend.utils.constants import (
+    ERROR,
+    GENERIC_ERROR_MESSAGE,
+    HTTP_INTERNAL_SERVER_ERROR,
+    INTERNAL_SERVER_ERROR,
+)
 from functools import wraps
 from backend.apis.model.http_error import HttpResponse
 from flask import jsonify
@@ -17,8 +22,9 @@ def handle_response(f):
         except Exception as e:
             if isinstance(e, HttpResponse):
                 if e.type == ERROR:
+                    error_obj = get_error_object(e.message, e.code)
                     return (
-                        jsonify({"error": {"message": e.message, "code": e.code}}),
+                        jsonify(error_obj),
                         e.http_status,
                     )
                 else:
@@ -28,14 +34,21 @@ def handle_response(f):
                     )
             else:
                 logger.error(str(e))
+                message = GENERIC_ERROR_MESSAGE
+                code = INTERNAL_SERVER_ERROR
+                error_obj = get_error_object(message, code)
                 return (
-                    jsonify(
-                        {
-                            "message": GENERIC_ERROR_MESSAGE,
-                            "code": INTERNAL_SERVER_ERROR,
-                        }
-                    ),
-                    500,
+                    jsonify(error_obj),
+                    HTTP_INTERNAL_SERVER_ERROR,
                 )
 
     return wrapped
+
+
+def get_error_object(message, code):
+    return {
+        "error": {
+            "message": message,
+            "code": code,
+        }
+    }

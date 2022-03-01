@@ -1,0 +1,40 @@
+# Build file from inside docker folder
+FROM apihq_base:latest as builder
+
+# Add new user
+RUN useradd -ms /bin/bash dockerdev && usermod -aG sudo dockerdev
+RUN echo 'dockerdev:dockerdev' | chpasswd
+RUN chown -R dockerdev:dockerdev /home/dockerdev
+
+# Change current user
+USER dockerdev
+RUN mkdir /home/dockerdev/apihq
+
+# Create dirs 
+RUN mkdir -p /home/dockerdev/bin/openapitools
+RUN mkdir /home/dockerdev/apihq/ui
+RUN mkdir /home/dockerdev/apihq/logs
+
+# Download openapi-generator-cli
+RUN curl https://raw.githubusercontent.com/OpenAPITools/openapi-generator/master/bin/utils/openapi-generator-cli.sh > ~/bin/openapitools/openapi-generator-cli
+RUN chmod u+x ~/bin/openapitools/openapi-generator-cli
+RUN export PATH=$PATH:~/bin/openapitools/
+
+# Install openapi validator package. Keep WORKDIR ahead of npm to avoid `idealTree already exists` error
+WORKDIR /home/dockerdev/apihq
+RUN npm install ibm-openapi-validator
+
+# Copy Backend files
+COPY --chown=dockerdev:dockerdev ./app.py ./
+COPY --chown=dockerdev:dockerdev ./config.py ./
+COPY --chown=dockerdev:dockerdev ./requirements.txt ./
+COPY --chown=dockerdev:dockerdev ./.spectral.yaml ./
+COPY --chown=dockerdev:dockerdev ./.validaterc ./
+COPY --chown=dockerdev:dockerdev ./docker/.env ./
+COPY --chown=dockerdev:dockerdev ./backend ./backend
+COPY --chown=dockerdev:dockerdev ./crawler ./crawler
+
+# Setup python backend
+RUN pip install -r requirements.txt
+
+EXPOSE 5000

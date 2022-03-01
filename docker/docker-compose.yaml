@@ -1,27 +1,42 @@
 version: '3.8'
 
 services:
-  web:
+  ui:
+    container_name: apihq_ui
     build:
       context: ../
-      dockerfile: ./docker/Dockerfile.dev
-    command: bash -c "nginx -g "daemon off;" && gunicorn --bind 127.0.0.1:5000 app:app --log-level debug --timeout 90 -w 1"
+      dockerfile: ./docker/Dockerfile.ui
     ports:
       - "80:80"
       - "443:443"
     env_file:
       - ./.env
     depends_on:
+      - backend
+  backend:
+    container_name: apihq_backend
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile.backend
+    command: gunicorn --bind 0.0.0.0:5000 app:app --log-level debug --timeout 120 -w 1
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./.env
+    depends_on:
       - db
     user: "${UID}:${GID}"  
+    volumes:
+      - ./mount_volumes/apihq_logs:/home/dockerdev/apihq/logs
   db:
+    container_name: apihq_db
     build:
       context: ../
       dockerfile: ./docker/Dockerfile.db
-    volumes:
-      - ./mount_volumes/pgdata:/var/lib/postgresql/data
     env_file:
       - ./.env
     ports:
       - "5432:5432"  
     user: "${UID}:${GID}"  
+    volumes:
+      - ./mount_volumes/pgdata:/var/lib/postgresql/data

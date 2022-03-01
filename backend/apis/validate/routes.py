@@ -92,7 +92,9 @@ def create_openapi_str(current_user):
 
     except Exception as e:
         path_error_out = str(e)
-        logger.warning("Could not extract paths. " + path_error_out)
+        logger.error(
+            f"Could not extract paths from OpenAPI spec. Error: {path_error_out}"
+        )
 
     # Run validate on newly created spec
     output = validate(data_dir, user_id, spec_id, spec_path)
@@ -167,7 +169,9 @@ def update_openapi_str(current_user, spec_id):
 
     except Exception as e:
         path_error_out = str(e)
-        logger.warning("Could not extract paths. " + path_error_out)
+        logger.error(
+            "Could not extract paths from OpenAPI spec. Error: " + path_error_out
+        )
 
     output = validate(data_dir, user_id, spec_id, spec_path)
     validate_output = output.get("validate_out")

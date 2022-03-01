@@ -28,12 +28,18 @@ DATA_FILE = "~/Desktop/bomb_data"
 # TEMP HOST. DELETE AFTER TESTING
 HOST = "http://localhost:8123"
 VALIDATE_REPORT = "validate.json"
+
+
+# Openapi sdk generation TODO: Switch based on environment
+SDK_GENERATOR_CMD = "openapi-generator-cli"
 PYTHON_SDK_DIR = "python_sdk"
 API_DIR = os.path.join(BASE_DIR, "backend/tester/modules/openapi/python_sdk/api")
 GEN_CLASSES_DIR = os.path.join(
     BASE_DIR, "backend/tester/modules/openapi/python_sdk/model"
 )
 OPENAPI_CONFIG_FILE = "invoker_config.json"
+RUN = "run"
+
 REQUEST_ID = "request_id"
 CRLF = "\r\n"
 PACKAGE_NAME = "packageName"
@@ -65,10 +71,11 @@ VALIDATER_RULE_INFO_FILE_PATH = os.path.join(
 )
 
 # User visible messages
-API_RUN_FAILED = "API run failed. Please contact support"
+API_RUN_FAILED = "API Test Run failed. Please contact support"
 
 # API Run limit
 API_RUN_LIMIT = 3
+DEFAULT_API_RUN_LIMIT = 3
 
 # Http Response status
 HTTP_OK = 200
@@ -77,6 +84,7 @@ HTTP_BAD_REQUEST = 400
 HTTP_UNAUTHORIZED = 401
 HTTP_FORBIDDEN = 403
 HTTP_RESOURCE_NOT_FOUND = 404
+HTTP_INTERNAL_SERVER_ERROR = 500
 
 # Http Response message types
 ERROR = "error"

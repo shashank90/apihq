@@ -1,6 +1,7 @@
 from pathlib import Path
 import base64
 from typing import List, Dict
+from backend.utils.file_handler import create_run_dir, get_run_dir_path
 from urllib.parse import parse_qs, urlsplit
 from backend.db.helper import update_run_details
 from backend.db.model.api_run import RunStatusEnum
@@ -70,25 +71,25 @@ def get_har(zap: ZAPv2, zap_msg_id: str):
     return har_data
 
 
-def _save_har(data_dir: str, request_id: str, har: Dict):
+def _save_har(run_dir: str, request_id: str, har: Dict):
     """
     Save har(http archive) to file
     """
     har_file = request_id + ".json"
-    har_dir = os.path.join(data_dir, HAR_DIR)
+    har_dir = os.path.join(run_dir, HAR_DIR)
     # Create har file path along with dirs(if they don't exist)
     Path(har_dir).mkdir(parents=True, exist_ok=True)
     har_file_path = os.path.join(har_dir, har_file)
     write_json(har_file_path, har)
 
 
-def save_har(data_dir: str, request_id: str, zap: ZAPv2, zap_msg_id: str) -> Dict:
+def save_har(run_dir: str, request_id: str, zap: ZAPv2, zap_msg_id: str) -> Dict:
     """
     Save http archive file got from zap for given request_id.
     Also returning har dict for further processing
     """
     har_data = get_har(zap, zap_msg_id)
-    _save_har(data_dir, request_id, har_data)
+    _save_har(run_dir, request_id, har_data)
     return har_data
 
 
@@ -101,22 +102,30 @@ def run(
     # Create and send payloads for each api
     logger.info(f"Running API Tests with run_id {run_id} for api path: {api_path}")
 
+    # Create run dir and store request/response artifacts (post sdk generation here)
+    run_dir = get_run_dir_path(data_dir, run_id)
+    if not create_run_dir(run_dir):
+        update_run_details(run_id, RunStatusEnum.ERROR, API_RUN_FAILED)
+        return
+
     try:
         update_run_details(run_id, RunStatusEnum.IN_PROGRESS)
 
         # Enable ZAP request dump script
         enable_request_dump_script()
 
+        # Continue overwriting sdk generation in case of multiple runs within data dir.
+        # Only write requests & their results to separate run dirs
         (request_metadata, response_list) = invoke_apis(
-            run_id, data_dir, api_path, spec_path, auth_headers
+            run_id, data_dir, run_dir, api_path, spec_path, auth_headers
         )
 
-        write_request_metadata(data_dir, request_metadata)
+        write_request_metadata(run_dir, request_metadata)
 
         openapi_core_spec = get_openapi_spec(spec_path)
 
         zap: ZAPv2 = get_zap()
-        zap_messages = get_zap_message_ids(data_dir)
+        zap_messages = get_zap_message_ids(run_dir)
 
         # Validate each response against OpenAPI spec for each api
         response_validation_errors: List[str] = []
@@ -132,7 +141,7 @@ def run(
             request_id = response_object.get(REQUEST_ID)
             request_detail = get_zap_message_details(request_id, zap_messages)
             zap_msg_id = request_detail.get("zap_message_id")
-            har_data = save_har(data_dir, request_id, zap, zap_msg_id)
+            har_data = save_har(run_dir, request_id, zap, zap_msg_id)
 
             add_requests(request_id, har_data, requests)
 
@@ -155,11 +164,11 @@ def run(
             )
 
         error_response_validation_file = os.path.join(
-            data_dir, ERROR_RESPONSE_VALIDATION_FILE
+            run_dir, ERROR_RESPONSE_VALIDATION_FILE
         )
 
         error_request_validation_file = os.path.join(
-            data_dir, ERROR_REQUEST_VALIDATION_FILE
+            run_dir, ERROR_REQUEST_VALIDATION_FILE
         )
 
         # TODO: Save this to db (Add a request_id and connect table to requests table) so it can be joined with requests table
@@ -167,13 +176,13 @@ def run(
 
         write_json(error_request_validation_file, request_validation_errors)
 
-        requests_file = os.path.join(data_dir, REQUESTS_FILE)
+        requests_file = os.path.join(run_dir, REQUESTS_FILE)
         write_json(requests_file, requests)
 
         prepare_final_issues(
             request_validation_errors, response_validation_errors, issues
         )
-        issues_file = os.path.join(data_dir, ISSUES_FILE)
+        issues_file = os.path.join(run_dir, ISSUES_FILE)
         write_json(issues_file, issues)
 
         # Update final db status
@@ -209,7 +218,8 @@ def add_requests(request_id: str, har_data: Dict, requests: List):
                         request_object["body"] = body["text"]
             if "response" in entry:
                 response = entry["response"]
-                response_object["status"] = response["status"]
+                if "status" in response:
+                    response_object["status"] = response["status"]
                 if "headers" in response:
                     headers = response["headers"]
                     response_object["header"] = form_headers(
@@ -363,12 +373,12 @@ def is_error_new(response_validation_errors: List, res_error_messages: List):
     return True
 
 
-def write_request_metadata(data_dir: str, req_metadata: List[Dict]):
+def write_request_metadata(run_dir: str, req_metadata: List[Dict]):
     """
     Write request validation errors to file.
     TODO Save this to db
     """
-    request_metadata_file = os.path.join(data_dir, REQUEST_METADATA_FILE)
+    request_metadata_file = os.path.join(run_dir, REQUEST_METADATA_FILE)
     write_json(request_metadata_file, req_metadata)
     if os.path.exists(request_metadata_file):
         logger.info(
@@ -391,11 +401,11 @@ def get_zap_message_details(request_id: str, zap_messages: List[Dict]):
     return get_zap_message_detail(request_id, zap_messages)
 
 
-def get_zap_message_ids(data_dir: str):
+def get_zap_message_ids(run_dir: str):
     """
     Get zap message ids by reading file names
     """
-    zap_msg_dir = os.path.join(data_dir, ZAP_MESSAGE_DIR)
+    zap_msg_dir = os.path.join(run_dir, ZAP_MESSAGE_DIR)
 
     # Form list of request_id and zap_message_id
     items = []

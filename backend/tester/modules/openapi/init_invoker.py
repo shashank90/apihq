@@ -2,7 +2,7 @@ import os
 
 import shutil
 from typing import Dict, List
-from backend.utils.constants import SDK_DIR, API_RUN_FAILED
+from backend.utils.constants import SDK_DIR, API_RUN_FAILED, SDK_GENERATOR_CMD
 
 from backend.db.helper import update_run_details
 from backend.db.model.api_run import RunStatusEnum
@@ -30,7 +30,7 @@ def generate_sdk(
     logger.info(f"Openapi sdk generation begins for run_id {run_id}...")
     output = run_cmd(
         [
-            "/home/shashank/bin/openapitools/openapi-generator-cli",
+            SDK_GENERATOR_CMD,
             "generate",
             "-i",
             spec_path,
@@ -48,7 +48,12 @@ def generate_sdk(
 
 
 def invoke_apis(
-    run_id: str, data_dir: str, api_path: str, spec_path: str, auth_headers: List[Dict]
+    run_id: str,
+    data_dir: str,
+    run_dir: str,
+    api_path: str,
+    spec_path: str,
+    auth_headers: List[Dict],
 ):
     """
     Run Api tests by generating payloads from openapi spec and sending them
@@ -67,7 +72,7 @@ def invoke_apis(
         move_generated_files(gen_pkg_name)
 
         return _invoke_apis(
-            run_id, api_path, spec_path, data_dir, gen_pkg_name, auth_headers
+            run_id, api_path, spec_path, data_dir, run_dir, gen_pkg_name, auth_headers
         )
 
     except Exception:

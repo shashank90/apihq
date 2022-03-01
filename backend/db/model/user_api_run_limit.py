@@ -1,7 +1,8 @@
 import enum
-from sqlalchemy import Integer, Column, String, func, DateTime, ForeignKey, Enum
+from sqlalchemy import Integer, Column, String, func, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from backend.db.database import Base
+from backend.utils.constants import DEFAULT_API_RUN_LIMIT
 
 
 class UserApiRunLimit(Base):
@@ -9,8 +10,8 @@ class UserApiRunLimit(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(String, ForeignKey("user.user_id"))
-    api_run_count = Column(Integer, nullable=True)
-    limit = Column(Integer, default=0)
+    api_run_count = Column(Integer, default=0)
+    limit = Column(Integer, default=DEFAULT_API_RUN_LIMIT)
     # This is login timestamp
     time_created = Column(DateTime, default=func.now(), nullable=False)
     time_updated = Column(

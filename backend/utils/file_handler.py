@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict
 
 from backend.log.factory import Logger
-from backend.utils.constants import DATA_DIR_PREFIX, DISCOVERED_DIR, data_dir, WORK_DIR
+from backend.utils.constants import DATA_DIR_PREFIX, RUN, WORK_DIR
 
 logger = Logger(__name__)
 
@@ -44,6 +44,18 @@ def create_spec_folder(spec_id: str) -> str:
     except OSError as e:
         logger.error(e)
     return data_dir
+
+
+def create_run_dir(run_dir: str) -> bool:
+    """
+    Create run dir within data_dir for given run id
+    """
+    try:
+        Path(run_dir).mkdir(parents=True, exist_ok=True)
+        return True
+    except Exception as e:
+        logger.error(f"Could not create run dir {run_dir}. Error: {str(e)}")
+    return False
 
 
 def remove_files(folder: str):
@@ -101,3 +113,7 @@ def is_file_exists(path):
     if file_path.is_file():
         return True
     return False
+
+
+def get_run_dir_path(data_dir: str, run_id: str):
+    return os.path.join(data_dir, RUN, run_id)

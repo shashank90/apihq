@@ -115,8 +115,8 @@ def import_api(current_user):
                 }
                 add_api_to_inventory(user_id, api_path, api_insert_record)
         except Exception as e:
-            logger.exception(
-                f"Could not extract paths. Uploaded file {spec_path} may not adhere to OpenAPI standard. Error: {str(e)}"
+            logger.error(
+                f"Could not extract paths from OpenAPI spec. Uploaded file {spec_path} may not adhere to OpenAPI standard. Error: {str(e)}"
             )
 
         # Add validation status entry for uploaded file
