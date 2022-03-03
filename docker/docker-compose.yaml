@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   ui:
-    container_name: apihq_ui
+    container_name: apihome_ui
     build:
       context: ../
       dockerfile: ./docker/Dockerfile.ui
@@ -14,7 +14,7 @@ services:
     depends_on:
       - backend
   backend:
-    container_name: apihq_backend
+    container_name: apihome_backend
     build:
       context: ../
       dockerfile: ./docker/Dockerfile.backend
@@ -27,9 +27,9 @@ services:
       - db
     user: "${UID}:${GID}"  
     volumes:
-      - ./mount_volumes/apihq_logs:/home/dockerdev/apihq/logs
+      - ./mount_volumes/apihome_logs:/home/dockerdev/apihome/logs
   db:
-    container_name: apihq_db
+    container_name: apihome_db
     build:
       context: ../
       dockerfile: ./docker/Dockerfile.db

@@ -2,7 +2,6 @@ import os
 
 BASE_DIR = os.getcwd()
 # TODO: Replace temp with base dir
-# BASE_DIR = "/home/shashank/Desktop/apihq"
 
 WORK_DIR = os.path.join(BASE_DIR, "logs")
 DISCOVERED_DIR = "api_discovered"
@@ -10,7 +9,6 @@ data_dir = "api_spec"
 DATA_DIR_PREFIX = "data_dir_"
 DATA_DIR = "data_dir"
 ZAP_MESSAGE_DIR = "har/zap_message_ids"
-UPLOAD_FOLDER = "~/apihq/logs"
 JSON_REPORT = "zap_report.json"
 NEWMAN_OUTFILE = "newman_output.json"
 LOG_FILE_NAME = "app"

@@ -15,7 +15,7 @@ sudo apt-get install libpq-dev python-dev
 pip install -r requirements.txt
 
 
-# Install IBM OpenAPI validator ( I guess for these to work, they need to be installed at /apihq level. Try installing globally and check)
+# Install IBM OpenAPI validator ( I guess for these to work, they need to be installed at /apihome level. Try installing globally and check)
 sudo npm install -g ibm-openapi-validator
 sudo npm install -g @ibm-cloud/openapi-ruleset
 

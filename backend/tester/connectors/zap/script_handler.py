@@ -87,7 +87,7 @@ def init():
     script_type = "httpsender"
     script_engine = "jython"
     # file_path = ZAP_DUMP_REQUEST_SCRIPT
-    file_path = "/home/shashank/Desktop/apihq/backend/tester/connectors/zap/scripts/dump_request.py"
+    file_path = "/home/shashank/Desktop/apihome/backend/tester/connectors/zap/scripts/dump_request.py"
 
     zap: ZAPv2 = get_zap()
     add_script(zap, script_name, script_type, script_engine, file_path)

@@ -160,5 +160,5 @@ def get_generated_file_handles(data_dir: str, file_type: str):
 
 
 if __name__ == "__main__":
-    data_dir = "/home/shashank/Desktop/apihq/logs/test"
+    data_dir = "/home/shashank/Desktop/apihome/logs/test"
     generate_zip_file(data_dir)

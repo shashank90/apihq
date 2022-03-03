@@ -11,7 +11,7 @@ logger = Logger(__name__)
 
 # Connect and create an SQLAlchemy session
 DATABASE_NAME = "cymitra"
-SCHEMA_NAME = "apihq"
+SCHEMA_NAME = "apihome"
 
 # TODO: Move this to .env
 # USER_P075am_PASSWORD = "Wyr73x@BgQQ;4"

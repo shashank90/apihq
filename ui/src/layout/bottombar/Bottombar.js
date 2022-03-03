@@ -14,7 +14,7 @@ export default function Topbar() {
         <div className={styles.supportMessage}>
           For support queries write to: contactus@cymitra.com.
           <p>
-            For more information checkout:
+            For more information checkout:{" "}
             <a href="http://cymitra.com">Cymitra</a>
           </p>
         </div>

@@ -3,7 +3,7 @@ import styles from "./topbar.module.css";
 import { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../../store/auth-context';
-import logo from "../../icon/ApiHQ.png"
+import logo from "../../icon/ApiHome.png"
 
 export default function Topbar() {
   const authCtx = useContext(AuthContext);

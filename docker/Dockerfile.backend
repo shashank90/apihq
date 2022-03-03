@@ -1,5 +1,5 @@
 # Build file from inside docker folder
-FROM apihq_base:latest as builder
+FROM apihome_base:latest as builder
 
 # Add new user
 RUN useradd -ms /bin/bash dockerdev && usermod -aG sudo dockerdev
@@ -8,20 +8,14 @@ RUN chown -R dockerdev:dockerdev /home/dockerdev
 
 # Change current user
 USER dockerdev
-RUN mkdir /home/dockerdev/apihq
+RUN mkdir /home/dockerdev/apihome
 
 # Create dirs 
-RUN mkdir -p /home/dockerdev/bin/openapitools
-RUN mkdir /home/dockerdev/apihq/ui
-RUN mkdir /home/dockerdev/apihq/logs
-
-# Download openapi-generator-cli
-RUN curl https://raw.githubusercontent.com/OpenAPITools/openapi-generator/master/bin/utils/openapi-generator-cli.sh > ~/bin/openapitools/openapi-generator-cli
-RUN chmod u+x ~/bin/openapitools/openapi-generator-cli
-RUN export PATH=$PATH:~/bin/openapitools/
+RUN mkdir /home/dockerdev/apihome/ui
+RUN mkdir /home/dockerdev/apihome/logs
 
 # Install openapi validator package. Keep WORKDIR ahead of npm to avoid `idealTree already exists` error
-WORKDIR /home/dockerdev/apihq
+WORKDIR /home/dockerdev/apihome
 RUN npm install ibm-openapi-validator
 
 # Copy Backend files
