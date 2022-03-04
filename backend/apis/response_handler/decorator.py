@@ -33,7 +33,8 @@ def handle_response(f):
                         e.http_status,
                     )
             else:
-                logger.error(str(e))
+                if e and str(e):
+                    logger.error(f"Response handler Error: {str(e)}")
                 message = GENERIC_ERROR_MESSAGE
                 code = INTERNAL_SERVER_ERROR
                 error_obj = get_error_object(message, code)

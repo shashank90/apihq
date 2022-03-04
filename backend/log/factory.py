@@ -20,7 +20,7 @@ def init_logger():
     log_file = os.path.join(LOG_DIR, file_name)
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s [%(threadName)s] [%(levelname)s]  %(message)s",
+        format="%(asctime)s [%(threadName)s] [%(levelname)s] [%(name)s:%(lineno)d] %(message)s",
         handlers=[logging.FileHandler(log_file), logging.StreamHandler()],
     )
 

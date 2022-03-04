@@ -54,10 +54,6 @@ export default function SpecEditor(props) {
   }
 
   const fetchSpecHandler = useCallback(async () => {
-    // if (specId == TEMPLATE) {
-    //   console.log("Show spec template");
-    //   return;
-    // }
     setSpecLoading(true);
     setSpecError(null);
     const getSpecURL = getSpecBaseURL + "/" + specId;
@@ -195,6 +191,7 @@ export default function SpecEditor(props) {
       }
     } catch (error) {
       setValidationError(error.message);
+      setValidationResponse("");
     }
 
     setValidationLoading(false);
@@ -270,7 +267,7 @@ export default function SpecEditor(props) {
               theme="github"
               onChange={onChange}
               fontSize={18}
-              width="650px"
+              width="675px"
               height="700px"
               tabSize={2}
               showPrintMargin

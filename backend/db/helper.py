@@ -260,7 +260,7 @@ def update_api_run_count(user_id: str):
     user_api_run_limit: UserApiRunLimit = (
         session.query(UserApiRunLimit).filter_by(user_id=user_id).first()
     )
-    user_api_run_limit.api_run_counter = user_api_run_limit.api_run_counter + 1
+    user_api_run_limit.api_run_count = user_api_run_limit.api_run_count + 1
     session.commit()
 
 

@@ -76,14 +76,14 @@ def validate(
         if validate_out and len(validate_out) > 0:
             lint_out = lint_yaml(validate_out)
             lint_error_message = get_default_lint_error_message(lint_out)
-            result["validate_out"] = lint_error_message
+            result["validate_out"] = get_lint_error_msg(lint_error_message)
             logger.info(
                 f"Hence writing validate_output directly to file for spec_id: [{spec_id}]"
             )
             write_json(validate_report_path, lint_error_message)
         else:
             lint_error_message = get_default_lint_error_message(None)
-            result["validate_out"] = lint_error_message
+            result["validate_out"] = get_lint_error_msg(lint_error_message)
             write_json(validate_report_path, lint_error_message)
 
         result["status"] = ValidateStatusEnum.LINT_ERROR.name
@@ -97,6 +97,16 @@ def validate(
     result["status"] = status
     result["is_lint_error"] = False
     return result
+
+
+def get_lint_error_msg(lint_error_msg: Dict) -> str:
+    """
+    Extract lint error message from message list
+    """
+    lint_error_msgs = lint_error_msg.get("messages")
+    if len(lint_error_msgs) > 0:
+        return lint_error_msgs[0].get("message")
+    return DEFAULT_LINT_ERROR_MESSAGE
 
 
 def get_default_lint_error_message(validate_out):
