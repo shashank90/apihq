@@ -135,7 +135,7 @@ const AuthForm = () => {
   return (
     <div className={classes.center}>
       <section className={classes.auth}>
-        <h1>{isLogin ? "Login" : "Sign Up"}</h1>
+        <h1>{isLogin ? "Login" : "Sign Up for free!"}</h1>
         <form onSubmit={submitHandler}>
           {!isLogin && (
             <div className={classes.control}>
@@ -188,8 +188,10 @@ const AuthForm = () => {
                   required
                 />
                 <label htmlFor="terms" className={classes.termsLabel}>
-                  I agree to the following{"  "}
-                  <a href="https://cymitra.com">terms and conditions</a>
+                  I have read the terms under{"  "}
+                  <a href="https://cymitra.com/faq" target="_blank">
+                    FAQ
+                  </a>
                 </label>
               </div>
             </React.Fragment>

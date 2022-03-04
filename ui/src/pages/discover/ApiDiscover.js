@@ -130,16 +130,6 @@ export default function APIInventory() {
       },
     },
     {
-      field: "Updated",
-      headerName: "Updated",
-      width: 200,
-      renderCell: (params) => {
-        return (
-          <div className={styles.TargetListItem}>{params.row.updated}</div>
-        );
-      },
-    },
-    {
       field: "OpenAPI Spec",
       headerName: "OpenAPI Spec",
       width: 200,
@@ -155,6 +145,16 @@ export default function APIInventory() {
               <button className={buttons.green_btn}>View</button>
             </Link>
           </>
+        );
+      },
+    },
+    {
+      field: "Updated",
+      headerName: "Updated",
+      width: 200,
+      renderCell: (params) => {
+        return (
+          <div className={styles.TargetListItem}>{params.row.updated}</div>
         );
       },
     },

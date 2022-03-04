@@ -270,7 +270,7 @@ export default function SpecEditor(props) {
               theme="github"
               onChange={onChange}
               fontSize={18}
-              width="785px"
+              width="650px"
               height="700px"
               tabSize={2}
               showPrintMargin

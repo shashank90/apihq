@@ -4,9 +4,6 @@ services:
   ui:
     image: sgshanks/apihome:ui
     container_name: apihome_ui
-    build:
-      context: ../
-      dockerfile: ./docker/Dockerfile.ui
     ports:
       - "80:80"
       - "443:443"
@@ -20,9 +17,6 @@ services:
   backend:
     image: sgshanks/apihome:backend
     container_name: apihome_backend
-    build:
-      context: ../
-      dockerfile: ./docker/Dockerfile.backend
     command: gunicorn --bind 0.0.0.0:5000 app:app --log-level debug --timeout 120 -w 1
     ports:
       - "5000:5000"
@@ -36,9 +30,6 @@ services:
   db:
     image: sgshanks/apihome:db
     container_name: apihome_db
-    build:
-      context: ../
-      dockerfile: ./docker/Dockerfile.db
     env_file:
       - ./.env
     ports:

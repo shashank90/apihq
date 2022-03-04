@@ -14,6 +14,7 @@ from backend.db.helper import (
     get_run_details,
     get_api_details,
     get_run_records,
+    update_api_run_count,
 )
 from backend.db.model.api_run import ApiRun, RunStatusEnum
 from backend.db.model.api_spec import ApiSpec
@@ -61,6 +62,9 @@ def run_api(current_user, api_id):
             http_status=HTTP_BAD_REQUEST,
             type=ERROR,
         )
+
+    logger.info(f"Updating api run count for user [{user_id}]")
+    update_api_run_count(user_id)
 
     run_id = uuid_handler.get_uuid()
     add_run_details(run_id, api_id, user_id, RunStatusEnum.INITIATED)

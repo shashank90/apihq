@@ -110,7 +110,7 @@ export default function APIScan() {
     {
       field: "Endpoint URL",
       headerName: "Endpoint URL",
-      width: 350,
+      width: 310,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.endpointURL}</div>;
       },
@@ -134,17 +134,9 @@ export default function APIScan() {
     {
       field: "Message",
       headerName: "Message",
-      width: 250,
+      width: 240,
       renderCell: (params) => {
         return <div className="TargetListItem">{params.row.message}</div>;
-      },
-    },
-    {
-      field: "Updated",
-      headerName: "Updated",
-      width: 160,
-      renderCell: (params) => {
-        return <div className="TargetListItem">{params.row.updated}</div>;
       },
     },
     {
@@ -168,6 +160,14 @@ export default function APIScan() {
             </Link>
           </>
         );
+      },
+    },
+    {
+      field: "Updated",
+      headerName: "Updated",
+      width: 160,
+      renderCell: (params) => {
+        return <div className="TargetListItem">{params.row.updated}</div>;
       },
     },
   ];

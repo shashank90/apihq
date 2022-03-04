@@ -1,0 +1,11 @@
+1. Docker login to hub
+    CMD: docker login
+        - Provide username/password
+
+2. Docker tag
+    CMD: docker tag docker_apihome_db sgshanks/apihome:db
+        - Tag image
+
+3. Docker push
+    CMD: Push to hub
+        - docker push sgshanks/apihome:db

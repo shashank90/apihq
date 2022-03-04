@@ -1,15 +1,73 @@
+## http://apihome.io redirects to https://apihome.io
 server {
     listen 80;
+    listen [::]:80;
+    server_name apihome.io;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+	location / {
+		return 301 https://apihome.io$request_uri;
+	}
+}
+
+## http://www.apihome.io redirects to https://www.apihome.io
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server ipv6only=on;
+	server_name www.apihome.io;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+	location / {
+		return 301 https://www.apihome.io$request_uri;
+	}
+}
+
+## https://apihome.io redirects to https://www.apihome.io
+server {
+	listen 443 ssl http2;
+	listen [::]:443 ssl http2;
+	server_name apihome.io;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+	ssl_certificate /etc/nginx/ssl/live/apihome.io/fullchain.pem;
+	ssl_certificate_key /etc/nginx/ssl/live/apihome.io/privkey.pem;
+	ssl_trusted_certificate /etc/nginx/ssl/live/apihome.io/fullchain.pem;
+	
+    include /etc/nginx/snippets/ssl.conf;
+
+	location / {
+		return 301 https://www.apihome.io$request_uri;
+	}
+}
+
+## Serves https://www.apihome.io
+server {
+	listen 443 ssl http2 default_server;
+	listen [::]:443 ssl http2 default_server ipv6only=on;
+	server_name www.apihome.io;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+	ssl_certificate /etc/nginx/ssl/live/www.apihome.io/fullchain.pem;
+	ssl_certificate_key /etc/nginx/ssl/live/www.apihome.io/privkey.pem;
+	ssl_trusted_certificate /etc/nginx/ssl/live/www.apihome.io/fullchain.pem;
+	
+    include /etc/nginx/snippets/ssl.conf;
+
     root /usr/share/nginx/html;
     index index.html;
 
-    server_name apihome.io;
-
-    location / {
-        try_files $uri $uri/ =404;
-        add_header Cache-Control "no-cache";
-    }
-
+	location / {
+		try_files $uri $uri/ =404;
+	}
+    
     location /static {
         expires 1y;
         add_header Cache-Control "public";
@@ -30,3 +88,7 @@ server {
         proxy_pass http://backend:5000;
     }
 }
+
+
+## Note that http://apihome.io redirects to https://apihome.io (which redirects to https://www.apihome.io) because 
+## redirecting to https://www.apihome.io directly would be incompatible with HSTS.

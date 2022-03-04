@@ -8,6 +8,7 @@ from werkzeug.security import check_password_hash
 from flask import Blueprint, jsonify, request, make_response
 import jwt
 from datetime import datetime, timedelta
+from backend.utils.api_util import get_remote_addr
 
 from backend.utils.constants import (
     API_RUN_LIMIT,
@@ -33,7 +34,7 @@ EXPIRES_IN_SECONDS = EXPIRES_IN_MINUTES * 60
 def login():
     # creates dictionary of form data
     auth = request.get_json()
-    ip_addr = request.remote_addr
+    ip_addr = get_remote_addr(request)
     logger.info(f"Attempting login from ip: [{ip_addr}]")
 
     if not auth or not auth.get("email") or not auth.get("password"):

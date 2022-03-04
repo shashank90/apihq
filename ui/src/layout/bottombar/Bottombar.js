@@ -15,7 +15,9 @@ export default function Topbar() {
           For support queries write to: contactus@cymitra.com.
           <p>
             For more information checkout:{" "}
-            <a href="http://cymitra.com">Cymitra</a>
+            <a href="http://cymitra.com" target="_blank">
+              Cymitra
+            </a>
           </p>
         </div>
       </div>

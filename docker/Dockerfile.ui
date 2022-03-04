@@ -13,6 +13,13 @@ RUN npm run build
 # Setup nginx
 FROM nginx:1.15
 COPY --from=build /app/build /usr/share/nginx/html
+
+# Create dirs for certificate renewal
+RUN mkdir -p /var/www/certbot/.well-known/acme-challenge
+
+# COPY conf files
+COPY ./docker/nginx/letsencrypt.conf /etc/nginx/snippets/letsencrypt.conf
+COPY ./docker/nginx/ssl.conf /etc/nginx/snippets/ssl.conf
 COPY ./docker/nginx/apihome.nginx /etc/nginx/sites-available/apihome.nginx
 COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./docker/nginx/proxy_params /etc/nginx/proxy_params
