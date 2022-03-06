@@ -2,6 +2,7 @@ import os
 import shutil
 from flask import Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
+from backend.apis.input_validator.validator import is_invalid_name
 from backend.apis.response_handler.decorator import handle_response
 from backend.db.model.api_validate import ValidateStatusEnum
 from backend.tester.validator import validate
@@ -12,7 +13,8 @@ from backend.db.helper import (
     get_api_inventory,
     get_api_status,
 )
-from backend.db.model.api_inventory import ApiInventory, AddedByEnum
+from backend.apis.model.http_error import HttpResponse
+from backend.db.model.api_inventory import AddedByEnum
 from backend.tester.modules.openapi.openapi_parser import get_paths
 from backend.utils import uuid_handler
 
@@ -21,8 +23,13 @@ from backend.utils.artifact_handler import (
 )
 from backend.log.factory import Logger
 from backend.utils.constants import (
+    COLLECTION_NAME,
+    COLLECTION_NAME_MAX_LENGTH,
     CRAWLER,
     ALLOWED_EXTENSIONS,
+    ERROR,
+    HTTP_BAD_REQUEST,
+    INPUT_VALIDATION,
     UNNAMED,
     YAML_LINT_ERROR_PREFIX,
 )
@@ -55,6 +62,17 @@ def import_api(current_user):
 
     # Deserialize form-data to extract collection name
     collection_name = request.form.get("collection_name", UNNAMED)
+
+    message = is_invalid_name(
+        COLLECTION_NAME, collection_name, COLLECTION_NAME_MAX_LENGTH
+    )
+    if message:
+        raise HttpResponse(
+            message=message,
+            code=INPUT_VALIDATION,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
+        )
 
     # Check if the post request has the file part
     if "file" not in request.files:

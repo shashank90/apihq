@@ -5,6 +5,7 @@ from backend.apis.response_handler.decorator import handle_response
 from backend.db.model.api_inventory import AddedByEnum
 from backend.db.model.api_spec import ApiSpec
 import os
+from backend.apis.input_validator.validator import is_invalid_name
 from flask import Blueprint, jsonify, request
 from backend.apis.auth.decorators.decorator import token_required
 from backend.db.helper import get_spec, get_validation_status
@@ -16,6 +17,7 @@ from backend.tester.modules.openapi.openapi_parser import get_paths
 from backend.utils.artifact_handler import (
     create_spec_artifacts,
 )
+from backend.apis.model.http_error import HttpResponse
 from backend.db.helper import (
     add_api_to_inventory,
     add_spec,
@@ -24,8 +26,13 @@ from backend.db.helper import (
 )
 from backend.utils import uuid_handler
 from backend.utils.constants import (
+    COLLECTION_NAME,
+    ERROR,
+    COLLECTION_NAME_MAX_LENGTH,
     CRAWLER,
     SPEC_STRING,
+    HTTP_BAD_REQUEST,
+    INPUT_VALIDATION,
     VALIDATE_REPORT,
     YAML_LINT_ERROR_PREFIX,
 )
@@ -47,6 +54,18 @@ def create_openapi_str(current_user):
 
     data = request.get_json()
     collection_name: str = data["collection_name"]
+
+    message = is_invalid_name(
+        COLLECTION_NAME, collection_name, COLLECTION_NAME_MAX_LENGTH
+    )
+    if message:
+        raise HttpResponse(
+            message=message,
+            code=INPUT_VALIDATION,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
+        )
+
     spec_string = data["spec_string"]
     # logger.info("Spec Type: " + str(type(spec_json)))
 
@@ -132,6 +151,18 @@ def update_openapi_str(current_user, spec_id):
 
     data = request.get_json()
     collection_name: str = data["collection_name"]
+
+    message = is_invalid_name(
+        COLLECTION_NAME, collection_name, COLLECTION_NAME_MAX_LENGTH
+    )
+    if message:
+        raise HttpResponse(
+            message=message,
+            code=INPUT_VALIDATION,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
+        )
+
     spec_string: str = data["spec_string"]
 
     spec: ApiSpec = get_spec(spec_id)

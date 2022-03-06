@@ -106,3 +106,14 @@ ZAP_DUMP_REQUEST_SCRIPT_NAME = "Dump Request"
 ZAP_DUMP_REQUEST_SCRIPT_PATH = os.path.join(
     BASE_DIR, "backend/tester/connectors/zap/scripts/dump_request.py"
 )
+
+
+# Form field lengths
+INPUT_VALIDATION = "INPUT_VALIDATION"
+COLLECTION_NAME = "Collection name"
+NAME = "Name"
+COLLECTION_NAME_MAX_LENGTH = 30
+NAME_MAX_LENGTH = 30
+PASSWORD_MAX_LENGTH = 30
+COMPANY_NAME_MAX_LENGTH = 30
+EMAIL_MAX_LENGTH = 40

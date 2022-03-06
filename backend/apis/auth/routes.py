@@ -1,3 +1,9 @@
+from backend.apis.input_validator.validator import (
+    is_invalid_company_name,
+    is_invalid_email,
+    is_invalid_password,
+    is_invalid_name,
+)
 from backend.apis.model.http_error import HttpResponse
 from backend.apis.response_handler.decorator import handle_response
 from backend.db.helper import add_api_run_limit, add_login_details, get_user, add_user
@@ -15,6 +21,12 @@ from backend.utils.constants import (
     HTTP_FORBIDDEN,
     HTTP_UNAUTHORIZED,
     ERROR,
+    NAME,
+    NAME_MAX_LENGTH,
+    INPUT_VALIDATION,
+    PASSWORD_MAX_LENGTH,
+    COMPANY_NAME_MAX_LENGTH,
+    HTTP_BAD_REQUEST,
 )
 
 
@@ -38,17 +50,6 @@ def login():
     logger.info(f"Attempting login from ip: [{ip_addr}]")
 
     if not auth or not auth.get("email") or not auth.get("password"):
-        # returns 401 if any email or / and password is missing
-        # return make_response(
-        # "Could not verify",
-        # 401,
-        # {
-        # "error": {
-        # "code": MISSING_EMAIL_PASSWORD,
-        # "message": "Either email or password is missing",
-        # }
-        # },
-        # )
         raise HttpResponse(
             message="Either email or password is missing",
             code=MISSING_EMAIL_PASSWORD,
@@ -59,12 +60,6 @@ def login():
     user: User = get_user(email=auth.get("email"))
 
     if not user:
-        # returns 401 if user does not exist
-        # return make_response(
-        # "Could not verify",
-        # 401,
-        # {"error": {"code": INVALID_USER, "message": "User does not exist"}},
-        # )
         raise HttpResponse(
             message="User does not exist",
             code=INVALID_USER,
@@ -101,12 +96,6 @@ def login():
             ),
             201,
         )
-    # returns 403 if password is wrong
-    # return make_response(
-    #     "Could not verify",
-    #     403,
-    #     {"error": {"code": INCORRECT_PASSWORD, "message": "Incorrect password"}},
-    # )
     raise HttpResponse(
         message="Incorrect password",
         code=INCORRECT_PASSWORD,
@@ -115,8 +104,8 @@ def login():
     )
 
 
-@handle_response
 @auth_bp.route("/signup", methods=["POST"])
+@handle_response
 def signup():
     # creates a dictionary of the form data
     data = request.get_json()
@@ -127,6 +116,44 @@ def signup():
     company_name = data.get("companyName")
     agree_terms = data.get("agreeTerms")
 
+    message = is_invalid_name(NAME, name, NAME_MAX_LENGTH)
+    if message:
+        raise HttpResponse(
+            message=message,
+            code=INPUT_VALIDATION,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
+        )
+
+    message = is_invalid_email(email)
+    if message:
+        raise HttpResponse(
+            message=message,
+            code=INPUT_VALIDATION,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
+        )
+
+    message = is_invalid_password(password)
+    if message:
+        raise HttpResponse(
+            message=message,
+            code=INPUT_VALIDATION,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
+        )
+
+    # Validate only if entered
+    if company_name:
+        message = is_invalid_company_name(company_name)
+        if message:
+            raise HttpResponse(
+                message=message,
+                code=INPUT_VALIDATION,
+                http_status=HTTP_BAD_REQUEST,
+                type=ERROR,
+            )
+
     # checking for existing user
     user: User = get_user(email=email)
     if not user:
@@ -135,7 +162,6 @@ def signup():
         user_id = user.user_id
 
         # Init user config upon successful registration
-        # Add Api Run limit
         limit = API_RUN_LIMIT
         add_api_run_limit(user_id, limit)
 
@@ -143,13 +169,10 @@ def signup():
             jsonify({"message": "Successfully registered"}),
             201,
         )
-        # response.headers["Content-Type"] = "application/json"
         return response
     else:
-        # returns 202 if user already exists
         response = make_response(
             jsonify({"message": "User already exists. Please log in"}),
             202,
         )
-        # response.headers["Content-Type"] = "application/json"
         return response

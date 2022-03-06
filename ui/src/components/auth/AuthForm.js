@@ -31,7 +31,6 @@ const AuthForm = () => {
   };
 
   const checkboxHandler = () => {
-    // console.log("Toggle conditions checkbox");
     // if agree === true, it will be set to false
     // if agree === false, it will be set to true
     setAgree(!agree);
@@ -116,6 +115,7 @@ const AuthForm = () => {
           setMessage(successMsg);
           setIsLogin(true);
           setMessage("");
+          setError("");
         }
       }
     } catch (error) {
@@ -140,24 +140,12 @@ const AuthForm = () => {
           {!isLogin && (
             <div className={classes.control}>
               <label htmlFor="name">Name</label>
-              <input
-                type="text"
-                id="name"
-                required
-                ref={nameInputRef}
-                maxLength="40"
-              />
+              <input type="text" id="name" required ref={nameInputRef} />
             </div>
           )}
           <div className={classes.control}>
             <label htmlFor="email">Email</label>
-            <input
-              type="text"
-              id="email"
-              required
-              ref={emailInputRef}
-              maxLength="40"
-            />
+            <input type="text" id="email" required ref={emailInputRef} />
           </div>
           <div className={classes.control}>
             <label htmlFor="password">Password</label>
@@ -165,7 +153,6 @@ const AuthForm = () => {
               type="password"
               id="password"
               required
-              maxLength="40"
               ref={passwordInputRef}
             />
           </div>
@@ -173,12 +160,7 @@ const AuthForm = () => {
             <React.Fragment>
               <div className={classes.control}>
                 <label htmlFor="company">Company</label>
-                <input
-                  type="text"
-                  id="company"
-                  ref={companyInputRef}
-                  maxLength="40"
-                />
+                <input type="text" id="company" ref={companyInputRef} />
               </div>
               <div>
                 <input
