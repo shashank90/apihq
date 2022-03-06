@@ -241,6 +241,7 @@ export default function SpecEditor(props) {
                   size="30"
                   value={collectionName}
                   onChange={handleCollectionNameChange}
+                  maxLength="30"
                 ></input>
               </div>
               <div className={styles.status_container}>

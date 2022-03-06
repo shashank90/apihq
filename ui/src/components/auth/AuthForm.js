@@ -140,12 +140,24 @@ const AuthForm = () => {
           {!isLogin && (
             <div className={classes.control}>
               <label htmlFor="name">Name</label>
-              <input type="text" id="name" required ref={nameInputRef} />
+              <input
+                type="text"
+                id="name"
+                required
+                ref={nameInputRef}
+                maxLength="30"
+              />
             </div>
           )}
           <div className={classes.control}>
             <label htmlFor="email">Email</label>
-            <input type="text" id="email" required ref={emailInputRef} />
+            <input
+              type="text"
+              id="email"
+              required
+              ref={emailInputRef}
+              maxLength="40"
+            />
           </div>
           <div className={classes.control}>
             <label htmlFor="password">Password</label>
@@ -154,6 +166,7 @@ const AuthForm = () => {
               id="password"
               required
               ref={passwordInputRef}
+              maxLength="30"
             />
           </div>
           {!isLogin && (
@@ -168,6 +181,7 @@ const AuthForm = () => {
                   id="terms"
                   onChange={checkboxHandler}
                   required
+                  maxLength="30"
                 />
                 <label htmlFor="terms" className={classes.termsLabel}>
                   I have read the terms under{"  "}

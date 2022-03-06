@@ -1,5 +1,5 @@
 import yaml
-
+import ruamel
 import json
 from backend.apis.response_handler.decorator import handle_response
 from backend.db.model.api_inventory import AddedByEnum
@@ -268,6 +268,7 @@ def retrieve_spec(current_user, spec_id):
     with open(spec_path, "r") as f:
         try:
             data = yaml.safe_load(f)
+            # Retain key order as is
             spec_string = yaml.dump(data, sort_keys=False)
         except Exception as e:
             logger.error(
@@ -276,7 +277,9 @@ def retrieve_spec(current_user, spec_id):
             logger.info(
                 f"Hence. Reading file contents from spec: [{spec_path}] directly"
             )
+
             spec_string = read_content(spec_path)
+            # logger.debug(spec_string)
 
         response = jsonify(
             {

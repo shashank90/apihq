@@ -117,3 +117,11 @@ def is_file_exists(path):
 
 def get_run_dir_path(data_dir: str, run_id: str):
     return os.path.join(data_dir, RUN, run_id)
+
+
+def get_file_name_and_extension(file_name):
+    """
+    Extract file name and extension from file name. Ex: (abc.yaml) -> abc & yaml
+    """
+    filename, file_extension = os.path.splitext(file_name)
+    return (filename, file_extension)

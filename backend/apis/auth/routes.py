@@ -14,7 +14,7 @@ from werkzeug.security import check_password_hash
 from flask import Blueprint, jsonify, request, make_response
 import jwt
 from datetime import datetime, timedelta
-from backend.utils.api_util import get_remote_addr
+from backend.utils.api_helper import get_remote_addr
 
 from backend.utils.constants import (
     API_RUN_LIMIT,

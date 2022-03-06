@@ -8,6 +8,7 @@ logger = Logger(__name__)
 def run_cmd(cmd_arr: List, timeout: int) -> str:
     result = None
     audit_output = None
+    run_error = None
     try:
         result = subprocess.run(
             cmd_arr,
@@ -22,13 +23,15 @@ def run_cmd(cmd_arr: List, timeout: int) -> str:
     except subprocess.CalledProcessError as e:
         logger.error(e)
         if result:
+            run_error = result.stderr
             log_stderr(result.stderr)
     except subprocess.TimeoutExpired as e:
         logger.error(e)
         if result:
+            run_error = result.stderr
             log_stderr(result.stderr)
 
-    return audit_output
+    return audit_output, run_error
 
 
 def log_stderr(std_err):

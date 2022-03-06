@@ -65,7 +65,7 @@ def is_invalid_company_name(value: str):
         is_invalid_str_length("Company name", value, COMPANY_NAME_MAX_LENGTH)
         validate.Regexp(
             r"^[A-Z]([a-zA-Z0-9]|[- @\.#&!])*$",
-            error="Company name can contain following special characters only: '.','-','#', '&'",
+            error="Company name can contain following special characters only: `.-#&`",
         )(value)
     except ValidationError as ve:
         return ve.messages
@@ -79,13 +79,14 @@ def is_invalid_name(field_name: str, value: str, length: int):
     Test validity of following:
     1. user name
     2. collection name
+    3. file name
     """
     logger.info(f"Validating {field_name}...")
     try:
         is_invalid_str_length(field_name, value, length)
         validate.Regexp(
-            r"^[a-zA-Z ,.'-]+$",
-            error="Name can have only space",
+            r"^[a-zA-Z .'-,_]+$",
+            error=f"{field_name} can have following special characters only: `,.-_`",
         )(value)
     except ValidationError as ve:
         return ve.messages

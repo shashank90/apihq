@@ -29,10 +29,15 @@ def validate(
     """
     Perform OpenAPI spec validation using ibm openapi validator npm package
     """
-    logger.info(f"Validating openapi spec at {spec_path}...")
+    if lint_only:
+        logger.info(f"Linting openapi spec at [{spec_path}] for user [{user_id}]...")
+    else:
+        logger.info(f"Validating openapi spec at [{spec_path}] for user [{user_id}]...")
 
     validate_out: str = None
     final_messages: List = []
+
+    # Starting status
     status_enum = ValidateStatusEnum.FIX_VALIDATION_ERROR
     status: str = ValidateStatusEnum.FIX_VALIDATION_ERROR.name
     is_lint_error: bool = False
@@ -43,7 +48,7 @@ def validate(
     }
 
     cmd_list = [LINT_CMD, "-j", spec_path]
-    validate_output = run_cmd(cmd_list, timeout=10)
+    validate_output, run_error = run_cmd(cmd_list, timeout=10)
 
     validate_out = lint_yaml(validate_output)
 
@@ -86,7 +91,7 @@ def validate(
             result["validate_out"] = get_lint_error_msg(lint_error_message)
             write_json(validate_report_path, lint_error_message)
 
-        result["status"] = ValidateStatusEnum.LINT_ERROR.name
+        result["status"] = status
         result["is_lint_error"] = True
         return result
 
@@ -139,12 +144,13 @@ def update_validate_status(
         # Update validation status. Right now logic may be restrict. TODO: Come up with a score instead ?
         if len(messages) > 0:
             update_validation_status(spec_id, user_id, in_status)
+            status = ValidateStatusEnum.FIX_VALIDATION_ERROR.name
         else:
             update_validation_status(spec_id, user_id, ValidateStatusEnum.RUN_API)
             status = ValidateStatusEnum.RUN_API.name
     else:
-        status = in_status.name
         update_validation_status(spec_id, user_id, in_status)
+        status = in_status.name
 
     return status
 

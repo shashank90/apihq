@@ -92,7 +92,7 @@ INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
 # Error message that doesn't reveal much
 GENERIC_ERROR_MESSAGE = "Something went wrong. Please contact support"
 
-DEFAULT_LINT_ERROR_MESSAGE = "Malformed OpenAPI YAML"
+DEFAULT_LINT_ERROR_MESSAGE = "Malformed OpenAPI yaml"
 
 # ZAP
 DUMP_REQUEST_SCRIPT_RELATIVE_PATH = (
@@ -117,3 +117,12 @@ NAME_MAX_LENGTH = 30
 PASSWORD_MAX_LENGTH = 30
 COMPANY_NAME_MAX_LENGTH = 30
 EMAIL_MAX_LENGTH = 40
+FILE_NAME = "File name"
+FILE_NAME_MAX_LENGTH = 40
+
+# Postman collection to openapi conversion
+POSTMAN_COLLECTION = "Postman Collection"
+POSTMAN_ERROR_MESSAGE_PREFIX = (
+    "Failed to convert Postman collection to OpenAPI Specification. "
+)
+DEFAULT_POSTMAN_ERROR_MESSAGE = "Collection could be malformed"

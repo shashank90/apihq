@@ -72,7 +72,10 @@ def get_api_status(spec_id: str) -> str:
     Given spec id, get validation status
     """
     spec: ApiSpec = get_spec(spec_id)
-    return spec.validate_result.status.name
+    # Check if spec present. It's very much possible that spec is deleted and apis are left behind
+    if spec and spec.validate_result:
+        return spec.validate_result.status.name
+    return None
 
 
 def get_validation_status(spec_id: str) -> str:

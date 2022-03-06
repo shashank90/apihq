@@ -1,4 +1,3 @@
-from backend.utils.os_cmd_runner import run_cmd
 from backend.log.factory import Logger
 from backend.tester.connectors.zap.script_handler import (
     add_script,
@@ -29,7 +28,6 @@ def start_zap():
     """
 
     try:
-        # output = run_cmd(ZAP_START_CMD, timeout=30)
         logger.info("Starting ZAP...")
         subprocess.Popen(
             [

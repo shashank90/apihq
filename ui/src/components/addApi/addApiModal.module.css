@@ -6,6 +6,11 @@
   margin-top: 10px;
   margin-left: 10px;
 }
+.file_type_container {
+  margin-top: 10px;
+  /* margin-left: 10px; */
+  margin-right: 125px;
+}
 .file_upload_container {
   margin-top: 10px;
   text-align: center;
@@ -17,7 +22,9 @@
 .collection_name_label {
   margin-right: 5px;
 }
-
+.file_type_label {
+  margin-right: 5px;
+}
 .file_selector_label {
   margin-right: 5px;
 }

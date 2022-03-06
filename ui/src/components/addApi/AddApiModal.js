@@ -11,6 +11,8 @@ export default function AddApiModal(props) {
   const [addApiOption, setAddApiOption] = useState(0); // 0: no show, 1: show yes, 2: show no.
   const [collectionName, setCollectionName] = useState("");
   const [file, setFile] = useState();
+  const [fileType, setFileType] = useState("");
+
   const authCtx = useContext(AuthContext);
 
   const [loading, setLoading] = useState(false);
@@ -20,6 +22,10 @@ export default function AddApiModal(props) {
 
   const addApiHandler = (addApiOption) => {
     setAddApiOption(addApiOption);
+  };
+
+  const handleFileTypeChange = (category) => {
+    setFileType(category);
   };
 
   let content = <p></p>;
@@ -58,7 +64,6 @@ export default function AddApiModal(props) {
     e.preventDefault();
 
     if (file == undefined) {
-      // setShowError(true);
       return;
     }
     console.log("Uploading file: " + file.name);
@@ -68,6 +73,7 @@ export default function AddApiModal(props) {
     const formData = new FormData();
 
     formData.append("collection_name", collectionName);
+    formData.append("file_type", fileType);
     formData.append("file", file);
 
     try {
@@ -156,7 +162,22 @@ export default function AddApiModal(props) {
                 size="30"
                 value={collectionName}
                 onChange={handleCollectionNameChange}
+                maxLength="30"
               ></input>
+            </div>
+            <div className={styles.file_type_container}>
+              <label htmlFor="fileOption" className={styles.file_type_label}>
+                Select file type
+              </label>
+              <select
+                id="fileOption"
+                name="fileOption"
+                value={fileType}
+                onChange={(event) => handleFileTypeChange(event.target.value)}
+              >
+                <option id="0">OpenAPI</option>
+                <option id="1">Postman Collection</option>
+              </select>
             </div>
             <div className={styles.file_upload_container}>
               <label htmlFor="file_id" className={styles.file_selector_label}>

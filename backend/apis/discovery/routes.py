@@ -17,6 +17,7 @@ from backend.apis.model.http_error import HttpResponse
 from backend.db.model.api_inventory import AddedByEnum
 from backend.tester.modules.openapi.openapi_parser import get_paths
 from backend.utils import uuid_handler
+from backend.utils.api_helper import convert_postman_collection
 
 from backend.utils.artifact_handler import (
     create_spec_artifacts,
@@ -32,6 +33,9 @@ from backend.utils.constants import (
     INPUT_VALIDATION,
     UNNAMED,
     YAML_LINT_ERROR_PREFIX,
+    POSTMAN_COLLECTION,
+    FILE_NAME,
+    FILE_NAME_MAX_LENGTH,
 )
 
 X_API_SOURCE = "x-api-source"
@@ -63,6 +67,8 @@ def import_api(current_user):
     # Deserialize form-data to extract collection name
     collection_name = request.form.get("collection_name", UNNAMED)
 
+    file_type = request.form.get("file_type", UNNAMED)
+
     message = is_invalid_name(
         COLLECTION_NAME, collection_name, COLLECTION_NAME_MAX_LENGTH
     )
@@ -76,11 +82,9 @@ def import_api(current_user):
 
     # Check if the post request has the file part
     if "file" not in request.files:
-        # if "file" not in form_data:
         response = jsonify({"message": "No file part in the request"})
         response.status_code = 400
         return response
-    # file = form_data["file"]
     file = request.files["file"]
     if file.filename == "":
         response = jsonify({"message": "No file selected for uploading"})
@@ -88,6 +92,16 @@ def import_api(current_user):
         return response
     if file and allowed_openapi_file(file.filename):
         file_name = secure_filename(file.filename)
+
+        # Check file name length
+        message = is_invalid_name(FILE_NAME, file_name, FILE_NAME_MAX_LENGTH)
+        if message:
+            raise HttpResponse(
+                message=message,
+                code=INPUT_VALIDATION,
+                http_status=HTTP_BAD_REQUEST,
+                type=ERROR,
+            )
 
         # Create SpecParams
         spec_params = create_spec_artifacts()
@@ -98,6 +112,23 @@ def import_api(current_user):
 
         # Save file on the file system(data dir)
         file.save(spec_path)
+
+        if file_type == POSTMAN_COLLECTION:
+            (
+                converted_spec_path,
+                updated_file_name,
+                conversion_out_message,
+            ) = convert_postman_collection(user_id, data_dir, file_name, spec_path)
+            if conversion_out_message:
+                raise HttpResponse(
+                    message=conversion_out_message,
+                    code=INPUT_VALIDATION,
+                    http_status=HTTP_BAD_REQUEST,
+                    type=ERROR,
+                )
+            # Set new spec path after conversion(postman collection -> openapi)
+            spec_path = converted_spec_path
+            file_name = updated_file_name
 
         # Lint and check if valid YAML
         response = {}
@@ -148,7 +179,11 @@ def import_api(current_user):
         return response
     else:
         response = jsonify(
-            {"error": {"message": "Only OpenAPI in YAML format is supported"}}
+            {
+                "error": {
+                    "message": "OpenAPI specification is supported in yaml format only"
+                }
+            }
         )
         response.status_code = 400
         return response

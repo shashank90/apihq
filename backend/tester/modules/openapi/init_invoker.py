@@ -28,7 +28,7 @@ def generate_sdk(
     Generate python sdk from openapi spec(using openapi generator)
     """
     logger.info(f"Openapi sdk generation begins for run_id {run_id}...")
-    output = run_cmd(
+    output, run_error = run_cmd(
         [
             SDK_GENERATOR_CMD,
             "generate",

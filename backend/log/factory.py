@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 from backend.utils.constants import LOG_FILE_NAME, LOG_DIR
-
+from inspect import currentframe, getframeinfo
 
 # Rotating File Handler:
 # file_handler = logging.handlers.RotatingFileHandler(
