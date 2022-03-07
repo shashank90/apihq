@@ -90,11 +90,10 @@ const AuthForm = () => {
 
       // Parse response data
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       setLoading(false);
 
       if (!response.ok) {
-        console.log("Response status: " + response.status);
         if ("error" in data) {
           throw new Error(data.error.message);
         }

@@ -4,21 +4,20 @@ import Buttons from "../../components/common/Buttons";
 import Message from "../../components/common/Message";
 export default function IssueDetails(props) {
   const issueDetail = props.issueDetail.issue;
-  console.log(issueDetail);
+  // console.log(issueDetail);
 
   const isBackBtnVisible = true;
   const isActionBtnVisible = true;
   const isNextBtnVisible = false;
   const actionButtonLabel = "Show Request";
   const requestDetail = props.issueDetail.request;
-  console.log(requestDetail);
+  // console.log(requestDetail);
   const [showRequest, setShowRequest] = useState(false);
 
   const description = issueDetail.description;
   // const wascId = detail.wascid;
   // const cweId = detail.cweid;
   const message = issueDetail.message;
-  console.log(message);
   // const confidence = detail.confidence;
   // const riskDesc = detail.riskdesc;
   // const instanceCount = detail.count;

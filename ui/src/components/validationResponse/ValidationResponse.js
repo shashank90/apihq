@@ -11,7 +11,7 @@ export default function ValidationResponse(props) {
   });
 
   const validationResponse = props.response;
-  console.log(validationResponse);
+  // console.log(validationResponse);
 
   function backButtonHandler() {
     setShowExample(false);

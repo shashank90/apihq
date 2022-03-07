@@ -33,9 +33,9 @@ export default function APIScan() {
   function updateRuns(fetchedRuns) {
     if (runs.length > 0) {
       if (JSON.stringify(runs) === JSON.stringify(fetchedRuns)) {
-        console.log("Matched!!. No change");
+        // console.log("Matched!!. No change");
       } else {
-        console.log("Change DETECTED..");
+        // console.log("Change DETECTED..");
         setRuns(fetchedRuns);
       }
     } else {
@@ -60,9 +60,9 @@ export default function APIScan() {
       });
 
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       if (!response.ok) {
-        console.log("Response status: " + response.status);
+        // console.log("Response status: " + response.status);
         if ("error" in data) {
           throw new Error(data.error.message);
         }
@@ -89,7 +89,7 @@ export default function APIScan() {
   }
 
   useEffect(() => {
-    console.log("Fetch Api Run data on first load...");
+    // console.log("Fetch Api Run data on first load...");
     fetchApiRunDataFirstTime();
     const interval = setInterval(() => {
       fetchApiRunDataPeriodic();

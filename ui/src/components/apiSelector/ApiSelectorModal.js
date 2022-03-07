@@ -39,7 +39,6 @@ export default function APIDropdownModal(props) {
     if (apiEndpointURL == defaultApiEndpointURLSelectMessage) {
       return null;
     }
-    console.log("api endpoint url: " + apiEndpointURL);
     for (let x in apis) {
       let api = apis[x];
       // console.log(api.apiPath);
@@ -67,8 +66,6 @@ export default function APIDropdownModal(props) {
       return { headerName: headerName, headerValue: headerValue };
     });
 
-    console.log(transformedHeaderPairs);
-
     const body = {
       api_endpoint_url: apiEndpointURL,
       http_method: httpMethod,
@@ -88,10 +85,9 @@ export default function APIDropdownModal(props) {
 
       // Parse response data
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
 
       if (!response.ok) {
-        console.log("Response status: " + response.status);
         if ("error" in data) {
           throw new Error(data.error.message);
         }
@@ -127,7 +123,7 @@ export default function APIDropdownModal(props) {
         },
       });
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       if (!response.ok) {
         if ("error" in data) {
           throw new Error(data.error.message);
@@ -167,14 +163,11 @@ export default function APIDropdownModal(props) {
     // Get http method corresponding to selected endpoint URL
     const selectedURL = event.target.value;
     let selectedApi = null;
-    console.log(apis);
-    console.log(selectedURL);
     selectedApi = apis.find((api) => {
       return selectedURL === api.apiEndpointURL;
     });
-    console.log(selectedApi);
     if (selectedApi) {
-      console.log(apiEndpointURL);
+      // console.log("Selected Api endpoint URL: " + apiEndpointURL);
       if (selectedApi.apiEndpointURL === defaultApiEndpointURLSelectMessage) {
         setHttpMethods([defaultApiEndpointURLSelectMessage]);
       } else {
@@ -235,7 +228,6 @@ export default function APIDropdownModal(props) {
   };
 
   const handleSubmit = (e) => {
-    console.log("Form submitted");
     e.preventDefault();
   };
 

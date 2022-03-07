@@ -1,5 +1,6 @@
 import "./issues.css";
 import styles from "../../components/common/errors.css";
+import buttons from "../../components/common/buttons.module.css";
 import { useState, useCallback, useEffect, useContext } from "react";
 import { DataGrid } from "@material-ui/data-grid";
 import { useParams } from "react-router-dom";
@@ -19,10 +20,8 @@ export default function Issues(props) {
 
   const params = useParams();
   let runId = params.runId;
-  console.log("runId: " + runId);
 
   function showIssueDetails(id) {
-    console.log("Row with id clicked: " + id);
     // console.log(data);
     // Find issue by id and corresponding request
     const issueS = issues.filter((item) => {
@@ -30,9 +29,9 @@ export default function Issues(props) {
     });
     if (issueS) {
       const issue = issueS[0];
-      console.log(issue);
+      // console.log(issue);
       const requestId = issue.requestId;
-      console.log("requestId: " + requestId);
+      // console.log("requestId: " + requestId);
 
       // Set corresponding request
       const requestS = requests.filter((request) => {
@@ -62,10 +61,9 @@ export default function Issues(props) {
         },
       });
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       // Set error and other success message(if any)
       if (!response.ok) {
-        console.log("Response status: " + response.status);
         if ("error" in data) {
           throw new Error(data.error.message);
         }
@@ -111,7 +109,7 @@ export default function Issues(props) {
         return (
           <>
             <button
-              className="msgListView"
+              className={buttons.green_btn}
               onClick={() => {
                 showIssueDetails(params.row.id);
               }}

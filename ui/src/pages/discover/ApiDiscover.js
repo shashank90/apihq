@@ -34,9 +34,7 @@ export default function APIInventory() {
   function updateApis(fetchedApis) {
     if (apis.length > 0) {
       if (JSON.stringify(apis) === JSON.stringify(fetchedApis)) {
-        console.log("Matched!!. No change");
       } else {
-        console.log("Change DETECTED..");
         setApis(fetchedApis);
       }
     } else {
@@ -60,9 +58,8 @@ export default function APIInventory() {
         },
       });
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       if (!response.ok) {
-        console.log("Response status: " + response.status);
         if ("error" in data) {
           throw new Error(data.error.message);
         }
@@ -89,7 +86,7 @@ export default function APIInventory() {
   }
 
   useEffect(() => {
-    console.log("Fetch Api Inventory data on first load...");
+    // console.log("Fetch Api Inventory data on first load...");
     fetchApiInventoryDataFirstTime();
     const interval = setInterval(() => {
       fetchApiInventoryDataPeriodic();

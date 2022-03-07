@@ -3,7 +3,6 @@ export default function Checkbox(props) {
   const label = props.label;
   const checked = props.checked;
   const onChange = props.onChange;
-  console.log("Checkbox: ", name, checked);
 
   return (
     <div>

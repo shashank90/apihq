@@ -2,7 +2,6 @@ import React from "react";
 import "./buttons.css";
 
 export default function Buttons(props) {
-  console.log("Inside buttons component. Props " + JSON.stringify(props));
   let isBackBtnVisible = false;
   const onBackHandle = props.onBackHandle;
   let isActionBtnVisible = false;
