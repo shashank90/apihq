@@ -1,9 +1,9 @@
 .sidebar {
-  flex: 1;
   height: calc(100vh - 50px);
   background-color: rgb(251, 251, 255);
   position: sticky;
   top: 50px;
+  width: 10em;
 }
 
 .sidebarWrapper {
@@ -38,7 +38,7 @@
   background-color: rgb(240, 240, 255);
 }
 
-.sidebarIcon{
-    margin-right: 5px;
-    font-size: 20px !important;
+.sidebarIcon {
+  margin-right: 5px;
+  font-size: 20px !important;
 }

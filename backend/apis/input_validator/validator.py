@@ -85,8 +85,8 @@ def is_invalid_name(field_name: str, value: str, length: int):
     try:
         is_invalid_str_length(field_name, value, length)
         validate.Regexp(
-            r"^[a-zA-Z .'-,_]+$",
-            error=f"{field_name} can have following special characters only: `,.-_`",
+            r"^[a-zA-Z -_]+$",
+            error=f"{field_name} can have only hyphen, space or underscore as special characters",
         )(value)
     except ValidationError as ve:
         return ve.messages
