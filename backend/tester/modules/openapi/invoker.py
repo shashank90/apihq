@@ -1172,6 +1172,7 @@ def _invoke_apis(
         # Pass fuzzed payloads one at a time
         response_data = None
         response_status = None
+        response_headers = None
         logger.info(
             f"Sending fuzzed requests with run_id: {run_id} for api: {api_path}"
         )
@@ -1228,6 +1229,7 @@ def _invoke_apis(
                     )
                     response_data = response.data
                     response_status = response.status
+                    response_headers = response.headers
 
                 counter = counter + 1
             except exceptions_module.ApiValueError as ae:
@@ -1237,6 +1239,7 @@ def _invoke_apis(
                 logger.error(f"Api Exception Error: {str(api_exception)}")
                 response_data = api_exception.body
                 response_status = api_exception.status
+                response_headers = api_exception.headers
                 counter = counter + 1
             except exceptions_module.ApiAttributeError as ae:
                 logger.error(f"Api Attribute Error: {str(ae)}")
@@ -1256,6 +1259,7 @@ def _invoke_apis(
                 # "path_params": path_params,
                 "mimetype": mimetype,
                 "http_method": http_method,
+                "response_headers": response_headers,
                 "response_data": response_data,
                 "response_status": response_status,
             }

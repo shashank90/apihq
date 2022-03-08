@@ -67,9 +67,9 @@ def get_messages(zap):
     return _get_messages(zap, sites)
 
 
-def get_urls(messages):
+def get_messages_from_zap(messages):
     """
-    Parse message and extract the following details: {"url": "", "zap_message_id": "", request_id: ""}
+    Get messages proxied through zap in this format: {"url": "", "zap_message_id": "", request_id: ""}
     """
     url_details = []
     for message in messages:
@@ -83,15 +83,16 @@ def get_urls(messages):
         url_detail = {"zap_message_id": id, "url": url, "request_id": request_id}
         url_details.append(url_detail)
 
-    # print(url_details)
     return url_details
 
 
-def get_zap_message_detail(request_id: str, zap_message_ids: List[Dict]):
+def get_zap_message_detail(request_id: str, url: str, zap_messages: List[Dict]):
     """
     Given a request id, fetch zap message. Example structure: [{'request_id':'R1', 'zap_message_id':'M1', 'request_id':'R2', 'zap_message_id':'M2'}]
     """
-    filtered: List = filter(lambda x: x["request_id"] == request_id, zap_message_ids)
+    filtered: List = filter(
+        lambda x: x["request_id"] == request_id and x["url"] == url, zap_messages
+    )
     if filtered:
         filter_list = list(filtered)
         if len(filter_list) == 1:

@@ -1,7 +1,9 @@
 from pathlib import Path
 import base64
+from urllib3._collections import HTTPHeaderDict
 from typing import List, Dict
-from backend.utils.file_handler import create_run_dir, get_run_dir_path
+from backend.tester.connectors import zap
+from backend.utils.file_handler import create_run_dir, get_run_dir_path, read_json
 from urllib.parse import parse_qs, urlsplit
 from backend.db.helper import update_run_details
 from backend.db.model.api_run import RunStatusEnum
@@ -125,7 +127,12 @@ def run(
         openapi_core_spec = get_openapi_spec(spec_path)
 
         zap: ZAPv2 = get_zap()
-        zap_messages = get_zap_message_ids(run_dir)
+
+        # Get requests saved via our script
+        zap_requests = get_zap_message_requests(run_dir)
+
+        # Get messages proxied through zap
+        # from_zap_messages = get_zap_messages(zap)
 
         # Validate each response against OpenAPI spec for each api
         response_validation_errors: List[str] = []
@@ -139,11 +146,15 @@ def run(
             response_status = response_object.get("response_status")
 
             request_id = response_object.get(REQUEST_ID)
-            request_detail = get_zap_message_details(request_id, zap_messages)
-            zap_msg_id = request_detail.get("zap_message_id")
-            har_data = save_har(run_dir, request_id, zap, zap_msg_id)
+            zap_request = get_request_detail_from_zap_message(request_id, zap_requests)
 
-            add_requests(request_id, har_data, requests)
+            # request_detail = get_zap_message_details(
+            #     request_id, zap_messages, from_zap_messages
+            # )
+            # zap_msg_id = request_detail.get("zap_message_id")
+            # har_data = save_har(run_dir, request_id, zap, zap_msg_id)
+
+            add_requests(request_id, zap_request, response_object, requests)
 
             # req_details: Dict = get_request_details(har_data)
             # req_details["path_params"] = path_params
@@ -193,13 +204,60 @@ def run(
         update_run_details(run_id, RunStatusEnum.ERROR, API_RUN_FAILED)
 
 
-def add_requests(request_id: str, har_data: Dict, requests: List):
+def add_requests(request_id: str, request: Dict, response: Dict, requests: List):
     """
     Parse zap har data and create request_response object
     """
     request_response = {}
     request_object = {}
     response_object = {}
+
+    request_object["url"] = request.get("url")
+    request_object["header"] = request.get("headers")
+    request_object["body"] = request.get("body")
+
+    response_object["status"] = response.get("response_status")
+    response_object["header"] = serialize_headers(
+        response.get("response_headers"), response.get("response_status")
+    )
+    response_object["body"] = extract_str(response.get("response_data"))
+
+    request_response["request_id"] = request_id
+    request_response["request"] = request_object
+    request_response["response"] = response_object
+
+    requests.append(request_response)
+
+
+def serialize_headers(header_object: HTTPHeaderDict, status: str) -> str:
+    """
+    Serialize HttpHeaderDict
+    """
+    header_str = ""
+    if header_object:
+        for header_name in header_object.keys():
+            header_str = (
+                header_str
+                + header_name
+                + ":"
+                + ",".join(header_object.getheaders(header_name))
+                + "\n"
+            )
+
+    # Append status to headers
+    if status:
+        header_str = header_str + "Status" + ":" + str(status) + "\n"
+
+    return header_str
+
+
+def get_from_har(har_data: Dict):
+    """
+    Form request and response objects from har files
+    """
+    request_object = {}
+    response_object = {}
+
     if "log" in har_data:
         log = har_data["log"]
         if "entries" in log and len(log["entries"]) > 0:
@@ -231,11 +289,7 @@ def add_requests(request_id: str, har_data: Dict, requests: List):
                         b64decoded = base64.b64decode(content["text"])
                         response_object["body"] = extract_str(b64decoded)
 
-    request_response["request_id"] = request_id
-    request_response["request"] = request_object
-    request_response["response"] = response_object
-
-    requests.append(request_response)
+        return request_object, response_object
 
 
 def extract_str(content):
@@ -246,7 +300,10 @@ def extract_str(content):
     try:
         string = content.decode("utf-8")
     except UnicodeDecodeError:
-        logger.debug("Given content isn't a bytes-like object")
+        logger.info("Given content isn't a bytes-like object")
+        string = content
+    except Exception as e:
+        logger.info("Given content isn't a bytes-like object")
         string = content
 
     return string
@@ -394,14 +451,34 @@ def get_zap_messages(zap: ZAPv2):
     return messages
 
 
-def get_zap_message_details(request_id: str, zap_messages: List[Dict]):
-    """
-    Get url details including zap_message_id given request_id (which binds request and response)
-    """
-    return get_zap_message_detail(request_id, zap_messages)
+# def get_zap_message_details(
+#     request_id: str, zap_request_messages: List[Dict], from_zap_messages: List[Dict]
+# ):
+#     """
+#     Get url details including zap_message_id given request_id
+#     """
+#     url_request_id = get_url_from_zap_message(request_id, zap_request_messages)
+#     url = url_request_id.get("url")
+#     return get_zap_message_detail(request_id, url, from_zap_messages)
 
 
-def get_zap_message_ids(run_dir: str):
+def get_request_detail_from_zap_message(
+    request_id: str, zap_request_messages: List[Dict]
+):
+    """
+    Extract request details from list of saved(via dump request script) ZAP messages
+    """
+    filtered: List = filter(
+        lambda x: x["request_id"] == request_id, zap_request_messages
+    )
+    if filtered:
+        filter_list = list(filtered)
+        if len(filter_list) == 1:
+            return filter_list[0]
+    return None
+
+
+def get_zap_message_requests(run_dir: str):
     """
     Get zap message ids by reading file names
     """
@@ -409,11 +486,17 @@ def get_zap_message_ids(run_dir: str):
 
     # Form list of request_id and zap_message_id
     items = []
-    for item in os.listdir(zap_msg_dir):
-        temp = item.split("_")
+    for file_item in os.listdir(zap_msg_dir):
+        temp = file_item.split("_")
         request_id = temp[0]
-        zap_message_id = temp[1]
-        items.append({"request_id": request_id, "zap_message_id": zap_message_id})
+        file_item_path = os.path.join(zap_msg_dir, file_item)
+        data = read_json(file_item_path)
+        url = data.get("url")
+        headers = data.get("headers")
+        body = data.get("body")
+        items.append(
+            {"request_id": request_id, "url": url, "headers": headers, "body": body}
+        )
     return items
 
 
