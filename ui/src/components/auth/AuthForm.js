@@ -3,7 +3,6 @@ import { useHistory } from "react-router-dom";
 
 import AuthContext from "../../store/auth-context";
 import classes from "./AuthForm.module.css";
-import styles from "../common/errors.css";
 
 const signupURL = "/signup";
 const loginURL = "/login";
@@ -122,10 +121,10 @@ const AuthForm = () => {
     }
   };
 
-  let content = <div></div>;
+  let content = null;
 
   if (error) {
-    content = <div className={styles.error_text}>{error}</div>;
+    content = <div className={classes.errorText}>{error}</div>;
   }
   if (message) {
     content = <div>{message}</div>;
@@ -170,10 +169,10 @@ const AuthForm = () => {
           </div>
           {!isLogin && (
             <React.Fragment>
-              <div className={classes.control}>
+              {/* <div className={classes.control}>
                 <label htmlFor="company">Company</label>
                 <input type="text" id="company" ref={companyInputRef} />
-              </div>
+              </div> */}
               <div>
                 <input
                   type="checkbox"
