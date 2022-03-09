@@ -140,15 +140,38 @@ export default function APIScan() {
       },
     },
     {
-      field: "Result",
-      headerName: "Result",
-      width: 200,
+      field: "Issues",
+      headerName: "Issues",
+      width: 160,
       renderCell: (params) => {
         return (
           <>
             <Link
               to={{
                 pathname: `/apis/run/issues/${params.row.runId}`,
+              }}
+            >
+              <button
+                className={buttons.green_btn}
+                disabled={!params.row.showResult}
+              >
+                View
+              </button>
+            </Link>
+          </>
+        );
+      },
+    },
+    {
+      field: "Requests",
+      headerName: "Requests",
+      width: 160,
+      renderCell: (params) => {
+        return (
+          <>
+            <Link
+              to={{
+                pathname: `/apis/run/requests/${params.row.runId}`,
               }}
             >
               <button

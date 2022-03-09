@@ -154,3 +154,30 @@ def get_issues(current_user, run_id):
 
     response.status_code = 200
     return response
+
+
+@run_bp.route("/apis/v1/requests/<run_id>", methods=["GET"])
+@token_required
+@handle_response
+def get_requests(current_user, run_id):
+    """
+    Run a tests to detect if defined spec and implementation are aligned
+    """
+    user_id = current_user.user_id
+    logger.info(f"Fetching requests for run {run_id} for user {user_id}")
+
+    api_run: ApiRun = get_run_details(run_id)
+    api_id = api_run.api_id
+    api: ApiInventory = get_api_details(api_id)
+    spec_id = api.spec_id
+    spec: ApiSpec = get_spec(spec_id)
+    data_dir: str = spec.data_dir
+
+    run_dir = get_run_dir_path(data_dir, run_id)
+    requests_file = os.path.join(run_dir, REQUESTS_FILE)
+    requests: List[Dict] = read_json(requests_file)
+
+    response = jsonify({"message": "success", "requests": requests})
+
+    response.status_code = 200
+    return response

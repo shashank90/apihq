@@ -34,7 +34,7 @@ export default function MsgDetails() {
     setMsgDetails({
       uri: uri,
       reqHeader: reqHeader,
-      reqBody: reqBody,
+      reqBody: xreqBody,
       resHeader: resHeader,
       resBody: resBody,
     });

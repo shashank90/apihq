@@ -13,6 +13,7 @@ import Issues from "./pages/findings/Issues";
 import SpecEditor from "./pages/editor/SpecEditor";
 import ApiDiscover from "./pages/discover/ApiDiscover";
 import ApiRun from "./pages/run/ApiRun";
+import MsgList from "./pages/request/MsgList";
 import Auth from "./pages/auth/Auth";
 import AuthContext from "./store/auth-context";
 
@@ -62,6 +63,9 @@ const DefaultContainer = () => (
     </Route>
     <Route exact path="/apis/run/issues/:runId">
       <Issues />
+    </Route>
+    <Route exact path="/apis/run/requests/:runId">
+      <MsgList />
     </Route>
   </div>
 );

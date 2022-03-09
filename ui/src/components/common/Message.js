@@ -5,8 +5,6 @@ import Buttons from "../../components/common/Buttons";
 export default function Message(props) {
   const editable = props.editable;
   const msgDetails = props.msgDetails;
-  const hideMessage = props.hideMessage;
-
   const [uri, setUri] = useState(msgDetails.url);
   const [reqHeader, setReqHeader] = useState(msgDetails.reqHeader);
   const [reqBody, setReqBody] = useState(msgDetails.reqBody);
