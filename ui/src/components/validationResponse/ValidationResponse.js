@@ -32,15 +32,19 @@ export default function ValidationResponse(props) {
 
   let content = <div></div>;
 
-  content = validationResponse.messages.map((item, index) => (
-    <li key={index + 1} onClick={() => showExampleHandler(index)}>
-      <div className={styles.box}>
-        <div>Message: {item.message}</div>
-        <div>Path: {item.path}</div>
-        <div>Line: {item.line}</div>
-      </div>
-    </li>
-  ));
+  if (validationResponse.hasOwnProperty("messages")) {
+    content = validationResponse.messages.map((item, index) => (
+      <li key={index + 1} onClick={() => showExampleHandler(index)}>
+        <div className={styles.box}>
+          <div>Message: {item.message}</div>
+          <div>Path: {item.path}</div>
+          <div>Line: {item.line}</div>
+        </div>
+      </li>
+    ));
+  } else {
+    content = validationResponse;
+  }
 
   if (showExample) {
     return (
