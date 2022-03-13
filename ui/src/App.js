@@ -15,6 +15,7 @@ import ApiDiscover from "./pages/discover/ApiDiscover";
 import ApiRun from "./pages/run/ApiRun";
 import MsgList from "./pages/request/MsgList";
 import Auth from "./pages/auth/Auth";
+import Landing from "./pages/landing/Landing";
 import AuthContext from "./store/auth-context";
 
 function App() {
@@ -48,6 +49,9 @@ const DefaultContainer = () => (
     <Sidebar />
     <Route exact path="/">
       <ApiDiscover />
+    </Route>
+    <Route exact path="/home">
+      <Landing />
     </Route>
     <Route exact path="/apis">
       <ApiDiscover />

@@ -75,8 +75,10 @@ export default function Issues(props) {
         return {
           id: index + 1,
           requestId: issue.request_id,
-          description: issue.description,
+          issueType: issue.issue_type,
           message: issue.message,
+          description: issue.description,
+          solution: issue.solution,
         };
       });
       setIssues(transformedIssues);
@@ -94,11 +96,11 @@ export default function Issues(props) {
   const columns = [
     { field: "id", headerName: "ID", width: 100 },
     {
-      field: "description",
-      headerName: "Description",
+      field: "Type",
+      headerName: "Type",
       width: 400,
       renderCell: (params) => {
-        return <div className="msgListItem">{params.row.description}</div>;
+        return <div className="msgListItem">{params.row.issueType}</div>;
       },
     },
     {

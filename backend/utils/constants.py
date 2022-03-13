@@ -61,7 +61,18 @@ SPEC_STRING = "spec_string.yaml"
 YAML_LINT_ERROR_PREFIX = "Invalid YAML. Error: "
 
 ERROR_TYPE_REQUEST = "Request Validation"
+DEFAULT_REQUEST_ERROR_DESCRIPTION = (
+    "Request sent with payload generated outside of API contract succeeded."
+)
+DEFAULT_REQUEST_ERROR_SOLUTION = "Improper input validation may allow attackers to pass malicious payload. \n Ensure API contract and implementation are aligned. "
 ERROR_TYPE_RESPONSE = "Response Validation"
+DEFAULT_RESPONSE_ERROR_DESCRIPTION = (
+    "Actual API response isn't matching response defined in OpenAPI spec"
+)
+DEFAULT_RESPONSE_ERROR_SOLUTION = "Excessive data exposure may leak sensitive data.\n Review API response and ensure contract and implementation are aligned."
+ISSUE_TYPE = "issue_type"
+SOLUTION = "solution"
+
 
 VALIDATER_RULE_INFO_FILE_NAME = "validater_rule_info.json"
 VALIDATER_RULE_INFO_FILE_PATH = os.path.join(

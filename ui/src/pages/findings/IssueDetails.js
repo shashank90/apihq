@@ -14,10 +14,12 @@ export default function IssueDetails(props) {
   // console.log(requestDetail);
   const [showRequest, setShowRequest] = useState(false);
 
-  const description = issueDetail.description;
   // const wascId = detail.wascid;
   // const cweId = detail.cweid;
+  const issueType = issueDetail.issueType;
   const message = issueDetail.message;
+  const description = issueDetail.description;
+  const solution = issueDetail.solution;
   // const confidence = detail.confidence;
   // const riskDesc = detail.riskdesc;
   // const instanceCount = detail.count;
@@ -61,11 +63,11 @@ export default function IssueDetails(props) {
         </div>
         <h2>Issue Details</h2>
         <div className="vulnDetailItem">
-          <label className="vulnDetailItemHeader" htmlFor="description">
-            Description:
+          <label className="vulnDetailItemHeader" htmlFor="issueType">
+            Type:
           </label>
-          <span className="vulnDetailItemValue" id="description">
-            {description}
+          <span className="vulnDetailItemValue" id="issueType">
+            {issueType}
           </span>
         </div>
         <div className="vulnDetailLargeItem">
@@ -74,6 +76,22 @@ export default function IssueDetails(props) {
           </label>
           <div className="box" id="msg">
             {msgItems}
+          </div>
+        </div>
+        <div className="vulnDetailLargeItem">
+          <label className="vulnDetailItemHeader" htmlFor="description">
+            Description:
+          </label>
+          <div className="box" id="description">
+            {description}
+          </div>
+        </div>
+        <div className="vulnDetailLargeItem">
+          <label className="vulnDetailItemHeader" htmlFor="solution">
+            Solution:
+          </label>
+          <div className="box" id="solution">
+            {solution}
           </div>
         </div>
       </div>

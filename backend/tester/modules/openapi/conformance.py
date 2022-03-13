@@ -12,15 +12,21 @@ from backend.tester.connectors.zap.script_handler import enable_request_dump_scr
 # from body_parser import encode_multipart_formdata
 from backend.utils.constants import (
     API_RUN_FAILED,
+    DEFAULT_REQUEST_ERROR_DESCRIPTION,
+    DEFAULT_REQUEST_ERROR_SOLUTION,
+    DEFAULT_RESPONSE_ERROR_DESCRIPTION,
+    DEFAULT_RESPONSE_ERROR_SOLUTION,
     DESCRIPTION,
     ERROR_TYPE_REQUEST,
     ERROR_TYPE_RESPONSE,
     HTTP_CREATED,
     HTTP_OK,
+    ISSUE_TYPE,
     MESSAGE,
     REQUEST_ID,
     HAR_DIR,
     ISSUE_ID,
+    SOLUTION,
     ZAP_MESSAGE_DIR,
 )
 from backend.tester.connectors.zap.factory import get_zap
@@ -345,7 +351,13 @@ def add_response_error(
     # error: Dict = get_error(request_id, res_error_messages)
     # response_validation_errors.append(error)
 
-    error: Dict = get_error(request_id, res_error_messages, ERROR_TYPE_RESPONSE)
+    error: Dict = get_error(
+        request_id,
+        res_error_messages,
+        ERROR_TYPE_RESPONSE,
+        DEFAULT_RESPONSE_ERROR_DESCRIPTION,
+        DEFAULT_RESPONSE_ERROR_SOLUTION,
+    )
     response_validation_errors.append(error)
 
     # add_issue(error, issues)
@@ -359,14 +371,26 @@ def add_request_error(
 ):
     req_details = get_request_metadata(request_id, request_metadata)
     messages = [req_details.get("message")]
-    error: Dict = get_error(request_id, messages, ERROR_TYPE_REQUEST)
+    error: Dict = get_error(
+        request_id,
+        messages,
+        ERROR_TYPE_REQUEST,
+        DEFAULT_REQUEST_ERROR_DESCRIPTION,
+        DEFAULT_REQUEST_ERROR_SOLUTION,
+    )
     request_validation_errors.append(error)
 
     # Add to list of final issues
     # add_issue(error, issues)
 
 
-def get_error(request_id: str, error_messages: List[str], error_type: str) -> Dict:
+def get_error(
+    request_id: str,
+    error_messages: List[str],
+    issue_type: str,
+    description: str,
+    solution: str,
+) -> Dict:
     """
     Return error object
     """
@@ -374,7 +398,9 @@ def get_error(request_id: str, error_messages: List[str], error_type: str) -> Di
         REQUEST_ID: request_id,
         MESSAGE: error_messages,
         REQUEST_INTENT: BAD_REQUEST,
-        DESCRIPTION: error_type,
+        ISSUE_TYPE: issue_type,
+        DESCRIPTION: description,
+        SOLUTION: solution,
     }
 
 
