@@ -1,18 +1,14 @@
 from backend.log.factory import Logger
 from backend.tester.connectors.zap.script_handler import (
-    add_script,
     enable_request_dump_script,
 )
 from zapv2 import ZAPv2
-from backend.utils.constants import (
-    ZAP_DUMP_REQUEST_SCRIPT_PATH,
-    ZAP_DUMP_REQUEST_SCRIPT_NAME,
-)
 from backend.tester.connectors.zap.factory import get_zap
 from backend.utils.constants import (
     IS_ZAP_RUNNING_CHECK_LIMIT,
     ZAP_EXE,
     ZAP_KEY,
+    ZAP_PORT,
     INITIAL_ZAP_SLEEP_COUNT,
 )
 import os
@@ -28,13 +24,15 @@ def start_zap():
     """
 
     try:
-        logger.info("Starting ZAP...")
+        logger.info(f"Starting ZAP on port [{ZAP_PORT}]...")
         subprocess.Popen(
             [
                 ZAP_EXE,
                 "-daemon",
                 "-addoninstall",
                 "jython",
+                "-port",
+                str(ZAP_PORT),
                 "-config",
                 "api.key=" + ZAP_KEY,
             ],

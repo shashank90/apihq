@@ -6,6 +6,33 @@ from backend.tester.modules.openapi.metadata_wrapper import (
     wrap_attribute_payload_metadata,
 )
 
+SPECIAL_CHARS = [
+    "~",
+    "!",
+    "@",
+    "#",
+    "$",
+    "%",
+    "^",
+    "&",
+    "*",
+    "(",
+    ")",
+    "-",
+    "_",
+    "/",
+    "'",
+    ";",
+    ":",
+    ",",
+    ".",
+    "?",
+    "|",
+    "{",
+    "}",
+    "[",
+    "]",
+]
 
 max_num_limit = 999999999999999
 
@@ -14,7 +41,7 @@ max_num_limit = 999999999999999
 # 2. Unique items(array)
 
 
-def get_length_fuzz_str(length: int) -> str:
+def get_max_length_fuzz_str(length: int) -> str:
     """
     Test max_length:
     Return payload that exceed given length(max_length)
@@ -22,13 +49,23 @@ def get_length_fuzz_str(length: int) -> str:
     return rstr.rstr("abc", length, length + 1)
 
 
-def get_regex_fuzz_str(regex: str) -> str:
+def get_min_length_fuzz_str(length: int) -> str:
+    """
+    Test min_length:
+    Return payload that's smaller than given length(max_length)
+    """
+    return rstr.rstr("abc", length - 1)
+
+
+def get_regex_fuzz_str(regex: str) -> List[str]:
     """
     Test regex:
     Return payload that's built from a regex but includes an special char not present in given regex
     """
-    # TODO: Improve below logic to create words with more special chars(those that aren't part of given pattern!)
-    return rstr.xeger(regex)
+    regex_list = []
+    for spl_char in SPECIAL_CHARS:
+        regex_list.append(rstr.xeger(regex) + spl_char)
+    return regex_list
 
 
 def get_valid_str(max_length: int, pattern: str) -> str:

@@ -1,6 +1,7 @@
 from zapv2 import ZAPv2
 
 from typing import List, Dict
+
 from backend.utils.constants import (
     ZAP_DUMP_REQUEST_SCRIPT_NAME,
     ZAP_DUMP_REQUEST_SCRIPT_PATH,

@@ -3,36 +3,12 @@ import os
 import shutil
 import threading
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 from backend.log.factory import Logger
 from backend.utils.constants import DATA_DIR_PREFIX, RUN, WORK_DIR
 
 logger = Logger(__name__)
-
-# Example of shared global variable
-
-# class DataDirCounter(object):
-# def __init__(self, val=0):
-# self.lock = threading.Lock()
-# self.counter = val
-#
-# def increment(self):
-# print("Waiting for a lock...")
-# self.lock.acquire()
-# try:
-# print("Acquired a lock, counter value: ", self.counter)
-# self.counter = self.counter + 1
-# finally:
-# print("Released a lock, counter value: ", self.counter)
-# self.lock.release()
-#
-# def get_counter(self):
-# return self.counter
-#
-#
-# Shared Global Variable
-# data_dir_counter = DataDirCounter()
 
 
 def create_spec_folder(spec_id: str) -> str:
@@ -125,3 +101,14 @@ def get_file_name_and_extension(file_name):
     """
     filename, file_extension = os.path.splitext(file_name)
     return (filename, file_extension)
+
+
+def read_file_into_list(file_path) -> List[str]:
+    """
+    Read file contents into list of strings
+    """
+    str_list = []
+    with open(file_path) as my_file:
+        for line in my_file:
+            str_list.append(line.rstrip("\n"))
+    return str_list

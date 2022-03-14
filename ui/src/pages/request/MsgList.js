@@ -47,7 +47,7 @@ export default function MsgList(props) {
         },
       });
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       // Set error and other success message(if any)
       if (!response.ok) {
         if ("error" in data) {

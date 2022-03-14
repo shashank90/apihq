@@ -40,6 +40,11 @@ from backend.tester.modules.openapi.openapi_util import (
     get_model_module_path,
     init_configuration,
 )
+from backend.utils.file_cache_handler import (
+    get_common_passwords,
+    get_common_sqli,
+    get_common_xss,
+)
 
 
 VALID_message = "All valid"
@@ -799,26 +804,83 @@ def get_attribute_negative_payloads_str(
     Prepare negative payloads for given attribute
     """
     neg_attr_details = []
+
+    # Fuzz using validation constraints
     for k1, v1 in validation_constraints.items():
+
+        if k1 == "min_length":
+            value = fuzzer.get_min_length_fuzz_str(v1)
+            message = f"Invalid value for {attribute}, length must be greater than or equal to {v1}"
+            constraint = "Min Length"
+            if value:
+                payload_metadata = wrap_attribute_payload_metadata(
+                    value=value,
+                    attribute=attribute,
+                    message=message,
+                    constraint=constraint,
+                )
+                neg_attr_details.append(payload_metadata)
+
         if k1 == "max_length":
-            value = fuzzer.get_length_fuzz_str(v1)
+            value = fuzzer.get_max_length_fuzz_str(v1)
             message = f"Invalid value for {attribute}, length must be less than or equal to {v1}"
             constraint = "Max Length"
             payload_metadata = wrap_attribute_payload_metadata(
                 value=value, attribute=attribute, message=message, constraint=constraint
             )
             neg_attr_details.append(payload_metadata)
+
         if k1 == "regex":
             regex = v1["pattern"]
-            value = fuzzer.get_regex_fuzz_str(regex)
-            message = (
-                f"Invalid value for {attribute}, must match regular expression {regex}"
-            )
-            constraint = "Pattern"
-            payload_metadata = wrap_attribute_payload_metadata(
-                value=value, attribute=attribute, message=message, constraint=constraint
-            )
-            neg_attr_details.append(payload_metadata)
+
+            values = fuzzer.get_regex_fuzz_str(regex)
+            for value in values:
+                message = f"Invalid value for {attribute}, must match regular expression {regex}"
+                constraint = "Pattern"
+                payload_metadata = wrap_attribute_payload_metadata(
+                    value=value,
+                    attribute=attribute,
+                    message=message,
+                    constraint=constraint,
+                )
+                neg_attr_details.append(payload_metadata)
+
+    # Fuzz with common sqli
+    for value in get_common_sqli():
+        message = f"Attempted SQL-injection with value: {value}"
+        constraint = "SQL-Injection"
+        payload_metadata = wrap_attribute_payload_metadata(
+            value=value,
+            attribute=attribute,
+            message=message,
+            constraint=constraint,
+        )
+        neg_attr_details.append(payload_metadata)
+
+    # Fuzz with common password
+    for value in get_common_passwords():
+        message = f"Attempted Password fuzzing with value: {value}"
+        constraint = "Password Brute force"
+        payload_metadata = wrap_attribute_payload_metadata(
+            value=value,
+            attribute=attribute,
+            message=message,
+            constraint=constraint,
+        )
+        neg_attr_details.append(payload_metadata)
+
+    # Fuzz with common xss (Enable once we are able to identify GET URIs)
+    # for value in get_common_xss():
+    #     message = f"Attempted Cross-Site-Scriptig(XSS) with value: {value}"
+    #     constraint = "XSS"
+    #     payload_metadata = wrap_attribute_payload_metadata(
+    #         value=value,
+    #         attribute=attribute,
+    #         message=message,
+    #         constraint=constraint,
+    #     )
+    #     neg_attr_details.append(payload_metadata)
+
     return neg_attr_details
 
 
@@ -852,8 +914,8 @@ def get_attribute_payloads_file(
         negative_attr_payload = wrap_attribute_payload_metadata(
             value=file_handle,
             attribute=attribute,
-            message="Upload incorrect file type: " + file_type,
-            constraint="file type",
+            message="Incorrect file type: " + file_type + " uploaded",
+            constraint="File Type",
             additional_info={"file_type": file_type},
         )
         neg_attr_payloads.append(negative_attr_payload)

@@ -22,14 +22,13 @@ export default function Issues(props) {
   let runId = params.runId;
 
   function showIssueDetails(id) {
-    // console.log(data);
     // Find issue by id and corresponding request
     const issueS = issues.filter((item) => {
       return item.id === id;
     });
     if (issueS) {
       const issue = issueS[0];
-      // console.log(issue);
+      console.log(issue);
       const requestId = issue.requestId;
       // console.log("requestId: " + requestId);
 
@@ -41,7 +40,7 @@ export default function Issues(props) {
       let requestSelected = null;
       if (requestS) {
         requestSelected = requestS[0];
-        // console.log(request);
+        // console.log(requestSelected);
       }
       setIssueDetail({ issue: issue, request: requestSelected });
       setIssueSelected(true);
@@ -79,6 +78,8 @@ export default function Issues(props) {
           message: issue.message,
           description: issue.description,
           solution: issue.solution,
+          category: issue.category,
+          instances: issue.instances,
         };
       });
       setIssues(transformedIssues);
@@ -101,6 +102,14 @@ export default function Issues(props) {
       width: 400,
       renderCell: (params) => {
         return <div className="msgListItem">{params.row.issueType}</div>;
+      },
+    },
+    {
+      field: "Category",
+      headerName: "Category",
+      width: 400,
+      renderCell: (params) => {
+        return <div className="msgListItem">{params.row.category}</div>;
       },
     },
     {

@@ -12,7 +12,6 @@ ZAP_MESSAGE_DIR = "har/zap_requests"
 JSON_REPORT = "zap_report.json"
 NEWMAN_OUTFILE = "newman_output.json"
 LOG_FILE_NAME = "app"
-ZAP_HTTP_PROXY = "http://localhost:8123"
 TIMEOUT_SECONDS = 10
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 UPLOAD_TXT_FILE = os.path.join(BASE_DIR, "backend/tester/modules/openapi/spam.txt")
@@ -24,7 +23,6 @@ OTHER_REGEX = "otherRegex"
 # File with null chars. Use this to create zip bomb
 DATA_FILE = "~/Desktop/bomb_data"
 # TEMP HOST. DELETE AFTER TESTING
-HOST = "http://localhost:8123"
 VALIDATE_REPORT = "validate.json"
 
 
@@ -72,6 +70,10 @@ DEFAULT_RESPONSE_ERROR_DESCRIPTION = (
 DEFAULT_RESPONSE_ERROR_SOLUTION = "Excessive data exposure may leak sensitive data.\n Review API response and ensure contract and implementation are aligned."
 ISSUE_TYPE = "issue_type"
 SOLUTION = "solution"
+CATEGORY = "category"
+INSTANCES = "instances"
+CONSTRAINT = "constraint"
+SCHEMA_VALIDATION = "Schema Validation"
 
 
 VALIDATER_RULE_INFO_FILE_NAME = "validater_rule_info.json"
@@ -109,6 +111,11 @@ DEFAULT_LINT_ERROR_MESSAGE = "Malformed OpenAPI yaml"
 DUMP_REQUEST_SCRIPT_RELATIVE_PATH = (
     "backend/tester/connectors/zap/scripts/dump_request.py"
 )
+
+# IMPORTANT STRING
+ZAP_PORT = 8086
+ZAP_HOST = "http://localhost:" + str(ZAP_PORT)
+
 ZAP_HOME_PATH = "zapHomePath"
 ZAP_EXE = "/opt/zaproxy/zap.sh"
 IS_ZAP_RUNNING_CHECK_LIMIT = 5
@@ -137,3 +144,14 @@ POSTMAN_ERROR_MESSAGE_PREFIX = (
     "Failed to convert Postman collection to OpenAPI Specification. "
 )
 DEFAULT_POSTMAN_ERROR_MESSAGE = "Collection could be malformed"
+
+# Cache file paths
+COMMON_PASSWORDS_FILE_PATH = os.path.join(
+    BASE_DIR, "backend/tester/modules/fuzz_payloads/passwords.txt"
+)
+COMMON_SQLi_FILE_PATH = os.path.join(
+    BASE_DIR, "backend/tester/modules/fuzz_payloads/sqli.txt"
+)
+COMMON_XSS_FILE_PATH = os.path.join(
+    BASE_DIR, "backend/tester/modules/fuzz_payloads/xss.txt"
+)

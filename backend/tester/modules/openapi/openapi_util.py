@@ -12,6 +12,8 @@ from backend.utils.constants import (
     PACKAGE_NAME,
     SDK_DIR,
     TEMP_FOLDER_SUFFIX,
+    ZAP_HOST,
+    ZAP_PORT,
 )
 
 
@@ -113,7 +115,7 @@ def init_configuration(pkg_name: str) -> str:
     # Enable Debug logging
     configuration.debug = True
     # Proxy requests through ZAP
-    configuration.proxy = "http://localhost:8080"
+    configuration.proxy = ZAP_HOST
     # Disable ssl cert verification for communicating with ZAP
     configuration.verify_ssl = False
     return configuration

@@ -1,8 +1,7 @@
 from zapv2 import ZAPv2
 
 from backend.utils.constants import ZAP_KEY
-
-HOST = "http://localhost:8080"
+from backend.utils.constants import ZAP_HOST
 
 
 class ZAP:
@@ -15,7 +14,7 @@ class ZAP:
 
 
 # Global var (Keeping a single instance)
-zap_instance = ZAP(host=HOST, apikey=ZAP_KEY)
+zap_instance = ZAP(host=ZAP_HOST, apikey=ZAP_KEY)
 
 
 def get_zap():

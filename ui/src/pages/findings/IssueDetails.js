@@ -20,6 +20,8 @@ export default function IssueDetails(props) {
   const message = issueDetail.message;
   const description = issueDetail.description;
   const solution = issueDetail.solution;
+  const category = issueDetail.category;
+  const instanceCount = issueDetail.instances.length;
   // const confidence = detail.confidence;
   // const riskDesc = detail.riskdesc;
   // const instanceCount = detail.count;
@@ -70,6 +72,14 @@ export default function IssueDetails(props) {
             {issueType}
           </span>
         </div>
+        <div className="vulnDetailItem">
+          <label className="vulnDetailItemHeader" htmlFor="category">
+            Category:
+          </label>
+          <span className="vulnDetailItemValue" id="category">
+            {category}
+          </span>
+        </div>
         <div className="vulnDetailLargeItem">
           <label className="vulnDetailItemHeader" htmlFor="msg">
             Message:
@@ -77,6 +87,14 @@ export default function IssueDetails(props) {
           <div className="box" id="msg">
             {msgItems}
           </div>
+        </div>
+        <div className="vulnDetailItem">
+          <label className="vulnDetailItemHeader" htmlFor="instanceCount">
+            Instance Count:
+          </label>
+          <span className="vulnDetailItemValue" id="instanceCount">
+            {instanceCount}
+          </span>
         </div>
         <div className="vulnDetailLargeItem">
           <label className="vulnDetailItemHeader" htmlFor="description">

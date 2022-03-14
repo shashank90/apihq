@@ -2,7 +2,6 @@ from pathlib import Path
 import base64
 from urllib3._collections import HTTPHeaderDict
 from typing import List, Dict
-from backend.tester.connectors import zap
 from backend.utils.file_handler import create_run_dir, get_run_dir_path, read_json
 from urllib.parse import parse_qs, urlsplit
 from backend.db.helper import update_run_details
@@ -12,6 +11,7 @@ from backend.tester.connectors.zap.script_handler import enable_request_dump_scr
 # from body_parser import encode_multipart_formdata
 from backend.utils.constants import (
     API_RUN_FAILED,
+    CATEGORY,
     DEFAULT_REQUEST_ERROR_DESCRIPTION,
     DEFAULT_REQUEST_ERROR_SOLUTION,
     DEFAULT_RESPONSE_ERROR_DESCRIPTION,
@@ -21,13 +21,16 @@ from backend.utils.constants import (
     ERROR_TYPE_RESPONSE,
     HTTP_CREATED,
     HTTP_OK,
+    INSTANCES,
     ISSUE_TYPE,
     MESSAGE,
     REQUEST_ID,
     HAR_DIR,
     ISSUE_ID,
+    SCHEMA_VALIDATION,
     SOLUTION,
     ZAP_MESSAGE_DIR,
+    CONSTRAINT,
 )
 from backend.tester.connectors.zap.factory import get_zap
 from backend.tester.connectors.zap.util import (
@@ -306,10 +309,9 @@ def extract_str(content):
     try:
         string = content.decode("utf-8")
     except UnicodeDecodeError:
-        logger.info("Given content isn't a bytes-like object")
+        logger.warning("Given content isn't a bytes-like object")
         string = content
     except Exception as e:
-        logger.info("Given content isn't a bytes-like object")
         string = content
 
     return string
@@ -341,26 +343,26 @@ def add_response_error(
     """
     error: Dict = None
 
-    # Uncomment below Logic to add unique response error
-
-    # if len(response_validation_errors) == 0:
-    # error: Dict = get_error(request_id, res_error_messages)
-    # response_validation_errors.append(error)
-    #
-    # elif is_error_new(response_validation_errors, res_error_messages):
-    # error: Dict = get_error(request_id, res_error_messages)
-    # response_validation_errors.append(error)
-
     error: Dict = get_error(
         request_id,
         res_error_messages,
         ERROR_TYPE_RESPONSE,
         DEFAULT_RESPONSE_ERROR_DESCRIPTION,
         DEFAULT_RESPONSE_ERROR_SOLUTION,
+        SCHEMA_VALIDATION,
     )
-    response_validation_errors.append(error)
 
-    # add_issue(error, issues)
+    if len(response_validation_errors) == 0:
+        response_validation_errors.append(error)
+    else:
+        existing_error = get_response_error(
+            response_validation_errors, res_error_messages
+        )
+        if existing_error:
+            instances = existing_error.get(INSTANCES)
+            instances.append(request_id)
+        else:
+            response_validation_errors.append(error)
 
 
 def add_request_error(
@@ -370,18 +372,28 @@ def add_request_error(
     issues: List[Dict],
 ):
     req_details = get_request_metadata(request_id, request_metadata)
+
     messages = [req_details.get("message")]
+
+    category = req_details.get(CONSTRAINT)
     error: Dict = get_error(
         request_id,
         messages,
         ERROR_TYPE_REQUEST,
         DEFAULT_REQUEST_ERROR_DESCRIPTION,
         DEFAULT_REQUEST_ERROR_SOLUTION,
+        category,
     )
-    request_validation_errors.append(error)
 
-    # Add to list of final issues
-    # add_issue(error, issues)
+    if len(request_validation_errors) == 0:
+        request_validation_errors.append(error)
+    else:
+        existing_error = get_request_error(request_validation_errors, category)
+        if existing_error:
+            instances = existing_error.get(INSTANCES)
+            instances.append(request_id)
+        else:
+            request_validation_errors.append(error)
 
 
 def get_error(
@@ -390,6 +402,7 @@ def get_error(
     issue_type: str,
     description: str,
     solution: str,
+    category: str = None,
 ) -> Dict:
     """
     Return error object
@@ -401,6 +414,8 @@ def get_error(
         ISSUE_TYPE: issue_type,
         DESCRIPTION: description,
         SOLUTION: solution,
+        CATEGORY: category,
+        INSTANCES: [request_id],
     }
 
 
@@ -439,21 +454,33 @@ def get_request_metadata(request_id: str, request_metadata: List[Dict]):
             return item
 
 
-def is_error_new(response_validation_errors: List, res_error_messages: List):
+def get_request_error(validation_errors: List, category: str):
     """
-    Add only unique errors to final validation error list
+    Retain one error per constraint category and add the rest to instances
     """
-    total = len(res_error_messages)
-    count = 0
-    for m1 in res_error_messages:
-        for m2 in response_validation_errors:
-            for m3 in m2[MESSAGE]:
-                if m1 == m3:
+    for error in validation_errors:
+        if category == error.get(CATEGORY):
+            return error
+    return None
+
+
+def get_response_error(validation_errors: List, error_messages: List):
+    """
+    Add only unique errors to final validation error list. Return existing error in case of match else None
+    """
+    error_match: Dict = None
+    total = len(error_messages)
+    for m1 in validation_errors:
+        count = 0
+        error_match = m1
+        for m2 in error_messages:
+            for m3 in m1[MESSAGE]:
+                if m2 == m3:
                     count = count + 1
 
-    if count == total:
-        return False
-    return True
+        if count == total:
+            return error_match
+    return None
 
 
 def write_request_metadata(run_dir: str, req_metadata: List[Dict]):
