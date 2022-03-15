@@ -20,6 +20,7 @@ class ApiRun(Base):
     id = Column(Integer, primary_key=True)
     run_id = Column(String(40))
     api_id = Column(String(40), ForeignKey("api_inventory.api_id", ondelete="CASCADE"))
+    run_dir = Column(String(120), nullable=False)
     http_method = Column(String(20), nullable=True)
     user_id = Column(String, ForeignKey("user.user_id"))  # Who initiated the run
     score = Column(Integer, nullable=True)
@@ -32,9 +33,10 @@ class ApiRun(Base):
     # Many to one relationship from run to api
     api = relationship("ApiInventory", backref="runs")
 
-    def __init__(self, run_id, api_id, user_id, status, http_method=None):
+    def __init__(self, run_id, run_dir, api_id, user_id, status, http_method=None):
         self.api_id = api_id
         self.user_id = user_id
         self.run_id = run_id
+        self.run_dir = run_dir
         self.status = status
         self.http_method = http_method

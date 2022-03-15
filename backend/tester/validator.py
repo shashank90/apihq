@@ -15,6 +15,7 @@ from backend.utils.os_cmd_runner import run_cmd
 
 logger = Logger(__name__)
 LINT_CMD = "lint-openapi"
+VALIDATE_TIMEOUT = 20
 YAML_EXCEPTION = "YAMLException:"
 DEFAULT_RULE_DESCRIPTION = {
     "heading": "Yet to add",
@@ -48,7 +49,7 @@ def validate(
     }
 
     cmd_list = [LINT_CMD, "-j", spec_path]
-    validate_output, run_error = run_cmd(cmd_list, timeout=10)
+    validate_output, run_error = run_cmd(cmd_list, timeout=VALIDATE_TIMEOUT)
 
     validate_out = lint_yaml(validate_output)
 

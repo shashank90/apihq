@@ -105,7 +105,12 @@ def save_har(run_dir: str, request_id: str, zap: ZAPv2, zap_msg_id: str) -> Dict
 
 
 def run(
-    run_id: str, api_path: str, spec_path: str, data_dir: str, auth_headers: List[Dict]
+    run_id: str,
+    run_dir: str,
+    api_path: str,
+    spec_path: str,
+    data_dir: str,
+    auth_headers: List[Dict],
 ):
     """
     Test API contract conformance by initiating requests that fall outside contract constraints
@@ -114,7 +119,6 @@ def run(
     logger.info(f"Running API Tests with run_id {run_id} for api path: {api_path}")
 
     # Create run dir and store request/response artifacts (post sdk generation here)
-    run_dir = get_run_dir_path(data_dir, run_id)
     if not create_run_dir(run_dir):
         update_run_details(run_id, RunStatusEnum.ERROR, API_RUN_FAILED)
         return

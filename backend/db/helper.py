@@ -132,12 +132,14 @@ def get_run_details(run_id: str) -> ApiRun:
     return api
 
 
-def add_run_details(run_id: str, api_id: str, user_id: str, run_status: RunStatusEnum):
+def add_run_details(
+    run_id: str, run_dir: str, api_id: str, user_id: str, run_status: RunStatusEnum
+):
     """
     Add run record
     """
     session: Session = get_session()
-    api_run = ApiRun(run_id, api_id, user_id, run_status)
+    api_run = ApiRun(run_id, run_dir, api_id, user_id, run_status)
     session.add(api_run)
     session.commit()
 

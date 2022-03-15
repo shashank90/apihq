@@ -28,7 +28,7 @@ export default function Issues(props) {
     });
     if (issueS) {
       const issue = issueS[0];
-      console.log(issue);
+      // console.log(issue);
       const requestId = issue.requestId;
       // console.log("requestId: " + requestId);
 

@@ -66,9 +66,6 @@ def run_api(current_user, api_id):
     logger.info(f"Updating api run count for user [{user_id}]")
     update_api_run_count(user_id)
 
-    run_id = uuid_handler.get_uuid()
-    add_run_details(run_id, api_id, user_id, RunStatusEnum.INITIATED)
-
     api: ApiInventory = get_api_details(api_id)
     spec_id = api.spec_id
     api_endpoint_url = api.api_path
@@ -76,9 +73,17 @@ def run_api(current_user, api_id):
     data_dir = spec.data_dir
     file_name = spec.file_name
 
+    # Form spec path for openapi based sdk generation
     spec_path = os.path.join(data_dir, file_name)
+
+    run_id = uuid_handler.get_uuid()
+    # Form run dir path
+    run_dir = get_run_dir_path(data_dir, run_id)
+    add_run_details(run_id, run_dir, api_id, user_id, RunStatusEnum.INITIATED)
+
     t = threading.Thread(
-        target=run, args=[run_id, api_endpoint_url, spec_path, data_dir, t_auth_headers]
+        target=run,
+        args=[run_id, run_dir, api_endpoint_url, spec_path, data_dir, t_auth_headers],
     )
     t.start()
 
@@ -137,13 +142,14 @@ def get_issues(current_user, run_id):
     logger.info(f"Fetching issues for run {run_id} for user {user_id}")
 
     api_run: ApiRun = get_run_details(run_id)
-    api_id = api_run.api_id
-    api: ApiInventory = get_api_details(api_id)
-    spec_id = api.spec_id
-    spec: ApiSpec = get_spec(spec_id)
-    data_dir: str = spec.data_dir
+    run_dir = api_run.run_dir
+    # api_id = api_run.api_id
+    # api: ApiInventory = get_api_details(api_id)
+    # spec_id = api.spec_id
+    # spec: ApiSpec = get_spec(spec_id)
+    # data_dir: str = spec.data_dir
+    # run_dir = get_run_dir_path(data_dir, run_id)
 
-    run_dir = get_run_dir_path(data_dir, run_id)
     issues_file = os.path.join(run_dir, ISSUES_FILE)
     issues: List[Dict] = read_json(issues_file)
 
@@ -167,13 +173,14 @@ def get_requests(current_user, run_id):
     logger.info(f"Fetching requests for run {run_id} for user {user_id}")
 
     api_run: ApiRun = get_run_details(run_id)
-    api_id = api_run.api_id
-    api: ApiInventory = get_api_details(api_id)
-    spec_id = api.spec_id
-    spec: ApiSpec = get_spec(spec_id)
-    data_dir: str = spec.data_dir
+    run_dir = api_run.run_dir
+    # api_id = api_run.api_id
+    # api: ApiInventory = get_api_details(api_id)
+    # spec_id = api.spec_id
+    # spec: ApiSpec = get_spec(spec_id)
+    # data_dir: str = spec.data_dir
+    # run_dir = get_run_dir_path(data_dir, run_id)
 
-    run_dir = get_run_dir_path(data_dir, run_id)
     requests_file = os.path.join(run_dir, REQUESTS_FILE)
     requests: List[Dict] = read_json(requests_file)
 
