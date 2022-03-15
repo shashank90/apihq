@@ -1,5 +1,6 @@
-import React, { useState, useRef, useContext } from "react";
+import React, { useState, useRef, useContext, useEffect } from "react";
 import { useHistory } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import AuthContext from "../../store/auth-context";
 import classes from "./AuthForm.module.css";
@@ -21,6 +22,17 @@ const AuthForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  const params = useParams();
+  const authType = params.authType;
+  useEffect(() => {
+    if (authType === "signin") {
+      setIsLogin(true);
+    }
+    if (authType === "signup") {
+      setIsLogin(false);
+    }
+  }, [authType]);
 
   const switchAuthModeHandler = () => {
     if (error) {
@@ -100,26 +112,33 @@ const AuthForm = () => {
       } else {
         // Mark success message and exit after timeout
         let successMsg = message + " successful!";
-        console.log(successMsg);
+        // console.log(successMsg);
         if ("token" in data && "expires_in" in data) {
           const expirationTime = new Date(
             new Date().getTime() + data.expires_in * 1000
           );
           authCtx.login(data.token, expirationTime.toISOString());
-          history.replace("/");
+          history.replace("/apis");
         }
         // Signup successful
         if (!isLogin) {
           setMessage(successMsg);
-          setIsLogin(true);
-          setMessage("");
           setError("");
+          proceed();
         }
       }
     } catch (error) {
       setError(error.message);
     }
   };
+
+  function proceed() {
+    const timer = setTimeout(() => {
+      setIsLogin(true);
+      setMessage("");
+    }, 1400);
+    return () => clearTimeout(timer);
+  }
 
   let content = null;
 
@@ -133,7 +152,7 @@ const AuthForm = () => {
   return (
     <div className={classes.center}>
       <section className={classes.auth}>
-        <h1>{isLogin ? "Login" : "Sign Up for free!"}</h1>
+        <h1>{isLogin ? "Sign in" : "Sign Up for free!"}</h1>
         <form onSubmit={submitHandler}>
           {!isLogin && (
             <div className={classes.control}>
@@ -190,20 +209,20 @@ const AuthForm = () => {
               </div>
             </React.Fragment>
           )}
-          {content}
           <div className={classes.actions}>
             {!loading && (
               <button>{isLogin ? "Login" : "Create Account"}</button>
             )}
             {loading && <p>Sending request...</p>}
-            <button
+            {/* <button
               type="button"
               className={classes.toggle}
               onClick={switchAuthModeHandler}
             >
-              {isLogin ? "Create new account" : "Login with existing account"}
-            </button>
+              {isLogin ? "Create new account" : "Sign in with existing account"}
+            </button> */}
           </div>
+          {content}
         </form>
       </section>
     </div>

@@ -49,6 +49,7 @@
 
 .actions {
   margin-top: 1.5rem;
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -65,8 +66,8 @@
 }
 
 .actions button:hover {
-  background-color: #873abb;
-  border-color: #873abb;
+  background-color: #873aaa;
+  border-color: #873aaa;
 }
 
 .actions .toggle {
@@ -79,11 +80,11 @@
 
 .actions .toggle:hover {
   background-color: transparent;
-  color: #ae82cc;
+  color: purple;
 }
 
 .auth a:link {
-  color: #873abb;
+  color: #084469;
   background-color: transparent;
   text-decoration: none;
 }

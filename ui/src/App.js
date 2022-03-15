@@ -26,19 +26,31 @@ function App() {
       <Topbar />
       <Switch>
         {!authCtx.isLoggedIn && (
-          <Route exact path="/login" component={LoginContainer} />
+          <Route exact path="/" component={LandingContainer} />
+        )}
+        {!authCtx.isLoggedIn && (
+          <Route exact path="/auth/:authType" component={LoginContainer} />
         )}
         {authCtx.isLoggedIn && <Route component={DefaultContainer} />}
-        {!authCtx.isLoggedIn && <Redirect to="/login" />}
+        {!authCtx.isLoggedIn && <Redirect to="/" />}
       </Switch>
     </Router>
   );
 }
 
+const LandingContainer = () => (
+  <React.Fragment>
+    <div className="container">
+      <Route path="/" component={Landing} />
+    </div>
+    <Bottombar />
+  </React.Fragment>
+);
+
 const LoginContainer = () => (
   <React.Fragment>
     <div className="container">
-      <Route path="/login" component={Auth} />
+      <Route path="/auth/:authType" component={Auth} />
     </div>
     <Bottombar />
   </React.Fragment>
@@ -47,12 +59,6 @@ const LoginContainer = () => (
 const DefaultContainer = () => (
   <div className="container">
     <Sidebar />
-    <Route exact path="/">
-      <ApiDiscover />
-    </Route>
-    <Route exact path="/home">
-      <Landing />
-    </Route>
     <Route exact path="/apis">
       <ApiDiscover />
     </Route>

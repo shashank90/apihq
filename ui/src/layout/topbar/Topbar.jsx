@@ -8,6 +8,8 @@ import logo from "../../icon/ApiHome.png"
 export default function Topbar() {
   const authCtx = useContext(AuthContext);
   const isLoggedIn = authCtx.isLoggedIn;
+
+  
   const logoutHandler = () => {
     authCtx.logout();
   };
@@ -25,12 +27,21 @@ export default function Topbar() {
               <ul className={styles.list}>
                 {!isLoggedIn && (
                   <li className={styles.item}>
-                    <Link to='/login'>Login</Link>
+                    <Link to='/auth/signin'>
+                    <button className={styles.logoutBtn}>Sign in</button>
+                    </Link>
+                  </li>
+                )}
+                {!isLoggedIn && (
+                  <li className={styles.item}>
+                    <Link to='/auth/signup'>
+                    <button className={styles.signUpBtn}>Sign Up for Free</button>
+                    </Link>
                   </li>
                 )}
                 {isLoggedIn && (
                   <li className={styles.item}>
-                    <button className={styles.logout_btn} onClick={()=>logoutHandler()}>Logout</button>
+                    <button className={styles.logoutBtn} onClick={()=>logoutHandler()}>Logout</button>
                   </li>
                 )}
               </ul>

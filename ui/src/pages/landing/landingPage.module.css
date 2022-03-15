@@ -1,0 +1,78 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1em auto;
+}
+.title {
+  font-size: 26pt;
+  font-weight: bold;
+}
+.gridWrap {
+  display: grid;
+  margin: 1em auto;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 8em;
+}
+
+.item {
+  border-radius: 6px;
+  background-color: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  padding-left: 2rem;
+  border: 1px solid black;
+  /* text-align: center; */
+}
+
+.benefitTitle {
+  position: relative;
+  margin-left: 0.8em;
+  padding-left: 0.8em;
+  font-size: 18pt;
+}
+
+.benefitTitle::before {
+  content: "\2b50";
+  position: absolute;
+  left: -0.8em;
+}
+
+.lineItemStyle {
+  position: relative;
+  padding-left: 1em;
+  margin-left: 1em;
+  margin-bottom: 2rem;
+}
+
+.lineItemStyle::before {
+  content: "\2714";
+  position: absolute;
+  left: -0.8em;
+}
+.listStyle {
+  padding: 0;
+  list-style: none;
+  margin-bottom: 1em;
+  margin-right: 1em;
+  font-size: 14pt;
+}
+.signUpContainer {
+  margin: auto auto;
+}
+.signUpBtn {
+  font: inherit;
+  background-color: #084469;
+  border: 1px solid darkblue;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.signUpBtn:hover {
+  background-color: #073a5a;
+  border: 1px solid white;
+}

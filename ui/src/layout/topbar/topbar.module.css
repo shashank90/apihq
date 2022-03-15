@@ -68,10 +68,26 @@
   margin: 0 1rem;
 }
 
-.logout_btn {
+.logoutBtn {
   font: inherit;
-  background-color: transparent;
+  background-color: lightblue;
   border: 1px solid white;
+  color: black;
+  font-weight: bold;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.logoutBtn:hover {
+  border: 1px solid darkblue;
+}
+
+.signUpBtn {
+  font: inherit;
+  background-color: #084469;
+  border: 1px solid darkblue;
   color: white;
   font-weight: bold;
   padding: 0.5rem 1.5rem;
@@ -80,7 +96,7 @@
   margin-left: 10px;
 }
 
-.logout_btn:hover {
-  background-color: #c291e2;
-  color: #38015c;
+.signUpBtn:hover {
+  background-color: #073a5a;
+  border: 1px solid white;
 }

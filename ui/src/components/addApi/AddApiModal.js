@@ -108,7 +108,6 @@ export default function AddApiModal(props) {
 
   function proceed(specId) {
     const timer = setTimeout(() => {
-      // props.onCancel();
       history.push("/apis/spec/editor/" + specId);
     }, 1000);
     return () => clearTimeout(timer);
