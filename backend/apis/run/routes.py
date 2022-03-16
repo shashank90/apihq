@@ -24,6 +24,7 @@ from backend.tester.modules.openapi.conformance import ISSUES_FILE, REQUESTS_FIL
 from backend.utils import uuid_handler
 from backend.utils.file_handler import get_run_dir_path, read_json
 from backend.utils.constants import (
+    EXAMPLE_URL,
     HTTP_BAD_REQUEST,
     ERROR,
 )
@@ -33,6 +34,7 @@ run_bp = Blueprint("run_bp", __name__)
 logger = Logger(__name__)
 
 API_RUN_LIMIT_EXCEEDED = "API_RUN_LIMIT_EXCEEDED"
+DEFAULT_API_RUN_NOT_ALLOWED = "DEFAULT_API_RUN_NOT_ALLOWED"
 
 
 @run_bp.route("/apis/v1/run/<api_id>", methods=["POST"])
@@ -55,9 +57,18 @@ def run_api(current_user, api_id):
     logger.info(
         f"api_endpoint_url: {api_endpoint_url}; http method :{http_method} auth_headers: {t_auth_headers}"
     )
+
+    if EXAMPLE_URL in api_endpoint_url:
+        raise HttpResponse(
+            message="Cannot run example API. Default template for demo purpose only.",
+            code=DEFAULT_API_RUN_NOT_ALLOWED,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
+        )
+
     if is_api_run_limit_exceeded(user_id):
         raise HttpResponse(
-            message="API Run limit for user exceeded",
+            message="API Run limit for user exceeded. Please contact support",
             code=API_RUN_LIMIT_EXCEEDED,
             http_status=HTTP_BAD_REQUEST,
             type=ERROR,

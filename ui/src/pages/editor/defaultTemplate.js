@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   title: Pet Store
 servers:
-- url: http://localhost:80
+- url: http://example.com
 paths:
   /apis/v1/pets:
     post:
@@ -28,12 +28,14 @@ paths:
                 type: object
                 properties:
                   pet_id:
+                    description: pet_id
                     type: string
-                    pattern: ^\w+$
+                    pattern: ^w+$
                     maxLength: 20
                   message:
+                    description: message
                     type: string
-                    pattern: ^\w+$
+                    pattern: ^w+$
                     maxLength: 30
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -51,7 +53,7 @@ paths:
         description: Unique pet_id
         schema:
           type: string
-          pattern: ^\w+$
+          pattern: ^w+$
           maxLength: 40
           minLength: 0
       responses:
@@ -63,12 +65,12 @@ paths:
                 type: object
                 properties:
                   name:
+                    description: pet name
                     type: string
-                    pattern: ^\w+$
+                    pattern: ^w+$
                     maxLength: 20
         '400':
           $ref: '#/components/responses/BadRequest'
-
 components:
   schemas:
     addPet:
@@ -79,12 +81,12 @@ components:
       properties:
         pet_name:
           type: string
-          pattern: ^\w+$
+          pattern: ^w+$
           maxLength: 30
           minLength: 0
           description: Pet name.
         breed:
-          pattern: ^\w+$        
+          pattern: ^w+$
           type: string
           minLength: 0
           maxLength: 30
@@ -100,20 +102,23 @@ components:
             - error
             properties:
               error:
+                description: error
                 type: object
                 required:
                 - code
                 - message
                 properties:
                   code:
+                    description: code
                     type: string
-                    pattern: ^\w+$
+                    pattern: ^w+$
                     maxLength: 10
                   message:
+                    description: message
                     type: string
-                    pattern: ^\w+$
+                    pattern: ^w+$
                     maxLength: 20
 tags:
 - name: pets
-  description: Everything about pets
-  `}`;
+  description: Everything about pets  
+`}`;

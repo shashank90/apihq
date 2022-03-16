@@ -15,10 +15,9 @@ import { SPEC_STRING_MAX_LENGTH } from "../../store/constants";
 const fileSaveBaseURL = "/apis/v1/spec_strings";
 const getSpecBaseURL = "/apis/v1/specs";
 
-const addSpecMessage = "Validate Spec";
-
 export default function SpecEditor(props) {
   const [spec, setSpec] = useState(defaultValue);
+  const [specMessageHeading, setSpecMessageHeading] = useState("Validate Spec");
   const [collectionName, setCollectionName] = useState("");
   const [validationStatus, setValidationStatus] = useState(
     "Hit Validate to get started!"
@@ -96,6 +95,7 @@ export default function SpecEditor(props) {
     if (specId != TEMPLATE) {
       fetchSpecHandler();
     } else {
+      setSpecMessageHeading("Use default template to build OpenAPI Spec");
       console.log("Load default template...");
     }
   }, [fetchSpecHandler]);
@@ -222,7 +222,7 @@ export default function SpecEditor(props) {
           </div>
           <div className={styles.header_msg_container}>
             <div className={styles.msg_container}>
-              <h3>{addSpecMessage}</h3>
+              <h3>{specMessageHeading}</h3>
             </div>
             <div className={styles.collection_status_container}>
               <div className={styles.collection_container}>

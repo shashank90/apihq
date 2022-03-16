@@ -155,3 +155,5 @@ COMMON_SQLi_FILE_PATH = os.path.join(
 COMMON_XSS_FILE_PATH = os.path.join(
     BASE_DIR, "backend/tester/modules/fuzz_payloads/xss.txt"
 )
+
+EXAMPLE_URL = "example.com"
