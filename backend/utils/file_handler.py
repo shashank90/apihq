@@ -112,3 +112,14 @@ def read_file_into_list(file_path) -> List[str]:
         for line in my_file:
             str_list.append(line.rstrip("\n"))
     return str_list
+
+
+def remove_data_dir(data_dir: str):
+    """
+    Remove data dir in case input validation error
+    """
+    try:
+        logger.info(f"Incoming YAML lint failed. Removing data dir {data_dir}")
+        shutil.rmtree(data_dir)
+    except Exception as e:
+        logger.error(f"Could not remove data dir {data_dir}. Error: {str(e)}")

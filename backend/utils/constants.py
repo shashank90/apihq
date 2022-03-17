@@ -17,6 +17,7 @@ LOG_DIR = os.path.join(BASE_DIR, "logs")
 UPLOAD_TXT_FILE = os.path.join(BASE_DIR, "backend/tester/modules/openapi/spam.txt")
 UPLOAD_JSON_FILE = os.path.join(BASE_DIR, "backend/tester/modules/openapi/spam.json")
 ALLOWED_EXTENSIONS = set(["json", "yaml", "yml"])
+ALLOWED_OPENAPI_EXTENSIONS = set(["yaml", "yml"])
 SAVED_REGEX_FILE = "~/Desktop/saved_regex.json"
 SENSITIVE_DATA_REGEX = "sensitiveDataRegex"
 OTHER_REGEX = "otherRegex"
@@ -138,8 +139,16 @@ EMAIL_MAX_LENGTH = 40
 FILE_NAME = "File name"
 FILE_NAME_MAX_LENGTH = 40
 
+# OpenAPI file type support
+OPENAPI_SUPPORTED_FILE_TYPE = "OpenAPI Spec in yaml format supported"
+UNSUPPORTED_OPENAPI_FILE_TYPE = "UNSUPPORTED_OPENAPI_FILE_TYPE"
+OPENAPI_POSTMAN_COLLECTION = (
+    "OpenAPI Spec in yaml and Postman Collection in json format supported"
+)
+
 # Postman collection to openapi conversion
 POSTMAN_COLLECTION = "Postman Collection"
+OpenAPI = "OpenAPI"
 POSTMAN_ERROR_MESSAGE_PREFIX = (
     "Failed to convert Postman collection to OpenAPI Specification. "
 )
@@ -157,3 +166,7 @@ COMMON_XSS_FILE_PATH = os.path.join(
 )
 
 EXAMPLE_URL = "example.com"
+
+
+# API delete
+API_DELETE_FAILED = "API_DELETE_FAILED"

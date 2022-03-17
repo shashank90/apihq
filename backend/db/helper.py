@@ -12,7 +12,10 @@ from backend.db.model.user_api_run_limit import UserApiRunLimit
 from backend.db.model.api_run import ApiRun, RunStatusEnum
 from backend.db.model.user import User
 from backend.db.model.api_validate import ApiValidate, ValidateStatusEnum
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
+from backend.log.factory import Logger
+
+logger = Logger(__name__)
 
 
 def add_user(name: str, email: str, password: str, company_name: str):
@@ -280,3 +283,17 @@ def get_api_run_count(user_id: str) -> int:
     count = user_api_run_limit.api_run_count
     limit = user_api_run_limit.limit
     return (count, limit)
+
+
+def delete_api_record(api_id: str):
+    """
+    Delete api record from api_inventory table
+    """
+    try:
+        session: Session = get_session()
+        session.query(ApiInventory).filter_by(api_id=api_id).delete()
+        session.commit()
+        return True
+    except Exception as e:
+        logger.error(f"Could not delete api [{api_id}]. Error: {str(e)}")
+    return False

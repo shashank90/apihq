@@ -10,6 +10,7 @@ from backend.apis.auth.decorators.decorator import token_required
 from backend.db.helper import (
     add_api_to_inventory,
     add_spec,
+    delete_api_record,
     get_api_inventory,
     get_api_status,
 )
@@ -24,19 +25,27 @@ from backend.utils.artifact_handler import (
 )
 from backend.log.factory import Logger
 from backend.utils.constants import (
+    ALLOWED_OPENAPI_EXTENSIONS,
+    API_DELETE_FAILED,
     COLLECTION_NAME,
     COLLECTION_NAME_MAX_LENGTH,
     CRAWLER,
     ALLOWED_EXTENSIONS,
     ERROR,
     HTTP_BAD_REQUEST,
+    HTTP_INTERNAL_SERVER_ERROR,
     INPUT_VALIDATION,
+    OPENAPI_POSTMAN_COLLECTION,
+    OPENAPI_SUPPORTED_FILE_TYPE,
     UNNAMED,
+    UNSUPPORTED_OPENAPI_FILE_TYPE,
     YAML_LINT_ERROR_PREFIX,
     POSTMAN_COLLECTION,
     FILE_NAME,
     FILE_NAME_MAX_LENGTH,
+    OpenAPI,
 )
+from backend.utils.file_handler import get_file_name_and_extension, remove_data_dir
 
 X_API_SOURCE = "x-api-source"
 
@@ -56,7 +65,7 @@ discovery_bp = Blueprint("discovery_bp", __name__)
 # Accept: multipart/form-data
 def import_api(current_user):
     user_id = current_user.user_id
-    logger.info(f"Uploading OpenAPI spec for user {user_id}")
+    logger.info(f"Uploading OpenAPI spec for user: [{user_id}]")
 
     # Identify openapi source(user or crawler)
     added_by = AddedByEnum.USER
@@ -92,9 +101,10 @@ def import_api(current_user):
         return response
     if file and allowed_openapi_file(file.filename):
         file_name = secure_filename(file.filename)
+        f_name, _ = get_file_name_and_extension(file_name)
 
         # Check file name length
-        message = is_invalid_name(FILE_NAME, file_name, FILE_NAME_MAX_LENGTH)
+        message = is_invalid_name(FILE_NAME, f_name, FILE_NAME_MAX_LENGTH)
         if message:
             raise HttpResponse(
                 message=message,
@@ -130,20 +140,32 @@ def import_api(current_user):
             spec_path = converted_spec_path
             file_name = updated_file_name
 
+        elif file_type == OpenAPI:
+            _, file_extension = get_file_name_and_extension(file.filename)
+            if file_extension.strip(".") not in ALLOWED_OPENAPI_EXTENSIONS:
+                raise HttpResponse(
+                    message=OPENAPI_SUPPORTED_FILE_TYPE,
+                    code=UNSUPPORTED_OPENAPI_FILE_TYPE,
+                    http_status=HTTP_BAD_REQUEST,
+                    type=ERROR,
+                )
+
         # Lint and check if valid YAML
         response = {}
         output = validate(data_dir, user_id, spec_id, spec_path, lint_only=True)
         is_lint_error = output.get("is_lint_error")
         lint_output = output.get("validate_out")
         if is_lint_error:
-            error_msg = YAML_LINT_ERROR_PREFIX + lint_output
-            response = jsonify({"error": {"message": error_msg}})
-            response.status_code = 400
-
             # Rejecting file and hence removing data dir
-            logger.info(f"Incoming YAML lint failed. Removing data dir {data_dir}")
-            shutil.rmtree(data_dir)
-            return response
+            remove_data_dir(data_dir)
+
+            error_msg = YAML_LINT_ERROR_PREFIX + lint_output
+            raise HttpResponse(
+                message=error_msg,
+                code=INPUT_VALIDATION,
+                http_status=HTTP_BAD_REQUEST,
+                type=ERROR,
+            )
 
         # Add spec record to specs table
         add_spec(spec_id, user_id, collection_name, file_name, data_dir)
@@ -174,19 +196,15 @@ def import_api(current_user):
         response = jsonify(
             {"spec_id": spec_id, "message": "File uploaded successfully"}
         )
-
         response.status_code = 201
         return response
     else:
-        response = jsonify(
-            {
-                "error": {
-                    "message": "OpenAPI specification is supported in yaml format only"
-                }
-            }
+        raise HttpResponse(
+            message=OPENAPI_POSTMAN_COLLECTION,
+            code=UNSUPPORTED_OPENAPI_FILE_TYPE,
+            http_status=HTTP_BAD_REQUEST,
+            type=ERROR,
         )
-        response.status_code = 400
-        return response
 
 
 def allowed_discovery_file(filename):
@@ -215,6 +233,7 @@ def get_discovered_apis(current_user):
             "http_method": api.http_method,
             "added_by": api.added_by.name,
             "message": api.message,
+            "collection_name": api.spec.collection_name if api.spec else "",
             "updated": api.time_updated,
         }
         for api in api_list
@@ -264,3 +283,34 @@ def discover_api(current_user):
     resp.status_code = 201
 
     return resp
+
+
+@discovery_bp.route("/apis/v1/apis/<api_id>", methods=["DELETE"])
+@token_required
+@handle_response
+def delete_api(current_user, api_id):
+    """
+    Delete api given api_id
+    """
+    user_id = current_user.user_id
+    logger.info(f"Deleting api: [{api_id}] by user: [{user_id}]")
+
+    # Deleting api only and not corresponding spec
+    success = delete_api_record(api_id)
+
+    if success:
+        resp = jsonify(
+            {
+                "api_id": api_id,
+                "message": "Deleted API successfully",
+            }
+        )
+        resp.status_code = 200
+        return resp
+    else:
+        raise HttpResponse(
+            message="API Delete failed. Check logs for details",
+            code=API_DELETE_FAILED,
+            http_status=HTTP_INTERNAL_SERVER_ERROR,
+            type=ERROR,
+        )

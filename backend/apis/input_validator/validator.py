@@ -81,7 +81,7 @@ def is_invalid_name(field_name: str, value: str, length: int):
     2. collection name
     3. file name
     """
-    logger.info(f"Validating {field_name}...")
+    logger.info(f"Validating [{field_name}] with value [{value}]")
     try:
         is_invalid_str_length(field_name, value, length)
         validate.Regexp(

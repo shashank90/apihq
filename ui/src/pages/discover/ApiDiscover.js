@@ -6,12 +6,13 @@ import { useState, useEffect, useContext } from "react";
 import ReactDOM from "react-dom";
 import Backdrop from "../../components/common/Backdrop";
 import AddApiModal from "../../components/addApi/AddApiModal";
-// import { DeleteOutline } from "@material-ui/icons";
+import { DeleteOutline } from "@material-ui/icons";
 import AuthContext from "../../store/auth-context";
 import DataTable from "../../components/dataTable/DataTable";
 import { DATA_REFRESH_FREQUENCY } from "../../store/constants";
 
 const getApisURL = "/apis/v1/discovered";
+const baseDeleteAPIURL = "/apis/v1/apis/";
 
 export default function APIInventory() {
   const [apis, setApis] = useState([]);
@@ -29,7 +30,30 @@ export default function APIInventory() {
     setUploadModalIsOpen(false);
   }
 
-  function handleDelete() {}
+  async function handleDelete(apiId) {
+    try {
+      const deleteAPIURL = baseDeleteAPIURL + apiId;
+      const response = await fetch(deleteAPIURL, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": authCtx.token,
+        },
+      });
+      const data = await response.json();
+      // console.log(data);
+      if (!response.ok) {
+        if ("error" in data) {
+          throw new Error(data.error.message);
+        }
+        throw new Error(data.message);
+      } else {
+        fetchApiInventoryDataFirstTime();
+      }
+    } catch (error) {
+      setError(error.message);
+    }
+  }
 
   function updateApis(fetchedApis) {
     if (apis.length > 0) {
@@ -48,6 +72,7 @@ export default function APIInventory() {
     fetchApiInventoryDataPeriodic();
     setIsLoading(false);
   }
+
   async function fetchApiInventoryDataPeriodic() {
     try {
       const response = await fetch(getApisURL, {
@@ -74,6 +99,7 @@ export default function APIInventory() {
           // apiPath: api.api_path,
           apiEndpointURL: api.api_endpoint_url,
           httpMethod: api.http_method,
+          collectionName: api.collection_name,
           updated: api.updated,
           // status: api.status,
           // addedBy: api.added_by,
@@ -127,6 +153,18 @@ export default function APIInventory() {
       },
     },
     {
+      field: "Collection Name",
+      headerName: "Collection Name",
+      width: 180,
+      renderCell: (params) => {
+        return (
+          <div className={styles.TargetListItem}>
+            {params.row.collectionName}
+          </div>
+        );
+      },
+    },
+    {
       field: "OpenAPI Spec",
       headerName: "OpenAPI Spec",
       width: 200,
@@ -165,22 +203,21 @@ export default function APIInventory() {
     //     );
     //   },
     // },
-    // {
-    //   field: "Action",
-    //   headerName: "Action",
-    //   width: 150,
-    //   renderCell: (params) => {
-    //     return (
-    //       <>
-    //         {/* <button className="msgListView">Edit</button> */}
-    //         <DeleteOutline
-    //           className={styles.TargetListDelete}
-    //           onClick={() => handleDelete(params.row.id)}
-    //         />
-    //       </>
-    //     );
-    //   },
-    // },
+    {
+      field: "Delete",
+      headerName: "Delete",
+      width: 150,
+      renderCell: (params) => {
+        return (
+          <>
+            <DeleteOutline
+              className={styles.TargetListDelete}
+              onClick={() => handleDelete(params.row.apiId)}
+            />
+          </>
+        );
+      },
+    },
   ];
 
   let content = <DataTable data={apis} columns={columns} />;

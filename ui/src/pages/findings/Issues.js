@@ -141,7 +141,7 @@ export default function Issues(props) {
         rows={issues}
         disableSelectionOnClick
         columns={columns}
-        pageSize={8}
+        pageSize={12}
         checkboxSelection
       />
     );

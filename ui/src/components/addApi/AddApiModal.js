@@ -11,7 +11,7 @@ export default function AddApiModal(props) {
   const [addApiOption, setAddApiOption] = useState(0); // 0: no show, 1: show yes, 2: show no.
   const [collectionName, setCollectionName] = useState("");
   const [file, setFile] = useState();
-  const [fileType, setFileType] = useState("");
+  const [fileType, setFileType] = useState("OpenAPI");
 
   const authCtx = useContext(AuthContext);
 
@@ -24,8 +24,9 @@ export default function AddApiModal(props) {
     setAddApiOption(addApiOption);
   };
 
-  const handleFileTypeChange = (category) => {
-    setFileType(category);
+  const handleFileTypeChange = (fileType) => {
+    console.log("Setting file Type: " + fileType);
+    setFileType(fileType);
   };
 
   let content = <p></p>;
@@ -72,6 +73,7 @@ export default function AddApiModal(props) {
 
     const formData = new FormData();
 
+    console.log("Sending file type: " + fileType);
     formData.append("collection_name", collectionName);
     formData.append("file_type", fileType);
     formData.append("file", file);
@@ -96,6 +98,7 @@ export default function AddApiModal(props) {
         throw new Error(data.message);
       } else {
         // Mark success message and exit after timeout
+        setError("");
         setMessage(data.message);
         const specId = data.spec_id;
         proceed(specId);

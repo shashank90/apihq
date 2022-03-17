@@ -7,7 +7,7 @@ function DataTable(props) {
       rows={props.data}
       disableSelectionOnClick
       columns={props.columns}
-      pageSize={8}
+      pageSize={12}
       checkboxSelection
     />
   );
