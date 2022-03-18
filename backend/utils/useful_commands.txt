@@ -1,0 +1,2 @@
+# Convert yaml to delimited('\r\n') string
+sed -e :a -e '$!N;s/\n/\\\n/;ta' file > newfile

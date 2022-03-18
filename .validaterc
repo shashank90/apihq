@@ -1,36 +1,21 @@
 {
   "shared": {
     "operations": {
-      "no_operation_id": "warning",
+      "no_operation_id": "off",
       "operation_id_case_convention": [
         "off",
         "lower_snake_case"
       ],
-      "no_summary": "warning",
+      "no_summary": "off",
       "no_array_responses": "error",
-      "parameter_order": "warning",
+      "parameter_order": "off",
       "undefined_tag": "warning",
-      "unused_tag": "warning",
+      "unused_tag": "off",
       "operation_id_naming_convention": "off"
-    },
-    "pagination": {
-      "pagination_style": "warning"
-    },
-    "parameters": {
-      "no_parameter_description": "error",
-      "param_name_case_convention": [
-        "off",
-        "lower_snake_case"
-      ],
-      "invalid_type_format_pair": "error",
-      "content_type_parameter": "error",
-      "accept_type_parameter": "error",
-      "authorization_parameter": "warning",
-      "required_param_has_default": "warning"
     },
     "paths": {
       "missing_path_parameter": "error",
-      "duplicate_path_parameter": "warning",
+      "duplicate_path_parameter": "off",
       "snake_case_only": "off",
       "paths_case_convention": [
         "off",
@@ -50,10 +35,10 @@
     "schemas": {
       "invalid_type_format_pair": "error",
       "snake_case_only": "off",
-      "no_schema_description": "warning",
+      "no_schema_description": "off",
       "no_property_description": "warning",
-      "description_mentions_json": "warning",
-      "array_of_arrays": "warning",
+      "description_mentions_json": "off",
+      "array_of_arrays": "off",
       "inconsistent_property_type": [
         "warning",
         [
@@ -74,7 +59,7 @@
       ]
     },
     "walker": {
-      "no_empty_descriptions": "error",
+      "no_empty_descriptions": "warning",
       "has_circular_references": "warning",
       "$ref_siblings": "off",
       "duplicate_sibling_description": "warning",
@@ -90,16 +75,16 @@
   },
   "oas3": {
     "operations": {
-      "no_request_body_name": "warning"
+      "no_request_body_name": "off"
     },
     "responses": {
       "no_success_response_codes": "warning",
       "protocol_switching_and_success_code": "error",
       "no_response_body": "warning",
-      "ibm_status_code_guidelines": "warning"
+      "ibm_status_code_guidelines": "off"
     },
     "schemas": {
-      "json_or_param_binary_string": "warning"
+      "json_or_param_binary_string": "off"
     }
   }
 }

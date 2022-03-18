@@ -32,6 +32,38 @@
         }
     },
     {
+        "rule": "content-entry-contains-schema" ,
+        "info" : {
+            "headline":"Missing schema definition",
+            "description": "Provide schema definition for given content.",
+            "example" : "responses:\n  '200':\n    description: A User object\n    content:\n      application/json:\n        schema:\n          type: object\n          properties:\n            id:\n              type: integer\n              description: The user ID.\n            username:\n              type: string\n              description: The user name."
+        }
+    },
+    {
+        "rule": "content-type-parameter" ,
+        "info" : {
+            "headline":"Content-Type parameter",
+            "description": "Content-Type parameter not needed explicitly in header",
+            "example" : "paths:\n  '/v1/things':\n    post:\n      operationId: create_thing\n      requestBody:\n          description: 'The new Thing instance'\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Thing'\n      responses:\n        '201':\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Thing'"
+        }
+    },
+    {
+        "rule": "accept-parameter" ,
+        "info" : {
+            "headline":"Accept parameter",
+            "description": "Accept parameter not needed explicitly in header",
+            "example" : "paths:\n  '/v1/things':\n    get:\n      operationId: list_things\n      responses:\n        '200':\n          description: 'Success response!'\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/ThingCollection'"
+        }
+    },
+    {
+        "rule": "builtin" ,
+        "info" : {
+            "headline":"Equivalent Paths",
+            "description": "Define a single path /path/{parameter} with multiple operations (here GET and PUT):",
+            "example" : "/path/{IDs}:\n  get:\n    description: Get the ID list\n    parameters:\n      name: IDs\n      in: path\n      required: true\n      type: string\n      # ...\n  put:\n    description: Add IDs to the ID list\n    parameters:\n      name: addIDs\n      in: path\n      required: true\n      type: string\n      # ..."
+        }
+    },
+    {
         "rule": "malformed-spec" ,
         "info" : {
             "headline":"Malformed Spec",

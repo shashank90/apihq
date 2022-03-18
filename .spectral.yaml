@@ -3,7 +3,11 @@ extends: "@ibm-cloud/openapi-ruleset"
 rules:
   # Turn off a rule that is on in the default ruleset
   response-error-response-schema: off
+  parameter-case-convention: off
   property-case-convention: off
   schema-description: off
   openapi-tags: off
   response-example-provided: off
+  parameter-description: off
+  operation-description: off
+  major-version-in-path: off

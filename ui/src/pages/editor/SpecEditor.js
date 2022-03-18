@@ -42,7 +42,9 @@ export default function SpecEditor(props) {
     // console.log(newValue);
     if (newValue.length > SPEC_STRING_MAX_LENGTH) {
       setSpecError(
-        "Spec length cannot exceed " + SPEC_STRING_MAX_LENGTH + " characters"
+        "Spec length cannot exceed " +
+          SPEC_STRING_MAX_LENGTH +
+          " characters. Suggest to split given file into more than one file"
       );
     }
     setSpec(newValue);
