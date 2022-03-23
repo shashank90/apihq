@@ -12,11 +12,12 @@ import "./App.css";
 import Issues from "./pages/findings/Issues";
 import SpecEditor from "./pages/editor/SpecEditor";
 import ApiDiscover from "./pages/discover/ApiDiscover";
-import ApiRun from "./pages/run/ApiRun";
+import ApiTest from "./pages/test/ApiTest";
 import MsgList from "./pages/request/MsgList";
 import Auth from "./pages/auth/Auth";
 import Landing from "./pages/landing/Landing";
 import AuthContext from "./store/auth-context";
+import RequestEditor from "./components/requestEditor/RequestEditor";
 
 function App() {
   const authCtx = useContext(AuthContext);
@@ -69,12 +70,15 @@ const DefaultContainer = () => (
       <SpecEditor />
     </Route>
     <Route exact path="/apis/run">
-      <ApiRun />
+      <RequestEditor />
     </Route>
-    <Route exact path="/apis/run/issues/:runId">
+    <Route exact path="/apis/test">
+      <ApiTest />
+    </Route>
+    <Route exact path="/apis/test/issues/:runId">
       <Issues />
     </Route>
-    <Route exact path="/apis/run/requests/:runId">
+    <Route exact path="/apis/test/requests/:runId">
       <MsgList />
     </Route>
   </div>

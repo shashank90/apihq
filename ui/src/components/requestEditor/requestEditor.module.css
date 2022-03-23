@@ -1,0 +1,167 @@
+.container {
+  display: flex;
+  flex-direction: column;
+}
+.headingContainer {
+  display: flex;
+  justify-content: space-between;
+}
+.requestResponseContainer {
+  display: flex;
+}
+.request {
+  display: flex;
+  flex-direction: column;
+}
+.response {
+  display: flex;
+  flex-direction: column;
+}
+.headerContainer {
+  border: solid 1px black;
+  border-radius: 5px;
+  margin-left: 15px;
+  margin-top: 10px;
+  overflow: auto;
+  height: 300px;
+  width: 800px;
+}
+.header_btn {
+  margin-right: 2px;
+  margin-top: 10px;
+  text-align: right;
+}
+.header_pair {
+  display: flex;
+  flex-direction: column;
+  margin-top: 5px;
+  align-items: center;
+}
+.header_name_label {
+  margin-left: 38px;
+}
+.bodyKeyLabel {
+  margin-left: 40px;
+}
+.header_name_label::after {
+  content: "*";
+  color: red;
+}
+.header_label {
+  margin-left: 15px;
+}
+.header_label::after {
+  content: "*";
+  color: red;
+}
+.header_value {
+  font-size: 16px;
+  margin-top: 5px;
+  margin-left: 10px;
+  margin-right: 5px;
+}
+.heading {
+  font-size: 14pt;
+  margin-left: 15px;
+}
+.mainHeader {
+  display: flex;
+}
+.bodyContainer {
+  border: solid 1px black;
+  border-radius: 5px;
+  margin-top: 10px;
+  margin-left: 15px;
+  overflow: auto;
+  height: 300px;
+  width: 800px;
+}
+.requestBodyContainer {
+  display: flex;
+  flex-direction: column;
+  border: solid 1px black;
+  border-radius: 5px;
+  margin-top: 10px;
+  margin-left: 15px;
+  overflow: auto;
+  height: 300px;
+  width: 800px;
+}
+.requestBodyTextArea {
+  overflow: auto;
+  border-radius: 5px;
+  height: 250px;
+  width: 700px;
+  /* padding: 5px; */
+  margin: 5px;
+}
+.contentTypeLabel {
+  margin: 5px;
+  font-size: 10pt;
+}
+
+.responseBodyContainer {
+  border: solid 1px black;
+  border-radius: 5px;
+  margin-top: 10px;
+  margin-left: 15px;
+  overflow: auto;
+  height: 300px;
+  width: 750px;
+}
+.item {
+  margin: 0 1rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: baseline;
+}
+
+#formContainer {
+  width: 40%;
+  margin: auto;
+}
+#formC {
+  width: 100%;
+}
+.rows {
+  width: 60%;
+  display: block;
+  margin-left: 2em;
+  margin-bottom: 1em;
+}
+.column {
+  width: 100%;
+  display: inline-block;
+}
+.theLabels {
+  width: 20%;
+  /* float: left; */
+}
+.keyInput {
+  margin-left: 24px;
+}
+.valueInput {
+  margin-left: 10px;
+}
+.theInputs {
+  width: 65%;
+}
+
+.deleteButton {
+  width: 15%;
+  float: right;
+}
+.formDataType {
+  width: 15%;
+  float: right;
+}
+
+.theInputs::after {
+  content: "*";
+  color: red;
+}

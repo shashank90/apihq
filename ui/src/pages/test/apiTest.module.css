@@ -1,0 +1,39 @@
+.TargetList {
+  flex: 4;
+}
+
+.TargetListItem {
+  display: flex;
+  align-items: center;
+}
+
+.TargetListImg {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 10px;
+}
+
+.TargetListEdit {
+  border: none;
+  border-radius: 10px;
+  padding: 5px 10px;
+  background-color: #3bb077;
+  color: white;
+  cursor: pointer;
+  margin-right: 20px;
+}
+
+.TargetListDelete {
+  color: red;
+  cursor: pointer;
+}
+
+.card {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  width: 120px;
+}

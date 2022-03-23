@@ -30,6 +30,9 @@ export default function Sidebar() {
             <Link to="/apis/run" className="link">
               <li className="sidebarListItem">Run</li>
             </Link>
+            <Link to="/apis/test" className="link">
+              <li className="sidebarListItem">Tests</li>
+            </Link>
           </ul>
         </div>
         {/* <div className="sidebarMenu">
