@@ -10,11 +10,18 @@ sudo gpasswd -a $USER docker
 sudo chmod 666 /var/run/docker.sock
 newgrp docker
 
+
 # Install docker-compose
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 
+
+# Create folders
+cd ~
+mkdir -p apihome/docker
+
+cd ~/apihome/docker
 
 # Docker volume for web/app/db
 mkdir -p volumes/web
@@ -31,3 +38,12 @@ mkdir -p volumes/db/pgdata
 # Docker volume for managing certs
 mdkir -p volumes/web/certbot/www/
 mkdir -p volumes/web/certbot/certificates
+
+
+# Pull images
+docker pull sgshanks/apihome:ui
+docker pull sgshanks/apihome:backend
+docker pull sgshanks/apihome:db
+
+
+cat ~/my_password.txt | docker login --username sgshanks --password-stdin

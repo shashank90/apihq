@@ -64,6 +64,14 @@
         }
     },
     {
+        "rule": "property-description" ,
+        "info" : {
+            "headline":"Property description",
+            "description": "Schema properties should have a non-empty description.",
+            "example" : "components:\n  schemas:\n    Thing:\n      type: object\n      properties:\n        thing_id:\n          description: The ID associated with the Thing instance.\n          type: string\n        thing_type:\n          description: The type associated with the Thing instance.\n          type: string"
+        }
+    },
+    {
         "rule": "malformed-spec" ,
         "info" : {
             "headline":"Malformed Spec",
