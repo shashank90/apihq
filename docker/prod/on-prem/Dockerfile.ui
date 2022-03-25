@@ -1,0 +1,29 @@
+FROM node:16.14.0 as build
+
+WORKDIR /app
+COPY  ./ui/src ./src
+COPY  ./ui/public ./public
+COPY  ./ui/scripts ./scripts
+COPY  ./ui/config ./config
+COPY  ./ui/package.json  ./
+
+RUN npm install
+RUN npm run build
+
+# Setup nginx
+FROM nginx:1.15
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Create dirs for certificate renewal
+RUN mkdir -p /var/www/certbot/.well-known/acme-challenge
+
+# COPY conf files
+COPY ./docker/nginx/letsencrypt.conf /etc/nginx/snippets/letsencrypt.conf
+COPY ./docker/nginx/ssl.conf /etc/nginx/snippets/ssl.conf
+COPY ./docker/nginx/on-prem/apihome_on_prem_80.nginx /etc/nginx/sites-available/apihome_on_prem_80.nginx
+COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ./docker/nginx/proxy_params /etc/nginx/proxy_params
+RUN mkdir -p /etc/nginx/sites-enabled
+RUN ln -s /etc/nginx/sites-available/apihome_on_prem_80.nginx /etc/nginx/sites-enabled/apihome_on_prem_80.nginx
+
+CMD ["nginx", "-g", "daemon off;"]

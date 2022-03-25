@@ -1,0 +1,35 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name <ip_address>;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+	try_files $uri $uri/ =404;
+    }
+
+    location /static {
+        expires 1y;
+        add_header Cache-Control "public";
+    }
+
+    location /signup {
+        include proxy_params;
+        proxy_pass http://backend:5000;
+    }
+
+    location /login {
+        include proxy_params;
+        proxy_pass http://backend:5000;
+    }
+
+    location /apis {
+        include proxy_params;
+        proxy_pass http://backend:5000;
+    }
+}
