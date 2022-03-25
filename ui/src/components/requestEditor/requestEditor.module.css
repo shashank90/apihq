@@ -26,6 +26,16 @@
   height: 300px;
   width: 800px;
 }
+.urlLabel {
+  margin-left: 15px;
+  margin-right: 10px;
+}
+.urlStyle {
+  margin-left: 10px;
+  border: 1px solid black;
+  border-radius: 2px;
+  padding: 2px;
+}
 .header_btn {
   margin-right: 2px;
   margin-top: 10px;
@@ -129,18 +139,16 @@
   width: 100%;
 }
 .rows {
-  width: 60%;
+  width: 90%;
   display: block;
-  margin-left: 2em;
-  margin-bottom: 1em;
+  margin: 0.5em;
 }
 .column {
   width: 100%;
   display: inline-block;
 }
 .theLabels {
-  width: 20%;
-  /* float: left; */
+  width: 15%;
 }
 .keyInput {
   margin-left: 24px;
@@ -148,16 +156,22 @@
 .valueInput {
   margin-left: 10px;
 }
+.headerNameInput {
+  margin-left: 10px;
+}
+.headerValueInput {
+  margin-left: 12px;
+}
 .theInputs {
-  width: 65%;
+  width: 500px;
 }
 
 .deleteButton {
-  width: 15%;
+  width: 5%;
   float: right;
 }
 .formDataType {
-  width: 15%;
+  width: 5%;
   float: right;
 }
 

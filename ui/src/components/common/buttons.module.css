@@ -19,6 +19,10 @@
   cursor: pointer;
 }
 
+.new_action_btn:hover {
+  border: 1px solid black;
+}
+
 .action_btn {
   border: none;
   padding: 5px;
@@ -27,4 +31,8 @@
   color: white;
   font-weight: 600;
   cursor: pointer;
+}
+
+.action_btn:hover {
+  border: 1px solid black;
 }

@@ -1,7 +1,9 @@
 import { useState } from "react";
 import styles from "../common/msgDetails.module.css";
 import classes from "./requestEditor.module.css";
+import { SPEC_STRING_MAX_LENGTH } from "../../store/constants";
 import buttons from "../common/buttons.module.css";
+import AceEditor from "react-ace";
 import { DeleteOutline } from "@material-ui/icons";
 
 export default function RequestEditor(props) {
@@ -16,15 +18,14 @@ export default function RequestEditor(props) {
   //   const msgDetails = props.msgDetails;
   const [headerPairs, setHeaderPairs] = useState([]);
   const [bodyKeyValuePairs, setBodyKeyValuePairs] = useState([]);
-  const [uri, setUri] = useState(msgDetails.url);
+  const [url, setUrl] = useState(msgDetails.url);
   const [reqHeader, setReqHeader] = useState(msgDetails.reqHeader);
   const [reqBody, setReqBody] = useState(msgDetails.reqBody);
   const [resHeader, setResHeader] = useState(msgDetails.resHeader);
   const [resBody, setResBody] = useState(msgDetails.resBody);
   const [remarks, setRemarks] = useState();
-  const [contentType, setContentType] = useState("raw");
-  const [formDataType, setFormDataType] = useState("text");
-  const [file, setFile] = useState();
+  const [httpMethod, setHttpMethod] = useState("GET");
+  const [contentType, setContentType] = useState("JSON");
 
   const editable = props.editable;
 
@@ -34,15 +35,79 @@ export default function RequestEditor(props) {
     props.showRequest(false);
   };
 
-  function handleURIChange(event) {
-    setUri(event.target.value);
+  function handleURLChange(event) {
+    setUrl(event.target.value);
   }
+
+  function handleHttpMethodChange(event) {
+    setHttpMethod(event.target.value);
+  }
+
   function handleReqHeaderChange(event) {
     setReqHeader(event.target.value);
   }
-  function handleReqBodyChange(event) {
-    setReqBody(event.target.value);
+
+  function handleReqBodyChange(newValue) {
+    // console.log(newValue);
+    if (newValue.length > SPEC_STRING_MAX_LENGTH) {
+      // setError(
+      //   "Request body length cannot exceed " +
+      //     SPEC_STRING_MAX_LENGTH +
+      //     " characters."
+      // );
+
+      // TODO: Show Error pop-ups
+      console.log(
+        "Request body length cannot exceed " +
+          SPEC_STRING_MAX_LENGTH +
+          " characters"
+      );
+    }
+    setReqBody(newValue);
   }
+
+  async function sendRequest() {
+    try {
+      console.log("Sending request...");
+      let headers = {};
+      headers["Content-Type"] = contentType;
+      headerPairs.map((item) => {
+        headers[item.value["headerName"]] = item.value["headerValue"];
+      });
+
+      const response = await fetch(url, {
+        method: httpMethod,
+        headers: headers,
+      });
+
+      const data = await response.json();
+      // console.log(data);
+      if (!response.ok) {
+        if ("error" in data) {
+          throw new Error(data.error.message);
+        }
+        throw new Error(data.message);
+      } else {
+        //Extract response into headers and body
+        let headerStr = formHeaders(response.headers);
+        console.log(headerStr);
+        setResHeader(headerStr);
+        setResBody(JSON.stringify(data));
+      }
+    } catch (error) {
+      // setError(error.message);
+      console.log("Error while hitting URL: " + url);
+    }
+  }
+
+  function formHeaders(headers) {
+    let headerStr = "";
+    for (var pair of headers.entries()) {
+      headerStr = headerStr + pair[0] + ": " + pair[1] + "\n";
+    }
+    return headerStr;
+  }
+
   function handleResHeaderChange(event) {
     setResHeader(event.target.value);
   }
@@ -82,10 +147,9 @@ export default function RequestEditor(props) {
     });
   };
 
-  const removeHeaderPair = (e) => {
+  const removeHeaderPair = (e, index) => {
     e.preventDefault();
 
-    const index = e.target.id;
     setHeaderPairs((s) => {
       const newArr = s.slice();
       // Remove header pair
@@ -110,10 +174,9 @@ export default function RequestEditor(props) {
     });
   };
 
-  const handleHeaderNameChange = (e) => {
+  const handleHeaderNameChange = (e, index) => {
     e.preventDefault();
 
-    const index = e.target.id;
     setHeaderPairs((s) => {
       // Get copy of existing header pair
       const new_header_pair = { ...s[index].value };
@@ -127,19 +190,11 @@ export default function RequestEditor(props) {
     });
   };
 
-  function updateBodyKeyValuePairs(key, e, index) {
+  function updateBodyKeyValuePairs(key, value, index) {
     setBodyKeyValuePairs((s) => {
       // Get copy of existing key value pair
       const new_pair = { ...s[index].value };
-      if (
-        key === "value" &&
-        new_pair.hasOwnProperty("formDataType") &&
-        new_pair.formDataType === "file"
-      ) {
-        new_pair[key] = e.target.files[0];
-      } else {
-        new_pair[key] = e;
-      }
+      new_pair[key] = value;
       // Create copy of existing array
       const newArr = s.slice();
       // Assign new value to new array(copied)
@@ -155,25 +210,26 @@ export default function RequestEditor(props) {
     updateBodyKeyValuePairs(key, val, index);
   };
 
-  const handleFormDataKeyChange = (e) => {
+  const handleFormDataKeyChange = (e, index) => {
     e.preventDefault();
     const key = "key";
-    const index = e.target.id;
-    updateBodyKeyValuePairs(key, e, index);
+    const val = e.target.value;
+    updateBodyKeyValuePairs(key, val, index);
   };
 
-  const handleFormDataValueChange = (e) => {
+  const handleFormDataValueChange = (e, index, type) => {
     e.preventDefault();
     const key = "value";
-    const index = e.target.id;
-    updateBodyKeyValuePairs(key, e, index);
+    let val = e.target.value;
+    if (type === "file") {
+      val = e.target.files[0];
+    }
+    updateBodyKeyValuePairs(key, val, index);
   };
 
-  const handleHeaderValueChange = (e) => {
+  const handleHeaderValueChange = (e, index) => {
     e.preventDefault();
 
-    // setHeaderValue(e.target.value);
-    const index = e.target.id;
     setHeaderPairs((s) => {
       // Get copy of existing header pair
       const new_header_pair = { ...s[index].value };
@@ -188,11 +244,21 @@ export default function RequestEditor(props) {
   };
 
   let requestBody = (
-    <textarea
-      className={classes.requestBodyTextArea}
-      value={reqBody}
-      onChange={handleReqBodyChange}
-    />
+    <div className={classes.requestBodyTextArea}>
+      <AceEditor
+        mode="json"
+        theme="github"
+        onChange={handleReqBodyChange}
+        fontSize={14}
+        width="700px"
+        height="350px"
+        tabSize={2}
+        highlightActiveLine
+        name="openapi-editor"
+        value={reqBody}
+        editorProps={{ $blockScrolling: true }}
+      />
+    </div>
   );
 
   if (contentType === "form-data" || contentType === "x-www-form-urlencoded") {
@@ -212,7 +278,7 @@ export default function RequestEditor(props) {
                     <label className={classes.theLabels}>Key:</label>
                     <input
                       className={`${classes.theInputs} ${classes.keyInput}`}
-                      onChange={handleFormDataKeyChange}
+                      onChange={(event) => handleFormDataKeyChange(event, i)}
                       value={item.value["key"] || ""}
                       id={i}
                       key={i}
@@ -220,9 +286,11 @@ export default function RequestEditor(props) {
                       size="44"
                       required
                     />
-                    <div className={classes.deleteButton}>
-                      <DeleteOutline onClick={removeBodyKeyValuePair} />
-                    </div>
+                    <span className={classes.deleteButton}>
+                      <DeleteOutline
+                        onClick={(event) => removeBodyKeyValuePair(event, i)}
+                      />
+                    </span>
                   </div>
                   <div className={classes.column}>
                     <label className={classes.theLabels}>Value:</label>
@@ -230,11 +298,13 @@ export default function RequestEditor(props) {
                       <input
                         className={`${classes.theInputs} ${classes.valueInput}`}
                         type="text"
-                        onChange={handleFormDataValueChange}
                         value={item.value["value"] || ""}
                         id={i}
                         key={i}
                         size="44"
+                        onChange={(event) =>
+                          handleFormDataValueChange(event, i, "text")
+                        }
                         required
                       />
                     ) : (
@@ -242,7 +312,9 @@ export default function RequestEditor(props) {
                         className={`${classes.theInputs} ${classes.valueInput}`}
                         id="file_id"
                         type="file"
-                        onChange={handleFormDataValueChange}
+                        onChange={(event) =>
+                          handleFormDataValueChange(event, i, "file")
+                        }
                         required
                       />
                     )}
@@ -281,14 +353,40 @@ export default function RequestEditor(props) {
           <nav>
             <ul className={classes.list}>
               <li className={classes.item}>
-                <button>Send</button>
+                <button className={buttons.action_btn} onClick={sendRequest}>
+                  Send
+                </button>
               </li>
               <li className={classes.item}>
-                <button>Add</button>
+                <button className={buttons.action_btn}>Add</button>
               </li>
             </ul>
           </nav>
         </div>
+      </div>
+      <div>
+        <label htmlFor="url" className={classes.urlLabel}>
+          URL
+        </label>
+        <select
+          id="method"
+          name="method"
+          value={httpMethod}
+          onChange={handleHttpMethodChange}
+        >
+          <option id="0">GET</option>
+          <option id="1">POST</option>
+          <option id="2">PUT</option>
+          <option id="2">DELETE</option>
+        </select>
+        <input
+          className={classes.urlStyle}
+          onChange={handleURLChange}
+          type="text"
+          id="url"
+          size="75"
+          required
+        />
       </div>
       <div className={classes.requestResponseContainer}>
         <div className={classes.request}>
@@ -299,47 +397,50 @@ export default function RequestEditor(props) {
                 Add Headers
               </button>
             </div>
-            <div className={classes.header_pair}>
-              {headerPairs.map((item, i) => {
-                return (
-                  <div className={classes.header_pair} key={i}>
-                    <div>
-                      <label htmlFor={i} className={classes.header_name_label}>
-                        Header name:
-                      </label>
-                      <input
-                        className={classes.header_value}
-                        onChange={handleHeaderNameChange}
-                        value={item.value["headerName"] || ""}
-                        id={i}
-                        key={i}
-                        type="text"
-                        size="45"
-                        required
-                      />
-                      <DeleteOutline
-                        className="TargetListDelete"
-                        onClick={removeHeaderPair}
-                      />
+            <div className={classes.formContainer}>
+              <form id="formC">
+                {headerPairs.map((item, i) => {
+                  return (
+                    <div className={classes.rows} key={i}>
+                      <div className={classes.column}>
+                        <label htmlFor="headerNameInput">Header Name:</label>
+                        <input
+                          className={`${classes.theInputs} ${classes.headerNameInput}`}
+                          onChange={(event) => handleHeaderNameChange(event, i)}
+                          value={item.value["headerName"] || ""}
+                          id="headerNameInput"
+                          key={i}
+                          type="text"
+                          size="44"
+                          required
+                        />
+                        <span className={classes.deleteButton}>
+                          <DeleteOutline
+                            onClick={(event) => removeHeaderPair(event, i)}
+                          />
+                        </span>
+                      </div>
+                      <div className={classes.column}>
+                        <label className={classes.theLabels}>
+                          Header Value:
+                        </label>
+                        <input
+                          className={`${classes.theInputs} ${classes.headerValueInput}`}
+                          onChange={(event) =>
+                            handleHeaderValueChange(event, i)
+                          }
+                          type="text"
+                          value={item.value["headerValue"] || ""}
+                          id={i}
+                          key={i}
+                          size="44"
+                          required
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label htmlFor={i} className={classes.header_label}>
-                        Header value:
-                      </label>
-                      <input
-                        className={classes.header_value}
-                        onChange={handleHeaderValueChange}
-                        value={item.value["headerValue"] || ""}
-                        id={i}
-                        key={i}
-                        type="text"
-                        size="45"
-                        required
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </form>
             </div>
           </div>
           <div className={classes.heading}>Request Body</div>
@@ -356,7 +457,7 @@ export default function RequestEditor(props) {
                   handleContentTypeChange(event.target.value)
                 }
               >
-                <option id="0">raw</option>
+                <option id="0">JSON</option>
                 <option id="1">form-data</option>
                 <option id="2">x-www-form-urlencoded</option>
               </select>
@@ -366,9 +467,9 @@ export default function RequestEditor(props) {
         </div>
         <div className={classes.response}>
           <div className={classes.heading}>Response Header</div>
-          <div className={classes.responseBodyContainer}></div>
+          <div className={classes.responseBodyContainer}>{resHeader}</div>
           <div className={classes.heading}>Response Body</div>
-          <div className={classes.responseBodyContainer}></div>
+          <div className={classes.responseBodyContainer}>{resBody}</div>
         </div>
       </div>
     </div>
