@@ -109,9 +109,6 @@ def get_json_payloads(
     outer_param_payloads = []
     for param in input_params:
 
-        if param in SKIP_LIST or param.startswith("_"):
-            continue
-
         pytype = get_python_type(
             param,
             openapi_types,
@@ -1078,16 +1075,6 @@ def get_endpoint_obj(
                 == http_method.lower()
             ):
 
-                # input_params = get_api_params_map(api_endpoint, "all")
-                # if "inline_object" in input_params:
-                #     inline_model = get_api_model(base_package_name, INLINE_OBJ)
-                #     merge_inline_model_attributes(inline_model, api_endpoint)
-                # elif "body" in input_params:
-                #     raise Exception(
-                #         f"Request body is missing for [{endpoint_path}] and method [{http_method}]"
-                #     )
-
-                # params = api_instance.params.get("all")
                 return (api_instance, api_endpoint)
     return None
 
@@ -1106,16 +1093,21 @@ def get_api_http_method(endpoint_obj: object):
     return endpoint_obj.settings["http_method"]
 
 
-def get_api_params_map(endpoint_obj: object, filter_key=None) -> Dict:
+def get_api_input_params(endpoint_obj: object, filter_key=None) -> Dict:
     """
-    Get params map from given endpoint object
+    Get api input params
     """
+    params = []
     if filter_key:
-        return endpoint_obj.params_map[filter_key]
-    return endpoint_obj.params_map()
+        params = endpoint_obj.params_map[filter_key]
+        filtered_params = filter(lambda param: is_valid_param(param), params)
+    return list(filtered_params)
 
 
-def get_api_params(endpoint_obj: object) -> Dict:
+def get_api_params_from_attribute(endpoint_obj: object) -> Dict:
+    """
+    Get api input params from attribute map
+    """
     return endpoint_obj.attribute_map
 
 
@@ -1236,6 +1228,44 @@ def get_path_params(payload: List, path_params: List) -> Dict:
     return dict(zip(path_params, payload))
 
 
+def is_valid_param(param) -> bool:
+    """
+    Determine if valid param
+    """
+    if param in SKIP_LIST or param.startswith("_"):
+        return False
+    return True
+
+
+def pair_payload_param_value(required_params, all_input_params, values) -> Tuple:
+    """
+    Pair payload value against key(for optional params)
+    """
+    required_payload = None
+    optional_payload = {}
+
+    if isinstance(values, list):
+        if len(all_input_params) != len(values):
+            raise Exception(
+                "Number of payloads generated are not matching corresponding number of input params for which they are generated"
+            )
+        final_payload = []
+
+        # Assign key for optional payload values
+        for key, value in zip(all_input_params, values):
+            if key in required_params:
+                final_payload.append(value)
+            else:
+                optional_payload[key] = value
+
+    else:
+        if len(all_input_params) > 0:
+            key = all_input_params[0]
+            optional_payload[key] = values
+
+    return required_payload, optional_payload
+
+
 def extract_path_params(api_path):
     """
     Extract path params from api path. For example extract `petName` from http://localhost:80/pets/v1/{petName}
@@ -1284,7 +1314,8 @@ def _invoke_apis(
         )
         api_func_name = get_api_operation_id(endpoint_obj)
 
-        input_params: Dict = get_api_params_map(endpoint_obj, "all")
+        all_input_params: List = get_api_input_params(endpoint_obj, "all")
+        required_params: List = get_api_input_params(endpoint_obj, "required")
 
         # Pick all attributes ? TODO: Think about attributes without validation
         # input_params: Dict = get_api_params(endpoint_obj)
@@ -1297,7 +1328,7 @@ def _invoke_apis(
             f"Preparing fuzzed payloads with run_id: {run_id} for api: {api_path}"
         )
         combined_fuzzed_payloads = get_json_payloads(
-            input_params,
+            all_input_params,
             openapi_types,
             validations,
             spec=spec,
@@ -1354,29 +1385,55 @@ def _invoke_apis(
                     f"Sending request: {attribute_payload} with run_id: {run_id} for request_id: {request_id}"
                 )
 
-                # If payload is a list
-                if isinstance(attribute_payload, list):
-                    api_function = getattr(api_instance, api_func_name)
+                # If payload is a list or are mandatory(args)
+                # if isinstance(attribute_payload, list):
+                #     api_function = getattr(api_instance, api_func_name)
+                #     response: urllib3.HTTPResponse = api_function(
+                #         *attribute_payload,
+                #         _request_timeout=READ_TIMEOUT,
+                #         _preload_content=False,
+                #         _check_return_type=False,
+                #     )
+                #     response_data = response.data
+                #     response_status = response.status
+                # else:
+                # If payload is optional(kwargs)
+
+                api_function = getattr(api_instance, api_func_name)
+
+                required_payload, optional_payload = pair_payload_param_value(
+                    required_params, all_input_params, attribute_payload
+                )
+                if required_payload and optional_payload:
                     response: urllib3.HTTPResponse = api_function(
-                        *attribute_payload,
+                        *required_payload,
+                        **optional_payload,
                         _request_timeout=READ_TIMEOUT,
                         _preload_content=False,
                         _check_return_type=False,
                     )
-                    response_data = response.data
-                    response_status = response.status
+                elif required_payload:
+                    response: urllib3.HTTPResponse = api_function(
+                        *required_payload,
+                        _request_timeout=READ_TIMEOUT,
+                        _preload_content=False,
+                        _check_return_type=False,
+                    )
+                elif optional_payload:
+                    response: urllib3.HTTPResponse = api_function(
+                        **optional_payload,
+                        _request_timeout=READ_TIMEOUT,
+                        _preload_content=False,
+                        _check_return_type=False,
+                    )
                 else:
-                    # If payload is primitive
-                    api_function = getattr(api_instance, api_func_name)
-                    response: urllib3.HTTPResponse = api_function(
-                        inline_object=attribute_payload,
-                        _request_timeout=READ_TIMEOUT,
-                        _preload_content=False,
-                        _check_return_type=False,
+                    raise Exception(
+                        f"Payload not found for api path: [{api_path}] and run_id: [{run_id}]"
                     )
-                    response_data = response.data
-                    response_status = response.status
-                    response_headers = response.headers
+
+                response_data = response.data
+                response_status = response.status
+                response_headers = response.headers
 
                 counter = counter + 1
             except exceptions_module.ApiValueError as ae:

@@ -11,7 +11,7 @@ export default function RequestEditor(props) {
     url: "https://apihome.io",
     reqHeader: "",
     reqBody: "",
-    resHeader: "",
+    resHeader: [],
     resBody: "",
   };
 
@@ -21,7 +21,7 @@ export default function RequestEditor(props) {
   const [url, setUrl] = useState(msgDetails.url);
   const [reqHeader, setReqHeader] = useState(msgDetails.reqHeader);
   const [reqBody, setReqBody] = useState(msgDetails.reqBody);
-  const [resHeader, setResHeader] = useState(msgDetails.resHeader);
+  const [resHeaders, setResHeaders] = useState(msgDetails.resHeader);
   const [resBody, setResBody] = useState(msgDetails.resBody);
   const [remarks, setRemarks] = useState();
   const [httpMethod, setHttpMethod] = useState("GET");
@@ -89,27 +89,30 @@ export default function RequestEditor(props) {
         throw new Error(data.message);
       } else {
         //Extract response into headers and body
-        let headerStr = formHeaders(response.headers);
-        console.log(headerStr);
-        setResHeader(headerStr);
+        const headerS = formHeaders(response.headers);
+        // console.log(headerStr);
+        setResHeaders(headerS);
+        let body = "";
         setResBody(JSON.stringify(data));
       }
     } catch (error) {
       // setError(error.message);
+      console.log(error.message);
       console.log("Error while hitting URL: " + url);
     }
   }
 
   function formHeaders(headers) {
-    let headerStr = "";
+    const headerS = [];
     for (var pair of headers.entries()) {
-      headerStr = headerStr + pair[0] + ": " + pair[1] + "\n";
+      const headerStr = pair[0] + "- " + pair[1];
+      headerS.push(headerStr);
     }
-    return headerStr;
+    return headerS;
   }
 
   function handleResHeaderChange(event) {
-    setResHeader(event.target.value);
+    setResHeaders(event.target.value);
   }
   function handleResBodyChange(event) {
     setResBody(event.target.value);
@@ -343,6 +346,8 @@ export default function RequestEditor(props) {
     );
   }
 
+  // console.log(resHeaders);
+
   return (
     <div className={classes.container}>
       <div className={classes.headingContainer}>
@@ -467,7 +472,12 @@ export default function RequestEditor(props) {
         </div>
         <div className={classes.response}>
           <div className={classes.heading}>Response Header</div>
-          <div className={classes.responseBodyContainer}>{resHeader}</div>
+          <div className={classes.responseBodyContainer}>
+            {resHeaders}
+            {/* {resHeaders.map((item) => {
+              <li>{item}</li>;
+            })} */}
+          </div>
           <div className={classes.heading}>Response Body</div>
           <div className={classes.responseBodyContainer}>{resBody}</div>
         </div>

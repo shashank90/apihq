@@ -59,6 +59,13 @@ export default function APIDropdownModal(props) {
       setActionError("Select API Endpoint URL");
       return;
     }
+    if (
+      httpMethod === defaultApiEndpointURLSelectMessage ||
+      httpMethod === ""
+    ) {
+      setActionError("Select http method");
+      return;
+    }
 
     const transformedHeaderPairs = headerPairs.map((item) => {
       const headerName = item.value["headerName"];
@@ -72,6 +79,8 @@ export default function APIDropdownModal(props) {
       auth_headers: transformedHeaderPairs,
     };
     const runAPIURL = runAPIBaseURL + "/" + apiId;
+
+    console.log(httpMethod);
 
     try {
       const response = await fetch(runAPIURL, {
@@ -173,6 +182,7 @@ export default function APIDropdownModal(props) {
       } else {
         // Pick the first one assuming only single match happens
         const methods = selectedApi.httpMethod.split(",");
+        methods.unshift(defaultHttpMethodSelectMessage);
         setHttpMethods(methods);
       }
     }
