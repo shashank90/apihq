@@ -54,6 +54,7 @@ def invoke_apis(
     api_path: str,
     spec_path: str,
     auth_headers: List[Dict],
+    http_method: str,
 ):
     """
     Run Api tests by generating payloads from openapi spec and sending them
@@ -72,7 +73,14 @@ def invoke_apis(
         move_generated_files(gen_pkg_name)
 
         return _invoke_apis(
-            run_id, api_path, spec_path, data_dir, run_dir, gen_pkg_name, auth_headers
+            run_id,
+            api_path,
+            spec_path,
+            data_dir,
+            run_dir,
+            gen_pkg_name,
+            auth_headers,
+            http_method,
         )
 
     except Exception:

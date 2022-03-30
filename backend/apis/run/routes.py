@@ -94,7 +94,15 @@ def run_api(current_user, api_id):
 
     t = threading.Thread(
         target=run,
-        args=[run_id, run_dir, api_endpoint_url, spec_path, data_dir, t_auth_headers],
+        args=[
+            run_id,
+            run_dir,
+            api_endpoint_url,
+            spec_path,
+            data_dir,
+            t_auth_headers,
+            http_method,
+        ],
     )
     t.start()
 

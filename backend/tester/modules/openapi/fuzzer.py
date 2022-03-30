@@ -6,6 +6,9 @@ from backend.tester.modules.openapi.metadata_wrapper import (
     wrap_attribute_payload_metadata,
 )
 
+DEFAULT_MIN_INT = 1
+DEFAULT_MAX_INT = 100
+DEFAULT_VALID_STR = "default"
 SPECIAL_CHARS = [
     "~",
     "!",
@@ -72,13 +75,18 @@ def get_valid_str(max_length: int, pattern: str) -> str:
     """
     Generate payloads that adhere to given constraints
     """
-    return "valid"
+    return DEFAULT_VALID_STR
 
 
 def get_valid_int(minimum: int, maximum: int) -> int:
     """
     Generate an integer betweem minimum and maximum limits
     """
+    if minimum == None:
+        minimum = DEFAULT_MIN_INT
+    if maximum == None:
+        maximum = DEFAULT_MAX_INT
+
     return random.randrange(minimum, maximum)
 
 

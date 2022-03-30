@@ -111,6 +111,7 @@ def run(
     spec_path: str,
     data_dir: str,
     auth_headers: List[Dict],
+    http_method: str,
 ):
     """
     Test API contract conformance by initiating requests that fall outside contract constraints
@@ -132,7 +133,7 @@ def run(
         # Continue overwriting sdk generation in case of multiple runs within data dir.
         # Only write requests & their results to separate run dirs
         (request_metadata, response_list) = invoke_apis(
-            run_id, data_dir, run_dir, api_path, spec_path, auth_headers
+            run_id, data_dir, run_dir, api_path, spec_path, auth_headers, http_method
         )
 
         write_request_metadata(run_dir, request_metadata)
@@ -668,7 +669,7 @@ def get_response_validation_errors(
     except PathError as pe:
         error_messages = get_error_messages(pe)
     except ResponseNotFound as rn:
-        logger.info(str(rn))
+        logger.warning(str(rn))
         error_messages.append(str(rn))
     except ResponseFinderError as re:
         error_messages = get_error_messages(re)
@@ -684,5 +685,16 @@ def get_response_validation_errors(
 
 # TODO: Deal with response not found (500)? ResponseNotFound is not a list
 def get_error_messages(schema_errors: List[ValidationError]):
-    error_msgs = [schema_error.message for schema_error in schema_errors]
-    return error_msgs
+    try:
+        error_msgs = [schema_error.message for schema_error in schema_errors]
+        return error_msgs
+    except TypeError as te:
+        logger.error(
+            f"Response Validation schema error is not iterable. Error: {str(te)}"
+        )
+    except Exception as e:
+        logger.error(
+            f"Could not extract Response Validation Schema error. Error: {str(e)}"
+        )
+    schema_error_str = str(schema_errors)
+    return str(schema_error_str)

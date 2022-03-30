@@ -1,7 +1,9 @@
+from asyncio import streams
 from multiprocessing.spawn import prepare
 import re
 from typing import Dict, List, Tuple, Type
 from urllib.parse import urljoin
+import importlib
 
 import urllib3
 from backend.tester.modules.openapi.file_payload_handler import (
@@ -62,7 +64,7 @@ TEST_SPEC_PATH = "../openapi_specs/openapi3.yml"
 MODEL_PACKAGE = "tester.modules.openapi.python_sdk.model"
 # Assuming pdf is most popular file upload type? This assumption may be wrong
 DEFAULT_VALID_FILE_TYPE = "yaml"
-
+SKIP_LIST = ["async_req"]
 logger = Logger(__name__)
 
 # Payload Generation logic:
@@ -107,6 +109,9 @@ def get_json_payloads(
     outer_param_payloads = []
     for param in input_params:
 
+        if param in SKIP_LIST or param.startswith("_"):
+            continue
+
         pytype = get_python_type(
             param,
             openapi_types,
@@ -118,8 +123,9 @@ def get_json_payloads(
         if pytype == "str" or pytype == "int":
             validation_obj: Dict = process_validation_obj(validations)
             # Get all payloads(valid & negative) for 'param' string attribute
+            param_validation_obj = validation_obj.get(param)
             attr_payloads = get_attribute_payloads_primitive(
-                param, validation_obj[param], pytype
+                param, param_validation_obj, pytype
             )
             # print(attr_payloads)
             outer_param_payloads.append(attr_payloads)
@@ -224,10 +230,13 @@ def get_json_payloads(
 
             # Merge enumerated primitive attribute payloads
             obj_attr_payloads = merge_sibling_primitive_attributes_obj(
-                attr_payloads, obj, kwargs.get(PARENT_ATTRIBUTE)
+                attr_payloads,
+                obj,
+                kwargs.get(PARENT_ATTRIBUTE),
+                configuration=configuration,
             )
 
-            attribute_module_name_triplets = get_nested_objects(openapi_types)
+            attribute_module_name_triplets = get_nested_objects(openapi_types, data_dir)
             # Iterate nested objects, get their attribute payloads and merge them with the parent object
             for attribute_module_name_triplet in attribute_module_name_triplets:
                 parent_attr = attribute_module_name_triplet[0]
@@ -270,7 +279,8 @@ def get_json_payloads(
                     obj_attr_payloads,
                     child_obj_attr_payloads,
                     obj,
-                    parent_attr,
+                    parent_attribute=parent_attr,
+                    configuration=configuration,
                     data_dir=data_dir,
                 )
 
@@ -392,16 +402,18 @@ def pretty_print(param: Dict):
     print(js)
 
 
-def instantiate_class(param: str, pkg_name: str):
+def instantiate_class(class_name: str, pkg_name: str):
     """
     Return instance given a class name
     """
-    klass = extract_class(param)
-    inline_obj = getattr(get_model_module_path(pkg_name, param), klass)
+    klass = extract_class(class_name)
+    full_model_module_path = get_model_module_path(class_name, pkg_name)
+    module = importlib.import_module(full_model_module_path)
+    inline_obj = getattr(module, klass)
     return inline_obj
 
 
-def get_nested_objects(openapi_types: Dict) -> str:
+def get_nested_objects(openapi_types: Dict, data_dir: str) -> str:
     """
     Check if param has a nested openapi generated object and return triplet of (attribute, class name, class type)
     """
@@ -411,7 +423,7 @@ def get_nested_objects(openapi_types: Dict) -> str:
         # TODO: Do something about array type nested object
         if type(v[0]) == list:
             nested_objects.append((k, v[0], "array"))
-        elif is_generated_class(v[0]):
+        elif is_generated_class(v[0], data_dir):
             nested_objects.append(
                 (k, get_qualified_module_name(v[0]), "generated class")
             )
@@ -717,7 +729,7 @@ def get_attribute_payloads_obj(
     attribute_payloads = []
     for k, v in validations.items():
         # 'v' is a dict of validation constraints for given attribute 'k'
-        pytype = get_python_type(k, data_dir, openapi_types)
+        pytype = get_python_type(k, openapi_types, data_dir)
         if pytype == "str" or pytype == "int":
             attribute_payload = get_attribute_payloads_primitive(k, v, pytype)
             attribute_payloads.append(attribute_payload)
@@ -762,11 +774,12 @@ def get_attribute_positive_payload_str(
     """
     max_length = None
     pattern = None
-    for k1, v1 in validation_constraints.items():
-        if k1 == "max_length":
-            max_length = v1
-        if k1 == "regex":
-            pattern = v1["pattern"]
+    if validation_constraints:
+        for k1, v1 in validation_constraints.items():
+            if k1 == "max_length":
+                max_length = v1
+            if k1 == "regex":
+                pattern = v1["pattern"]
 
     value = fuzzer.get_valid_str(max_length, pattern)
     payload_metadata = wrap_attribute_payload_metadata(
@@ -783,12 +796,14 @@ def get_attribute_positive_payload_int(
     """
     min_length = None
     max_length = None
-    # valid_request_detail['attribute'] = attribute
-    for k1, v1 in validation_constraints.items():
-        if k1 == "minimum":
-            min_length = v1
-        if k1 == "maximum":
-            max_length = v1
+
+    if validation_constraints:
+        # valid_request_detail['attribute'] = attribute
+        for k1, v1 in validation_constraints.items():
+            if k1 == "minimum":
+                min_length = v1
+            if k1 == "maximum":
+                max_length = v1
 
     value = fuzzer.get_valid_int(min_length, max_length)
     payload_metadata = wrap_attribute_payload_metadata(
@@ -805,14 +820,27 @@ def get_attribute_negative_payloads_str(
     """
     neg_attr_details = []
 
-    # Fuzz using validation constraints
-    for k1, v1 in validation_constraints.items():
+    if validation_constraints:
+        # Fuzz using validation constraints
+        for k1, v1 in validation_constraints.items():
 
-        if k1 == "min_length":
-            value = fuzzer.get_min_length_fuzz_str(v1)
-            message = f"Invalid value for {attribute}, length must be greater than or equal to {v1}"
-            constraint = "Min Length"
-            if value:
+            if k1 == "min_length":
+                value = fuzzer.get_min_length_fuzz_str(v1)
+                message = f"Invalid value for {attribute}, length must be greater than or equal to {v1}"
+                constraint = "Min Length"
+                if value:
+                    payload_metadata = wrap_attribute_payload_metadata(
+                        value=value,
+                        attribute=attribute,
+                        message=message,
+                        constraint=constraint,
+                    )
+                    neg_attr_details.append(payload_metadata)
+
+            if k1 == "max_length":
+                value = fuzzer.get_max_length_fuzz_str(v1)
+                message = f"Invalid value for {attribute}, length must be less than or equal to {v1}"
+                constraint = "Max Length"
                 payload_metadata = wrap_attribute_payload_metadata(
                     value=value,
                     attribute=attribute,
@@ -821,29 +849,20 @@ def get_attribute_negative_payloads_str(
                 )
                 neg_attr_details.append(payload_metadata)
 
-        if k1 == "max_length":
-            value = fuzzer.get_max_length_fuzz_str(v1)
-            message = f"Invalid value for {attribute}, length must be less than or equal to {v1}"
-            constraint = "Max Length"
-            payload_metadata = wrap_attribute_payload_metadata(
-                value=value, attribute=attribute, message=message, constraint=constraint
-            )
-            neg_attr_details.append(payload_metadata)
+            if k1 == "regex":
+                regex = v1["pattern"]
 
-        if k1 == "regex":
-            regex = v1["pattern"]
-
-            values = fuzzer.get_regex_fuzz_str(regex)
-            for value in values:
-                message = f"Invalid value for {attribute}, must match regular expression {regex}"
-                constraint = "Pattern"
-                payload_metadata = wrap_attribute_payload_metadata(
-                    value=value,
-                    attribute=attribute,
-                    message=message,
-                    constraint=constraint,
-                )
-                neg_attr_details.append(payload_metadata)
+                values = fuzzer.get_regex_fuzz_str(regex)
+                for value in values:
+                    message = f"Invalid value for {attribute}, must match regular expression {regex}"
+                    constraint = "Pattern"
+                    payload_metadata = wrap_attribute_payload_metadata(
+                        value=value,
+                        attribute=attribute,
+                        message=message,
+                        constraint=constraint,
+                    )
+                    neg_attr_details.append(payload_metadata)
 
     # Fuzz with common sqli
     for value in get_common_sqli():
@@ -966,23 +985,30 @@ def get_attribute_negative_payloads_int(
     Prepare negative payloads for given attribute
     """
     neg_attr_details = []
-    for k1, v1 in validation_constraints.items():
-        if k1 == "minimum":
-            value = fuzzer.get_min_int(v1)
-            message = "Min length violation"
-            constraint = "Min Length"
-            payload_metadata = wrap_attribute_payload_metadata(
-                value=value, attribute=attribute, message=message, constraint=constraint
-            )
-            neg_attr_details.append(payload_metadata)
-        if k1 == "maximum":
-            value = fuzzer.get_max_int(v1)
-            message = "Max length violation"
-            constraint = "Max length"
-            payload_metadata = wrap_attribute_payload_metadata(
-                value=value, attribute=attribute, message=message, constraint=constraint
-            )
-            neg_attr_details.append(payload_metadata)
+    if validation_constraints:
+        for k1, v1 in validation_constraints.items():
+            if k1 == "minimum":
+                value = fuzzer.get_min_int(v1)
+                message = "Min length violation"
+                constraint = "Min Length"
+                payload_metadata = wrap_attribute_payload_metadata(
+                    value=value,
+                    attribute=attribute,
+                    message=message,
+                    constraint=constraint,
+                )
+                neg_attr_details.append(payload_metadata)
+            if k1 == "maximum":
+                value = fuzzer.get_max_int(v1)
+                message = "Max length violation"
+                constraint = "Max length"
+                payload_metadata = wrap_attribute_payload_metadata(
+                    value=value,
+                    attribute=attribute,
+                    message=message,
+                    constraint=constraint,
+                )
+                neg_attr_details.append(payload_metadata)
     return neg_attr_details
 
 
@@ -1033,15 +1059,36 @@ def get_all_endpoint_paths(api_obj) -> List:
     return [item.settings["endpoint_path"] for item in endpoint_settings]
 
 
-def get_endpoint_obj(endpoint_path: str, api_instances: List[object]) -> List[object]:
+def get_endpoint_obj(
+    base_package_name: str,
+    endpoint_path: str,
+    api_instances: List[object],
+    http_method: str,
+) -> List[object]:
     """
     Get endpoint object for given endpoint path from list of all api instances
     """
+    api_endpoint = None
     for api_instance in api_instances:
         endpoint_objs = get_endpoint_objs(api_instance)
-        for item in endpoint_objs:
-            if item.settings["endpoint_path"] == endpoint_path:
-                return (api_instance, item)
+        for api_endpoint in endpoint_objs:
+            if (
+                api_endpoint.settings["endpoint_path"] == endpoint_path
+                and (api_endpoint.settings["http_method"]).lower()
+                == http_method.lower()
+            ):
+
+                # input_params = get_api_params_map(api_endpoint, "all")
+                # if "inline_object" in input_params:
+                #     inline_model = get_api_model(base_package_name, INLINE_OBJ)
+                #     merge_inline_model_attributes(inline_model, api_endpoint)
+                # elif "body" in input_params:
+                #     raise Exception(
+                #         f"Request body is missing for [{endpoint_path}] and method [{http_method}]"
+                #     )
+
+                # params = api_instance.params.get("all")
+                return (api_instance, api_endpoint)
     return None
 
 
@@ -1068,6 +1115,10 @@ def get_api_params_map(endpoint_obj: object, filter_key=None) -> Dict:
     return endpoint_obj.params_map()
 
 
+def get_api_params(endpoint_obj: object) -> Dict:
+    return endpoint_obj.attribute_map
+
+
 def get_api_validations(endpoint_obj: object) -> Dict:
     """
     Get validations from given endpoint object
@@ -1080,6 +1131,34 @@ def get_api_param_types(endpoint_obj: object) -> Dict:
     Get openapi type information from given endpoint object
     """
     return endpoint_obj.openapi_types
+
+
+def get_api_model_package(base_pkg_name: str, class_name: str) -> str:
+    """
+    Get models referenced from apis like inline_object
+    """
+    model_pkg_name = base_pkg_name + "." + "model" + "." + class_name
+    return model_pkg_name
+
+
+def get_api_model(base_pkg_name: str, class_name: str):
+    """
+    Get instance of model referenced by api instance like inline_object
+    """
+    module_name = convert_case(class_name)
+    full_model_module_name = get_api_model_package(base_pkg_name, module_name)
+    module = importlib.import_module(full_model_module_name)
+    inline_obj = getattr(module, class_name)
+    return inline_obj
+
+
+def merge_inline_model_attributes(inline_model: object, api_endpoint: object):
+    """
+    Merge inline model attributes with api endpoint instance
+    """
+    api_endpoint.validations = inline_model.validations
+    api_endpoint.openapi_types = inline_model.openapi_types
+    api_endpoint.attribute_map = inline_model.attribute_map
 
 
 def get_endpoint_obj_names(api_obj) -> List:
@@ -1179,6 +1258,7 @@ def _invoke_apis(
     run_dir: str,
     gen_package_name: str,
     auth_headers: List[Dict],
+    http_method: str,
 ) -> List[Dict]:
     """
     Invoker apis with negative payloads for each attribute in request(body and path params)
@@ -1193,16 +1273,22 @@ def _invoke_apis(
         spec = get_openapi_spec(spec_path)
 
         # Extract path params from api path. Needed to form path params dict for request validation
-        path_param_keys = extract_path_params(api_path)
+        # path_param_keys = extract_path_params(api_path)
 
         # Create an instances of the API class
         api_instances = get_api_instances(api_client, data_dir, gen_package_name)
 
         # Testing operationId to api function mapping
-        api_instance, endpoint_obj = get_endpoint_obj(api_path, api_instances)
+        api_instance, endpoint_obj = get_endpoint_obj(
+            gen_package_name, api_path, api_instances, http_method
+        )
         api_func_name = get_api_operation_id(endpoint_obj)
 
-        input_params: Dict = get_api_params_map(endpoint_obj, "required")
+        input_params: Dict = get_api_params_map(endpoint_obj, "all")
+
+        # Pick all attributes ? TODO: Think about attributes without validation
+        # input_params: Dict = get_api_params(endpoint_obj)
+
         # Get validations on the endpoint object itself. These are usually applicable for the primitives
         validations: Dict = get_api_validations(endpoint_obj)
         openapi_types: Dict = get_api_param_types(endpoint_obj)
@@ -1281,10 +1367,9 @@ def _invoke_apis(
                     response_status = response.status
                 else:
                     # If payload is primitive
-                    response: urllib3.HTTPResponse = getattr(
-                        api_instance, api_func_name
-                    )(
-                        attribute_payload,
+                    api_function = getattr(api_instance, api_func_name)
+                    response: urllib3.HTTPResponse = api_function(
+                        inline_object=attribute_payload,
                         _request_timeout=READ_TIMEOUT,
                         _preload_content=False,
                         _check_return_type=False,
@@ -1335,5 +1420,14 @@ def _invoke_apis(
 
 
 if __name__ == "__main__":
-    api_path = "/users/v1/{username}/email"
-    _invoke_apis(api_path, TEST_SPEC_PATH)
+    run_id = "run_test_123"
+    api_path = "/v2/lucky_draw/address"
+    http_method = "post"
+    spec_path = "/home/ubuntu/Desktop/apihq/logs/data_dir_Sac1207d1bcd4450d928cd4c3bee2206b/spec_string.yaml"
+    data_dir = "data_dir_Sac1207d1bcd4450d928cd4c3bee2206b"
+    run_dir = "run_test"
+    auth_headers = []
+    gen_package_name = "logs.data_dir_Sac1207d1bcd4450d928cd4.python_sdk"
+    _invoke_apis(
+        run_id, api_path, spec_path, data_dir, run_dir, gen_package_name, auth_headers
+    )
