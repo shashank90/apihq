@@ -96,7 +96,7 @@ def create_openapi_str(current_user):
     # API inventory table has an FK dependency to API spec table
     path_error_out = None
     try:
-        path_list = get_paths(spec_path)
+        path_list = get_paths(spec_path, spec_string=content)
         for api_path, method, api_endpoint_url in path_list:
             api_id = uuid_handler.get_uuid()
             api_insert_record = {
@@ -148,6 +148,7 @@ def create_openapi_str(current_user):
 def update_openapi_str(current_user, spec_id):
     user_id = current_user.user_id
     logger.info(f"Updating OpenAPI spec string {spec_id} for user {user_id}")
+    added_by = AddedByEnum.USER
 
     data = request.get_json()
     collection_name: str = data["collection_name"]
@@ -175,10 +176,10 @@ def update_openapi_str(current_user, spec_id):
         os.remove(spec_path)
 
     # Extract content and write to file
-    content = json.loads(json.dumps(spec_string))
+    spec_content = json.loads(json.dumps(spec_string))
 
     with open(spec_path, "w+", encoding="utf-8") as f:
-        f.write(content)
+        f.write(spec_content)
 
     # Update spec record
     update_spec(spec_id, collection_name)
@@ -186,7 +187,7 @@ def update_openapi_str(current_user, spec_id):
     # Update API paths in inventory table
     path_error_out = None
     try:
-        path_list = get_paths(spec_path)
+        path_list = get_paths(spec_path, spec_string=spec_content)
         for api_path, method, api_endpoint_url in path_list:
             api_id = uuid_handler.get_uuid()
             api_insert_record = {
@@ -195,6 +196,7 @@ def update_openapi_str(current_user, spec_id):
                 "api_endpoint_url": api_endpoint_url,
                 "spec_id": spec_id,
                 "http_method": method,
+                "added_by": added_by,
             }
             add_api_to_inventory(user_id, api_path, api_insert_record)
 

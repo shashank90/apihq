@@ -2,7 +2,10 @@ import copy
 import os
 from tarfile import SUPPORTED_TYPES
 from typing import Tuple
-from prance import ResolvingParser
+from prance import ResolvingParser, BaseParser
+from prance.util.formats import parse_spec_details
+
+from backend.utils import file_cache_handler
 
 SUPPORTED_TYPES = ["txt", "pdf", "yaml", "json"]
 
@@ -81,14 +84,20 @@ def get_arr_validation(key, spec, key_validations):
                 get_arr_validation(key, v["properties"], key_validations)
 
 
-def get_paths(spec_path) -> Tuple[str, str]:
+def get_paths(spec_path, spec_string=None) -> Tuple[str, str]:
     """
     Retrieve API path and http method
     """
     parser = ResolvingParser(spec_path)
     spec = parser.specification
+
+    # Overwrite parser spec content as latest data is present in spec string
+    if spec_string:
+        spec, _, _ = parse_spec_details(spec_string, filename=spec_path)
+
     host = None
     api_endpoint_url = None
+
     # Logic to get hostname
     if "servers" in spec:
         # Picking the first server url. Warning: This may not be proper
@@ -98,14 +107,17 @@ def get_paths(spec_path) -> Tuple[str, str]:
 
     for k1, v in paths.items():
         if isinstance(v, dict):
+            methods = []
             for k2, _ in v.items():
-                method = k2
+                methods.append(k2.upper())
+            methods.sort()
+            method_str = ",".join(methods)
         api_path = k1
         if host:
             api_endpoint_url = host + api_path
         else:
             api_endpoint_url = api_path
-        path_list.append((api_path, method, api_endpoint_url))
+        path_list.append((api_path, method_str, api_endpoint_url))
     return path_list
 
 

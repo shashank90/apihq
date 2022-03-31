@@ -156,9 +156,9 @@ def update_run_details(run_id: str, run_status: RunStatusEnum, message=None):
     session.commit()
 
 
-def add_api_to_inventory(user_id: str, api_path: str, api_details: Dict):
+def get_api_object(user_id: str, api_path: str) -> object:
     """
-    Insert or Update api path in inventory table based on whether it exists
+    Give api path, get API object
     """
     session: Session = get_session()
     api_path_obj = (
@@ -168,14 +168,29 @@ def add_api_to_inventory(user_id: str, api_path: str, api_details: Dict):
         )
         .first()
     )
-    # http_method
-    http_method = api_details.get("http_method")
+    return api_path_obj
+
+
+def add_api_to_inventory(user_id: str, api_path: str, api_details: Dict):
+    """
+    Insert or Update api path in inventory table based on whether it exists
+    """
+    # api_object = get_api_object(user_id, api_path)
     session: Session = get_session()
 
+    api_object = (
+        session.query(ApiInventory)
+        .filter(
+            and_(ApiInventory.user_id == user_id, ApiInventory.api_path == api_path)
+        )
+        .first()
+    )
+
+    http_method = api_details.get("http_method")
     api_endpoint_url = api_details.get("api_endpoint_url")
     spec_id = api_details.get("spec_id")
 
-    if not api_path_obj:
+    if not api_object:
         api_id = api_details.get("api_id")
         user_id = api_details.get("user_id")
         added_by = api_details.get("added_by")
@@ -197,24 +212,13 @@ def add_api_to_inventory(user_id: str, api_path: str, api_details: Dict):
         session.commit()
     else:
         # Overwrite api path and endpoint url
-        api_path_obj.api_path = api_path
-        api_path_obj.api_endpoint_url = api_endpoint_url
-        api_path_obj.spec_id = spec_id
-        # TODO: Chance of a bug: As per below logic, we are extending http methods for existing APIs
-        # However, in case a http method for existing endpoint is deleted/deprecated from code.
-        # It may still linger here as per method extension logic
-        # Extend http methods if incoming method isn't part of existing list
-        if http_method:
-            temp: List = api_path_obj.http_method.split(",")
-            if temp and http_method not in temp:
-                temp.append(http_method)
-                temp.sort()
-                methoD = ",".join(temp)
-                api_path_obj.http_method = methoD
-                session.commit()
-            else:
-                api_path_obj.http_method = http_method
-                session.commit()
+        api_object.api_path = api_path
+        api_object.api_endpoint_url = api_endpoint_url
+        api_object.spec_id = spec_id
+        api_object.http_method = http_method
+
+        # session.add(api_object)
+        session.commit()
 
 
 def get_api_inventory(user_id):

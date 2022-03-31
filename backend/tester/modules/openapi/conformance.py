@@ -676,9 +676,9 @@ def get_response_validation_errors(
     except Exception as e:
         error_messages = get_error_messages(e.schema_errors)
 
-    logger.info(
-        f"Validation response error messages {error_messages} for api path {full_api_path}"
-    )
+    # logger.debug(
+    #     f"Validation response error messages {error_messages} for api path {full_api_path}"
+    # )
 
     return error_messages
 
