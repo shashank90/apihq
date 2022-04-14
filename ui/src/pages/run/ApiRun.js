@@ -14,7 +14,7 @@ import { COMPLETED } from "../../store/constants";
 
 const getRunsURL = "/apis/v1/runs";
 
-export default function ApiTest() {
+export default function ApiRun() {
   const [runs, setRuns] = useState([]);
   const [dropdownModalIsOpen, setDropdownModalIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);

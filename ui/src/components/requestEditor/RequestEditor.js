@@ -25,7 +25,7 @@ export default function RequestEditor(props) {
   const [resBody, setResBody] = useState(msgDetails.resBody);
   const [remarks, setRemarks] = useState();
   const [httpMethod, setHttpMethod] = useState("GET");
-  const [contentType, setContentType] = useState("JSON");
+  const [contentType, setContentType] = useState("application/json");
 
   const editable = props.editable;
 
@@ -75,26 +75,21 @@ export default function RequestEditor(props) {
         headers[item.value["headerName"]] = item.value["headerValue"];
       });
 
+      const bodyData = getBodyData(contentType);
+      console.log(bodyData);
       const response = await fetch(url, {
         method: httpMethod,
         headers: headers,
+        body: bodyData,
       });
 
       const data = await response.json();
       // console.log(data);
-      if (!response.ok) {
-        if ("error" in data) {
-          throw new Error(data.error.message);
-        }
-        throw new Error(data.message);
-      } else {
-        //Extract response into headers and body
-        const headerS = formHeaders(response.headers);
-        // console.log(headerStr);
-        setResHeaders(headerS);
-        let body = "";
-        setResBody(JSON.stringify(data));
-      }
+      const headerS = formHeaders(response.headers);
+      // console.log(headerStr);
+      setResHeaders(headerS);
+      let body = "";
+      setResBody(JSON.stringify(data));
     } catch (error) {
       // setError(error.message);
       console.log(error.message);
@@ -124,6 +119,24 @@ export default function RequestEditor(props) {
   const handleContentTypeChange = (contentType) => {
     setContentType(contentType);
   };
+
+  function getBodyData(contentType) {
+    let data = null;
+    if (contentType === "application/json") {
+      data = reqBody;
+    } else {
+      if (contentType === "form-data") {
+        data = new FormData();
+      } else if (contentType === "x-www-form-urlencoded") {
+        data = new URLSearchParams();
+      }
+      // console.log("Sending file type: " + fileType);
+      bodyKeyValuePairs.map((item) => {
+        data.append(item.value["key"], item.value["value"]);
+      });
+    }
+    return data;
+  }
 
   const addHeaderPair = (e) => {
     e.preventDefault();
@@ -462,7 +475,7 @@ export default function RequestEditor(props) {
                   handleContentTypeChange(event.target.value)
                 }
               >
-                <option id="0">JSON</option>
+                <option id="0">application/json</option>
                 <option id="1">form-data</option>
                 <option id="2">x-www-form-urlencoded</option>
               </select>
